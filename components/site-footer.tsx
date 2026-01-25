@@ -3,8 +3,6 @@ import { BookOpen, Github, Twitter, Mail, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function SiteFooter() {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="relative border-t border-border/40 bg-gradient-to-b from-background via-background to-background/95">
       {/* Gradient accent line */}
@@ -92,9 +90,8 @@ export function SiteFooter() {
             </h3>
             <ul className="space-y-3">
               {[
-                { name: "Privacy Policy", href: "#" },
-                { name: "Terms of Service", href: "#" },
-                { name: "Contact", href: "#" },
+                { name: "Privacy Policy", href: "/privacy" },
+                { name: "Terms of Service", href: "/terms" },
               ].map((link) => (
                 <li key={link.name}>
                   <Link

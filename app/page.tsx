@@ -1,17 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, Share2, Zap } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 
 export default function Home() {
   return (
     <main className="flex flex-col bg-background text-foreground">
       {/* Hero Section with Image */}
-      <section className="relative w-full px-4 py-24 md:py-40 overflow-hidden">
+      <section className="relative w-full  md:py-40 overflow-hidden">
         <Layout>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-16 items-center">
             {/* Left Content */}
-            <div className="space-y-10">
+            <div className="">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/50 backdrop-blur-sm w-fit hover:border-border transition-colors">
                 <Zap className="w-4 h-4 text-primary" />
@@ -58,86 +59,65 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Image Placeholder */}
-            <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/5 to-primary/10 rounded-2xl" />
-              <div className="absolute inset-0 backdrop-blur-sm" />
-              <div className="relative h-full flex items-center justify-center p-8">
-                <div className="space-y-6 w-full">
-                  <div className="bg-card/40 backdrop-blur border border-border/30 rounded-xl p-4 space-y-3">
-                    <div className="h-3 bg-primary/20 rounded w-32" />
-                    <div className="h-3 bg-primary/15 rounded w-24" />
-                  </div>
-                  <div className="bg-card/30 backdrop-blur border border-border/30 rounded-xl p-4 space-y-3">
-                    <div className="h-3 bg-accent/20 rounded w-28" />
-                    <div className="h-3 bg-accent/15 rounded w-20" />
-                  </div>
-                  <div className="bg-card/40 backdrop-blur border border-border/30 rounded-xl p-4 space-y-3">
-                    <div className="h-3 bg-secondary/20 rounded w-32" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute inset-0 border border-border/30 rounded-2xl" />
+            {/* Right Image */}
+            <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden border border-border/40 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/15">
+              <Image
+                src="/quzi-collection.png"
+                alt="Quiz sharing preview"
+                fill
+                priority
+                className="object-cover"
+                sizes="(min-width: 1024px) 50vw, 90vw"
+              />
             </div>
           </div>
 
           {/* 3-Step Flow - Below Hero */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-20 mt-16 border-t border-border/30 pt-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-16 border-t border-border/30 pt-16">
             {[
               {
-                step: 1,
-                title: "Create",
-                desc: "Build questions in seconds",
-                color: "from-primary/20 to-primary/5",
-                accent: "bg-primary/10 text-primary",
+                title: "Design in minutes",
+                desc: "Draft questions, add options, and set scoring rules without leaving the canvas.",
+                color: "from-primary/25 via-primary/10 to-transparent",
+                iconBg: "bg-primary/10 text-primary",
+                icon: <Zap className="w-5 h-5" />,
               },
               {
-                step: 2,
-                title: "Share",
-                desc: "Get instant shareable link",
-                color: "from-accent/20 to-accent/5",
-                accent: "bg-accent/10 text-accent",
+                title: "Publish & invite",
+                desc: "Generate share links or email invites. No login required for takers.",
+                color: "from-accent/25 via-accent/10 to-transparent",
+                iconBg: "bg-accent/10 text-accent",
+                icon: <Share2 className="w-5 h-5" />,
               },
               {
-                step: 3,
-                title: "Analyze",
-                desc: "Track all responses",
-                color: "from-secondary/20 to-secondary/5",
-                accent: "bg-secondary/10 text-secondary",
+                title: "See results live",
+                desc: "Monitor submissions, scores, and completion times with real-time charts.",
+                color: "from-secondary/25 via-secondary/10 to-transparent",
+                iconBg: "bg-secondary/10 text-secondary",
+                icon: <BarChart3 className="w-5 h-5" />,
               },
             ].map((item) => (
               <div
-                key={item.step}
-                className="group relative p-6 rounded-xl border border-border/30 hover:border-border/60 transition-all duration-300 hover:shadow-lg overflow-hidden"
+                key={item.title}
+                className="group relative p-5 rounded-xl border border-border/40 bg-card/40 backdrop-blur-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
               >
-                {/* Background gradient */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
                 />
+                <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/5 blur-2xl" />
 
-                {/* Content */}
-                <div className="relative space-y-4">
-                  {/* Step number */}
+                <div className="relative flex flex-col gap-3">
                   <div
-                    className={`w-12 h-12 rounded-full ${item.accent} flex items-center justify-center font-bold text-lg`}
+                    className={`w-11 h-11 rounded-full border border-border/50 flex items-center justify-center ${item.iconBg} shadow-inner`}
                   >
-                    {item.step}
+                    {item.icon}
                   </div>
-
-                  {/* Title */}
-                  <h4 className="text-lg font-semibold group-hover:translate-x-1 transition-transform duration-300">
+                  <h4 className="text-lg font-semibold leading-snug">
                     {item.title}
                   </h4>
-
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {item.desc}
                   </p>
-
-                  {/* Arrow indicator */}
-                  <div className="pt-2 text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors duration-300">
-                    →
-                  </div>
                 </div>
               </div>
             ))}
@@ -151,18 +131,14 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Image */}
             <div className="order-2 md:order-1">
-              <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-accent/20 via-primary/10 to-card border border-border/50 flex items-center justify-center">
-                <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-                <div className="text-center space-y-4 p-8">
-                  <div className="flex gap-3 justify-center">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
-                    <div className="w-3 h-3 rounded-full bg-accent" />
-                    <div className="w-3 h-3 rounded-full bg-secondary" />
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    Analytics Dashboard
-                  </p>
-                </div>
+              <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden border border-border/40 bg-card">
+                <Image
+                  src="/quzi-collection.png"
+                  alt="Quiz collection preview"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 768px) 45vw, 90vw"
+                />
               </div>
             </div>
 
@@ -243,15 +219,14 @@ export default function Home() {
 
             {/* Right Image */}
             <div>
-              <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden bg-gradient-to-br from-secondary/20 via-primary/10 to-card border border-border/50 flex items-center justify-center">
-                <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-                <div className="text-center space-y-4 p-8">
-                  <div className="space-y-2">
-                    <div className="h-3 bg-primary/30 rounded w-24 mx-auto" />
-                    <div className="h-3 bg-primary/20 rounded w-32 mx-auto" />
-                  </div>
-                  <p className="text-muted-foreground text-sm">Quiz Editor</p>
-                </div>
+              <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden border border-border/40 bg-card">
+                <Image
+                  src="/quiz-editor.png"
+                  alt="Quiz editor preview"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 768px) 45vw, 90vw"
+                />
               </div>
             </div>
           </div>

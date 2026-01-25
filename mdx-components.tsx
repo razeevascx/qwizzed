@@ -3,7 +3,7 @@ import type { MDXComponents } from "mdx/types";
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     h1: ({ children }) => (
-      <h1 className="scroll-m-20 text-4xl font-bold tracking-tight mt-12 mb-6 first:mt-0 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+      <h1 className="scroll-m-20 text-4xl font-bold tracking-tight mt-12 mb-6 first:mt-0 bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
         {children}
       </h1>
     ),
@@ -23,7 +23,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </h4>
     ),
     p: ({ children }) => (
-      <p className="leading-7 mb-4 text-muted-foreground [&:not(:first-child)]:mt-4">
+      <p className="leading-7 mb-4 text-muted-foreground not-first:mt-4">
         {children}
       </p>
     ),
@@ -62,7 +62,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </pre>
     ),
     blockquote: ({ children }) => (
-      <blockquote className="mt-6 border-l-4 border-primary pl-6 italic text-muted-foreground [&>*]:text-muted-foreground">
+      <blockquote className="mt-6 border-l-4 border-primary pl-6 italic text-muted-foreground *:text-muted-foreground">
         {children}
       </blockquote>
     ),
@@ -75,12 +75,12 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </div>
     ),
     th: ({ children }) => (
-      <th className="border border-border/50 bg-muted/50 px-4 py-2 text-left font-semibold [&[align=center]]:text-center [&[align=right]]:text-right">
+      <th className="border border-border/50 bg-muted/50 px-4 py-2 text-left font-semibold [[align=center]]:text-center [[align=right]]:text-right">
         {children}
       </th>
     ),
     td: ({ children }) => (
-      <td className="border border-border/50 px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right">
+      <td className="border border-border/50 px-4 py-2 text-left [[align=center]]:text-center [[align=right]]:text-right">
         {children}
       </td>
     ),

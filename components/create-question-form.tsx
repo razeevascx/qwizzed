@@ -15,9 +15,10 @@ export function CreateQuestionForm({
   isLoading = false,
 }: CreateQuestionFormProps) {
   const [questionType, setQuestionType] = useState<
-    "multiple_choice" | "short_answer" | "true_false"
+    "multiple_choice" | "short_answer" | "true_false" | "fill_in_blank"
   >("multiple_choice");
   const [questionText, setQuestionText] = useState("");
+  const [points, setPoints] = useState(1);
   const [shortAnswerCorrect, setShortAnswerCorrect] = useState("");
   const [options, setOptions] = useState<
     { option_text: string; is_correct: boolean }[]
@@ -44,10 +45,11 @@ export function CreateQuestionForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (questionType === "short_answer") {
+    if (questionType === "short_answer" || questionType === "fill_in_blank") {
       await onSubmit({
         question_text: questionText,
         question_type: questionType,
+        points,
         options: [{ option_text: shortAnswerCorrect, is_correct: true }],
       });
     } else {
@@ -60,12 +62,14 @@ export function CreateQuestionForm({
       await onSubmit({
         question_text: questionText,
         question_type: questionType,
+        points,
         options,
       });
     }
 
     // Reset form
     setQuestionText("");
+    setPoints(1);
     setShortAnswerCorrect("");
     setOptions([
       { option_text: "", is_correct: false },
@@ -77,6 +81,7 @@ export function CreateQuestionForm({
     { value: "multiple_choice", label: "Multiple Choice", icon: "◉" },
     { value: "true_false", label: "True/False", icon: "☑" },
     { value: "short_answer", label: "Short Answer", icon: "✎" },
+    { value: "fill_in_blank", label: "Fill in the Blank", icon: "__" },
   ];
 
   const hasCorrectAnswer = options.some((opt) => opt.is_correct);
@@ -89,7 +94,7 @@ export function CreateQuestionForm({
           <HelpCircle className="w-4 h-4 text-primary" />
           Question Type <span className="text-destructive">*</span>
         </Label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {questionTypeOptions.map((opt) => (
             <button
               key={opt.value}
@@ -134,6 +139,28 @@ export function CreateQuestionForm({
             Question text is required
           </div>
         )}
+      </div>
+
+      {/* Points */}
+      <div>
+        <Label htmlFor="points" className="text-base font-semibold mb-3 block">
+          Points <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="points"
+          type="number"
+          min="1"
+          max="100"
+          placeholder="Points for this question"
+          value={points}
+          onChange={(e) => setPoints(parseInt(e.target.value) || 1)}
+          required
+          disabled={isLoading}
+          className="max-w-xs"
+        />
+        <p className="text-xs text-muted-foreground mt-2">
+          How many points is this question worth?
+        </p>
       </div>
 
       {/* Answer Options - Multiple Choice */}
@@ -309,14 +336,75 @@ export function CreateQuestionForm({
         </div>
       )}
 
+      {/* Answer Options - Fill in the Blank */}
+      {questionType === "fill_in_blank" && (
+        <div className="space-y-4 pt-4 border-t border-border/30">
+          <div className="space-y-2">
+            <Label className="text-base font-semibold">
+              How to Create Fill-in-the-Blank Questions
+            </Label>
+            <div className="bg-muted/50 border border-border/50 rounded-lg p-4 space-y-2">
+              <p className="text-sm text-foreground">
+                <strong>Step 1:</strong> In the question text above, use{" "}
+                <code className="bg-background px-2 py-0.5 rounded text-primary">
+                  _____
+                </code>{" "}
+                (underscores) to indicate where the blank should be.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Example: "The capital of France is _____"
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label
+              htmlFor="fill-blank-answer"
+              className="text-base font-semibold"
+            >
+              Correct Answer <span className="text-destructive">*</span>
+            </Label>
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter the word or phrase that fills the blank
+            </p>
+          </div>
+          <Input
+            id="fill-blank-answer"
+            type="text"
+            placeholder="e.g., Paris"
+            value={shortAnswerCorrect}
+            onChange={(e) => setShortAnswerCorrect(e.target.value)}
+            required
+            disabled={isLoading}
+            className="bg-background border-border/50 h-11 text-base"
+          />
+
+          {/* Preview */}
+          {questionText && shortAnswerCorrect && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
+              <Label className="text-sm font-semibold text-primary">
+                Preview
+              </Label>
+              <p className="text-sm text-foreground">
+                {questionText.replace(/_____/g, `[${shortAnswerCorrect}]`)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Submit Button */}
       <Button
         type="submit"
         disabled={
           isLoading ||
           !questionText ||
-          (questionType === "short_answer" && !shortAnswerCorrect) ||
-          (questionType !== "short_answer" && !hasCorrectAnswer)
+          ((questionType === "short_answer" ||
+            questionType === "fill_in_blank") &&
+            !shortAnswerCorrect) ||
+          (questionType !== "short_answer" &&
+            questionType !== "fill_in_blank" &&
+            !hasCorrectAnswer)
         }
         size="lg"
         className="w-full gap-2 h-11 font-semibold text-base"

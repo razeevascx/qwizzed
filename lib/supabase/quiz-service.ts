@@ -1,12 +1,14 @@
-import { createClient } from "./server";
+import { createClient, createAdminClient } from "./server";
 import type {
   Quiz,
   Question,
   QuestionOption,
   QuizSubmission,
+  QuizInvitation,
   CreateQuizInput,
   CreateQuestionInput,
   UpdateQuizInput,
+  InviteUserInput,
 } from "@/lib/types/quiz";
 
 export class QuizService {
@@ -27,6 +29,7 @@ export class QuizService {
           category: data.category,
           time_limit_minutes: data.time_limit_minutes,
           is_published: false,
+          visibility: data.visibility || "private",
           total_questions: 0,
         },
       ])
@@ -69,11 +72,15 @@ export class QuizService {
     const { data, error } = await client
       .from("quizzes")
       .select("*, profiles(username, email)")
-      .eq("is_published", true)
+      .eq("visibility", "public")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
+  }
+
+  static async getPublicQuizzes(): Promise<Quiz[]> {
+    return this.getPublishedQuizzes();
   }
 
   static async updateQuiz(
@@ -334,5 +341,190 @@ export class QuizService {
       .from("quizzes")
       .update({ total_questions: count || 0 })
       .eq("id", quizId);
+  }
+
+  // Quiz invitation operations
+  static async inviteUserToQuiz(
+    inviterId: string,
+    data: InviteUserInput,
+  ): Promise<QuizInvitation> {
+    const client = await createClient();
+
+    // Check if quiz is private and owned by inviter
+    const { data: quiz } = await client
+      .from("quizzes")
+      .select("visibility, creator_id, title")
+      .eq("id", data.quiz_id)
+      .single();
+
+    if (!quiz || quiz.creator_id !== inviterId) {
+      throw new Error("Unauthorized: You don't own this quiz");
+    }
+
+    if (quiz.visibility !== "private") {
+      throw new Error("Only private quizzes can have invitations");
+    }
+
+    // Check if invitation already exists
+    const { data: existing } = await client
+      .from("quiz_invitations")
+      .select()
+      .eq("quiz_id", data.quiz_id)
+      .eq("invitee_email", data.invitee_email)
+      .maybeSingle();
+
+    if (existing) {
+      throw new Error("User already invited to this quiz");
+    }
+
+    // Use admin client to invite user via Supabase Auth Admin API
+    try {
+      const adminClient = createAdminClient();
+      const { data: inviteData, error: inviteError } =
+        await adminClient.auth.admin.inviteUserByEmail(data.invitee_email, {
+          data: {
+            invited_to_quiz_id: data.quiz_id,
+            quiz_title: quiz.title,
+          },
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quizzes/${data.quiz_id}`,
+        });
+
+      if (inviteError) {
+        // If user already exists, that's okay - we'll still create the invitation
+        if (!inviteError.message?.includes("already registered")) {
+          throw new Error(
+            `Failed to send invite email: ${inviteError.message}`,
+          );
+        }
+      }
+    } catch (authError: any) {
+      // Log error but continue with invitation creation
+      console.warn("Auth invite warning:", authError.message);
+    }
+
+    // Create invitation record
+    const { data: invitation, error } = await client
+      .from("quiz_invitations")
+      .insert([
+        {
+          quiz_id: data.quiz_id,
+          inviter_id: inviterId,
+          invitee_email: data.invitee_email,
+          status: "pending",
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return invitation;
+  }
+
+  static async getQuizInvitations(quizId: string): Promise<QuizInvitation[]> {
+    const client = await createClient();
+
+    const { data, error } = await client
+      .from("quiz_invitations")
+      .select()
+      .eq("quiz_id", quizId)
+      .order("invited_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async getUserInvitations(userId: string): Promise<QuizInvitation[]> {
+    const client = await createClient();
+
+    const { data: user } = await client.auth.getUser();
+    if (!user.user) throw new Error("Not authenticated");
+
+    const { data, error } = await client
+      .from("quiz_invitations")
+      .select("*, quizzes(title, description, difficulty_level)")
+      .or(`invitee_email.eq.${user.user.email},invitee_id.eq.${userId}`)
+      .eq("status", "pending")
+      .order("invited_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async respondToInvitation(
+    invitationId: string,
+    status: "accepted" | "declined",
+  ): Promise<QuizInvitation> {
+    const client = await createClient();
+
+    const { data: invitation, error } = await client
+      .from("quiz_invitations")
+      .update({
+        status,
+        responded_at: new Date().toISOString(),
+      })
+      .eq("id", invitationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return invitation;
+  }
+
+  static async deleteInvitation(invitationId: string): Promise<void> {
+    const client = await createClient();
+
+    const { error } = await client
+      .from("quiz_invitations")
+      .delete()
+      .eq("id", invitationId);
+
+    if (error) throw error;
+  }
+
+  private static async sendInvitationEmail(
+    invitation: QuizInvitation,
+  ): Promise<void> {
+    const client = await createClient();
+
+    // Get quiz details
+    const { data: quiz } = await client
+      .from("quizzes")
+      .select("title, description")
+      .eq("id", invitation.quiz_id)
+      .single();
+
+    // Get inviter details
+    const { data: inviter } = await client
+      .from("profiles")
+      .select("username, email")
+      .eq("id", invitation.inviter_id)
+      .maybeSingle();
+
+    // TODO: Integrate with email service (Resend, SendGrid, etc.)
+    // For now, you can use Supabase Edge Functions to send emails
+    console.log("Sending invitation email:", {
+      to: invitation.invitee_email,
+      subject: `You've been invited to take "${quiz?.title}"`,
+      inviter: inviter?.username || inviter?.email,
+      quizTitle: quiz?.title,
+      quizDescription: quiz?.description,
+    });
+
+    // Example using Supabase Edge Functions:
+    // await fetch('https://your-project.supabase.co/functions/v1/send-invitation-email', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify({
+    //     to: invitation.invitee_email,
+    //     inviter: inviter?.username || inviter?.email,
+    //     quizTitle: quiz?.title,
+    //     quizDescription: quiz?.description,
+    //     invitationLink: `${process.env.NEXT_PUBLIC_APP_URL}/quiz/${invitation.quiz_id}`
+    //   })
+    // });
   }
 }

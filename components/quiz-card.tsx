@@ -10,17 +10,23 @@ import {
   Zap,
   ArrowRight,
   AlertCircle,
+  Mail,
+  Lock,
+  Globe,
+  EyeOff,
 } from "lucide-react";
 
 interface QuizCardProps {
   quiz: Quiz;
   onDelete?: (id: string) => void;
+  onInvite?: (id: string) => void;
   showActions?: boolean;
 }
 
 export function QuizCard({
   quiz,
   onDelete,
+  onInvite,
   showActions = false,
 }: QuizCardProps) {
   const difficultyConfig = {
@@ -47,7 +53,7 @@ export function QuizCard({
   const difficulty = difficultyConfig[quiz.difficulty_level];
 
   return (
-    <Link href={showActions ? "#" : `/quiz/take/${quiz.id}`}>
+    <Link href={showActions ? "#" : `/quizzes/${quiz.id}`}>
       <div className="group relative h-full rounded-2xl border border-border/50 bg-card hover:bg-card/80 hover:border-primary/40 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer flex flex-col">
         {/* Gradient accent bar at top */}
         <div className="h-1 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent group-hover:from-primary/60 transition-all" />
@@ -115,11 +121,32 @@ export function QuizCard({
             )}
           </div>
 
-          {/* Published Status */}
-          {quiz.is_published && (
-            <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold border border-emerald-200 dark:border-emerald-800 w-fit">
-              <div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
-              Published
+          {/* Published Status and Visibility - Only show when showActions is true */}
+          {showActions && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {quiz.is_published && (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+                  Published
+                </div>
+              )}
+              {quiz.visibility && (
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    quiz.visibility === "public"
+                      ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                      : "bg-slate-50 dark:bg-slate-950/30 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
+                  }`}
+                >
+                  {quiz.visibility === "public" ? (
+                    <Globe className="w-3 h-3" />
+                  ) : (
+                    <Lock className="w-3 h-3" />
+                  )}
+                  {quiz.visibility.charAt(0).toUpperCase() +
+                    quiz.visibility.slice(1)}
+                </div>
+              )}
             </div>
           )}
 
@@ -128,44 +155,61 @@ export function QuizCard({
 
           {/* Actions */}
           {showActions ? (
-            <div className="grid grid-cols-3 gap-2 pt-4 border-t border-border/30">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
-                title="Edit quiz"
-              >
-                <Link href={`/quiz/edit/${quiz.id}`}>
-                  <Edit className="w-3.5 h-3.5" />
-                  <span>Edit</span>
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
-                title="Preview quiz"
-              >
-                <Link href={`/quiz/take/${quiz.id}`}>
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>View</span>
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onDelete?.(quiz.id);
-                }}
-                className="w-full gap-1.5 text-xs h-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                title="Delete quiz"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
-              </Button>
+            <div className="space-y-2 pt-4 border-t border-border/30">
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
+                  title="Edit quiz"
+                >
+                  <Link href={`/quiz/edit/${quiz.id}`}>
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
+                  title="Preview quiz"
+                >
+                  <Link href={`/quizzes/${quiz.id}`}>
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View</span>
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDelete?.(quiz.id);
+                  }}
+                  className="w-full gap-1.5 text-xs h-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  title="Delete quiz"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </Button>
+              </div>
+              {quiz.visibility === "private" && onInvite && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onInvite(quiz.id);
+                  }}
+                  className="w-full gap-2 text-xs h-9 hover:border-primary/40"
+                  title="Invite users"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Invite Users</span>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-between pt-4 border-t border-border/30 group-hover:border-primary/40 transition-colors">

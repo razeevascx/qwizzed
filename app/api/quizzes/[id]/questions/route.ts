@@ -57,7 +57,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { question_text, question_type, options } = body;
+    const { question_text, question_type, points, options } = body;
 
     // Get current question count
     const { count } = await client
@@ -74,6 +74,7 @@ export async function POST(
           quiz_id: id,
           question_text,
           question_type,
+          points: points || 1,
           order,
         },
       ])

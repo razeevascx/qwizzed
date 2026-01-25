@@ -7,12 +7,17 @@ import { QuizCard } from "@/components/quiz-card";
 import { Button } from "@/components/ui/button";
 import { Quiz } from "@/lib/types/quiz";
 import { Plus } from "lucide-react";
+import { QuizInviteDialog } from "@/components/quiz-invite-dialog";
+import { PendingInvitations } from "@/components/pending-invitations";
 
 export default function MyQuizzesPage() {
   const router = useRouter();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedQuizForInvite, setSelectedQuizForInvite] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     loadQuizzes();
@@ -82,6 +87,11 @@ export default function MyQuizzesPage() {
           </div>
         )}
 
+        {/* Pending Invitations */}
+        <div className="mb-8">
+          <PendingInvitations />
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
             <div className="text-center space-y-3">
@@ -127,6 +137,7 @@ export default function MyQuizzesPage() {
                   key={quiz.id}
                   quiz={quiz}
                   onDelete={handleDeleteQuiz}
+                  onInvite={setSelectedQuizForInvite}
                   showActions={true}
                 />
               ))}
@@ -134,6 +145,17 @@ export default function MyQuizzesPage() {
           </div>
         )}
       </div>
+
+      {/* Invite Dialog */}
+      {selectedQuizForInvite && (
+        <QuizInviteDialog
+          quizId={selectedQuizForInvite}
+          onClose={() => setSelectedQuizForInvite(null)}
+          onInviteSent={() => {
+            // Optionally refresh invitations or show success message
+          }}
+        />
+      )}
     </div>
   );
 }

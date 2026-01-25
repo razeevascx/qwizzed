@@ -23,7 +23,7 @@ create table if not exists questions (
   id uuid primary key default uuid_generate_v4(),
   quiz_id uuid not null references quizzes(id) on delete cascade,
   question_text text not null,
-  question_type text not null check (question_type in ('multiple_choice', 'short_answer', 'true_false')),
+  question_type text not null check (question_type in ('multiple_choice', 'short_answer', 'true_false', 'fill_in_blank')),
   "order" integer not null,
   created_at timestamp with time zone default timezone('utc'::text, now()),
   updated_at timestamp with time zone default timezone('utc'::text, now())

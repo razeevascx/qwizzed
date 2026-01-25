@@ -99,7 +99,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; submissionId: string }> },
 ) {
   try {
-    const { submissionId } = await params;
+    const { submissionId, id: quizId } = await params;
     const client = await createClient();
     const {
       data: { user },
@@ -126,10 +126,10 @@ export async function PUT(
       );
     }
 
-    // Calculate score
+    // Get all answers for this submission
     const { data: answers, error: answersError } = await client
       .from("quiz_answers")
-      .select()
+      .select("*")
       .eq("submission_id", submissionId);
 
     if (answersError) {
@@ -140,17 +140,47 @@ export async function PUT(
       );
     }
 
+    // Get all questions for the quiz to calculate total points
+    const { data: allQuestions, error: questionsError } = await client
+      .from("questions")
+      .select("id, points")
+      .eq("quiz_id", quizId);
+
+    if (questionsError) {
+      console.error("Error fetching questions:", questionsError);
+      console.error("Quiz ID:", quizId);
+      console.error("User ID:", user.id);
+      return NextResponse.json(
+        { error: `Failed to fetch questions: ${questionsError.message}` },
+        { status: 500 },
+      );
+    }
+
+    // Calculate total possible points
+    const totalPoints =
+      allQuestions?.reduce((sum, q) => sum + (q.points || 1), 0) || 0;
+
+    // Calculate score from correct answers
     const score =
       answers?.reduce((sum, ans) => sum + (ans.points_earned || 0), 0) || 0;
-    const totalPoints = answers?.length || 0;
 
-    // Update submission
+    // Calculate time taken (if start time was recorded)
+    const startTime = submission.created_at
+      ? new Date(submission.created_at).getTime()
+      : null;
+    const endTime = Date.now();
+    const timeTaken = startTime
+      ? Math.round((endTime - startTime) / 1000)
+      : null;
+
+    // Update submission with final results
     const { data: updatedSubmission, error } = await client
       .from("quiz_submissions")
       .update({
-        status: "submitted",
+        status: "graded",
         score,
         total_points: totalPoints,
+        time_taken: timeTaken,
         submitted_at: new Date().toISOString(),
       })
       .eq("id", submissionId)

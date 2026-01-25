@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       difficulty_level,
       category,
       time_limit_minutes,
+      visibility = "public",
     } = body;
 
     const { data: quiz, error } = await client
@@ -66,18 +67,24 @@ export async function POST(request: NextRequest) {
           time_limit_minutes,
           is_published: false,
           total_questions: 0,
+          visibility,
         },
       ])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Database error creating quiz:", error);
+      throw error;
+    }
 
     return NextResponse.json(quiz, { status: 201 });
   } catch (error) {
+    console.error("Error creating quiz:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to create quiz",
+        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     );

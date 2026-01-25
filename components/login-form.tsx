@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { AlertCircle, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Mail,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 
 export function LoginForm({
   className,
@@ -17,28 +21,29 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const router = useRouter();
+  const [emailSent, setEmailSent] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleMagicLinkLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
+    setEmailSent(false);
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/get-started/callback?next=/quiz`,
+        },
       });
 
       if (error) throw error;
 
-      router.push("/quiz");
-      router.refresh();
+      setEmailSent(true);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -68,7 +73,22 @@ export function LoginForm({
 
   return (
     <div className={cn("w-full", className)} {...props}>
-      <form onSubmit={handleLogin} className="space-y-6">
+      <form onSubmit={handleMagicLinkLogin} className="space-y-6">
+        {/* Success Alert */}
+        {emailSent && (
+          <div className="flex items-start gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl animate-in fade-in">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold">
+                Magic link sent!
+              </p>
+              <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">
+                Check your email for a link to sign in to Qwizzed
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Error Alert */}
         {error && (
           <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl animate-in fade-in">
@@ -108,7 +128,7 @@ export function LoginForm({
           </div>
           <div className="relative flex justify-center">
             <span className="bg-background px-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-              Or continue with
+              Or continue with email
             </span>
           </div>
         </div>
@@ -126,37 +146,13 @@ export function LoginForm({
               type="email"
               placeholder="your@email.com"
               required
-              disabled={isLoading}
+              disabled={isLoading || emailSent}
               className="h-11 pl-11 pr-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all"
             />
           </div>
-        </div>
-
-        {/* Password Field */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-semibold">
-              Password
-            </Label>
-            <Link
-              href="/get-started/forgot-password"
-              className="text-xs font-medium text-primary/80 hover:text-primary transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              required
-              disabled={isLoading}
-              className="h-11 pl-11 pr-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all"
-            />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            We'll send you a magic link to sign in without a password
+          </p>
         </div>
 
         {/* Sign In Button */}
@@ -164,44 +160,25 @@ export function LoginForm({
           type="submit"
           size="lg"
           className="w-full h-11 mt-8 bg-gradient-to-br from-primary via-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 text-primary-foreground font-semibold rounded-lg transition-all duration-200 group"
-          disabled={isLoading}
+          disabled={isLoading || emailSent}
         >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              Sending magic link...
+            </>
+          ) : emailSent ? (
+            <>
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Email sent - Check your inbox
             </>
           ) : (
             <>
-              Sign in to Qwizzed
+              Send magic link
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </>
           )}
         </Button>
-
-        {/* Divider */}
-        <div className="relative py-3">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border/30" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-background px-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-              New here?
-            </span>
-          </div>
-        </div>
-
-        {/* Sign Up CTA */}
-        <Link href="/get-started/sign-up" className="block">
-          <Button
-            type="button"
-            size="lg"
-            variant="outline"
-            className="w-full h-11 border border-border/60 hover:border-border/80 hover:bg-muted/40 font-semibold rounded-lg transition-all"
-          >
-            Create a free account
-          </Button>
-        </Link>
       </form>
     </div>
   );

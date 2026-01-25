@@ -1,4 +1,6 @@
 // Quiz platform types
+export type QuizVisibility = "public" | "private";
+
 export interface Quiz {
   id: string;
   title: string;
@@ -7,6 +9,7 @@ export interface Quiz {
   created_at: string;
   updated_at: string;
   is_published: boolean;
+  visibility: QuizVisibility;
   total_questions: number;
   time_limit_minutes: number | null;
   difficulty_level: "easy" | "medium" | "hard";
@@ -17,8 +20,13 @@ export interface Question {
   id: string;
   quiz_id: string;
   question_text: string;
-  question_type: "multiple_choice" | "short_answer" | "true_false";
+  question_type:
+    | "multiple_choice"
+    | "short_answer"
+    | "true_false"
+    | "fill_in_blank";
   order: number;
+  points: number;
   created_at: string;
   updated_at: string;
 }
@@ -52,6 +60,18 @@ export interface QuizAnswer {
   created_at: string;
 }
 
+export interface QuizInvitation {
+  id: string;
+  quiz_id: string;
+  inviter_id: string;
+  invitee_email: string;
+  invitee_id: string | null;
+  status: "pending" | "accepted" | "declined";
+  invited_at: string;
+  responded_at: string | null;
+  created_at: string;
+}
+
 // Form types
 export interface CreateQuizInput {
   title: string;
@@ -59,11 +79,17 @@ export interface CreateQuizInput {
   difficulty_level: "easy" | "medium" | "hard";
   category: string;
   time_limit_minutes: number | null;
+  visibility?: QuizVisibility;
 }
 
 export interface CreateQuestionInput {
   question_text: string;
-  question_type: "multiple_choice" | "short_answer" | "true_false";
+  question_type:
+    | "multiple_choice"
+    | "short_answer"
+    | "true_false"
+    | "fill_in_blank";
+  points?: number;
   options?: {
     option_text: string;
     is_correct: boolean;
@@ -75,8 +101,14 @@ export interface SubmitAnswerInput {
   user_answer: string;
 }
 
+export interface InviteUserInput {
+  quiz_id: string;
+  invitee_email: string;
+}
+
 // Update types
 export interface UpdateQuizInput extends Partial<CreateQuizInput> {
+  visibility?: QuizVisibility;
   is_published?: boolean;
   total_questions?: number;
 }

@@ -1,0 +1,36 @@
+<svg width="960" height="640" viewBox="0 0 960 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="120" y1="60" x2="840" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED" stop-opacity="0.25" />
+      <stop offset="0.5" stop-color="#6366F1" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0.2" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="1" stop-color="#E5E7EB" stop-opacity="0.5" />
+    </linearGradient>
+    <filter id="shadow" x="-30" y="-30" width="200%" height="200%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="32" flood-color="#1F2937" flood-opacity="0.15" />
+    </filter>
+  </defs>
+  <rect x="40" y="32" width="880" height="576" rx="48" fill="url(#grad)" />
+  <rect x="92" y="96" width="776" height="448" rx="28" fill="rgba(255,255,255,0.6)" filter="url(#shadow)" />
+  <rect x="136" y="156" width="688" height="92" rx="16" fill="url(#card)" stroke="#E5E7EB" />
+  <rect x="136" y="272" width="448" height="64" rx="14" fill="#F3F4F6" stroke="#E5E7EB" />
+  <rect x="136" y="360" width="448" height="64" rx="14" fill="#EEF2FF" stroke="#E0E7FF" />
+  <rect x="136" y="448" width="448" height="64" rx="14" fill="#ECFEFF" stroke="#CFFAFE" />
+  <rect x="612" y="272" width="212" height="240" rx="18" fill="#111827" opacity="0.8" />
+  <rect x="632" y="296" width="172" height="24" rx="8" fill="#1F2937" />
+  <rect x="632" y="332" width="124" height="12" rx="6" fill="#7C3AED" />
+  <rect x="632" y="360" width="148" height="12" rx="6" fill="#6366F1" />
+  <rect x="632" y="388" width="96" height="12" rx="6" fill="#22D3EE" />
+  <circle cx="724" cy="456" r="62" fill="#111827" stroke="#1F2937" stroke-width="8" />
+  <path d="M672 456c20-12 40-18 52-18s32 6 52 18" stroke="#22D3EE" stroke-width="8" stroke-linecap="round" />
+  <circle cx="724" cy="424" r="18" fill="#7C3AED" />
+  <path d="M188 180h140" stroke="#7C3AED" stroke-width="12" stroke-linecap="round" />
+  <rect x="360" y="180" width="104" height="12" rx="6" fill="#CBD5E1" />
+  <rect x="136" y="118" width="64" height="12" rx="6" fill="#CBD5E1" />
+  <rect x="216" y="118" width="48" height="12" rx="6" fill="#CBD5E1" />
+  <rect x="136" y="512" width="148" height="12" rx="6" fill="#CBD5E1" />
+  <rect x="304" y="512" width="92" height="12" rx="6" fill="#CBD5E1" />
+</svg>

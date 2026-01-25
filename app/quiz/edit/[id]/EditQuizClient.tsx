@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { CreateQuestionForm } from "@/components/create-question-form";
 import { Button } from "@/components/ui/button";
-import { Quiz, Question, CreateQuestionInput } from "@/lib/types/quiz";
+import { Label } from "@/components/ui/label";
+import {
+  Quiz,
+  Question,
+  CreateQuestionInput,
+  QuizVisibility,
+} from "@/lib/types/quiz";
+import { QuizInviteDialog } from "@/components/quiz-invite-dialog";
+import { QuizInvitationsList } from "@/components/quiz-invitations-list";
 import {
   Trash2,
   CheckCircle,
@@ -15,6 +23,9 @@ import {
   BookOpen,
   Zap,
   AlertCircle,
+  Globe,
+  Lock,
+  Mail,
 } from "lucide-react";
 
 export default function EditQuizPage() {
@@ -26,6 +37,9 @@ export default function EditQuizPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [selectedVisibility, setSelectedVisibility] =
+    useState<QuizVisibility>("public");
 
   useEffect(() => {
     if (!quizId) return;
@@ -39,6 +53,7 @@ export default function EditQuizPage() {
       if (!response.ok) throw new Error("Failed to load quiz");
       const quizData = await response.json();
       setQuiz(quizData);
+      setSelectedVisibility(quizData.visibility || "public");
 
       const questionsResponse = await fetch(`/api/quizzes/${quizId}/questions`);
       if (!questionsResponse.ok) throw new Error("Failed to load questions");
@@ -95,6 +110,23 @@ export default function EditQuizPage() {
       if (!response.ok) throw new Error("Failed to publish quiz");
       const updatedQuiz = await response.json();
       setQuiz(updatedQuiz);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
+  const handleVisibilityChange = async (visibility: QuizVisibility) => {
+    try {
+      const response = await fetch(`/api/quizzes/${quizId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...quiz, visibility }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update visibility");
+      const updatedQuiz = await response.json();
+      setQuiz(updatedQuiz);
+      setSelectedVisibility(visibility);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }
@@ -182,6 +214,101 @@ export default function EditQuizPage() {
             </div>
           </div>
         )}
+
+        {/* Quiz Visibility & Invitations */}
+        <div className="mb-12 pb-12 border-b border-border/30">
+          {/* Visibility Selector */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Quiz Visibility</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleVisibilityChange("public")}
+                className={`flex flex-col items-start p-4 rounded-lg border-2 transition-all ${
+                  selectedVisibility === "public"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border/50 hover:border-border/80 hover:bg-accent/50"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Globe
+                    className={`w-4 h-4 ${
+                      selectedVisibility === "public"
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={`font-medium text-sm ${
+                      selectedVisibility === "public"
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    Public
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Anyone can find and take this quiz
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleVisibilityChange("private")}
+                className={`flex flex-col items-start p-4 rounded-lg border-2 transition-all ${
+                  selectedVisibility === "private"
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border/50 hover:border-border/80 hover:bg-accent/50"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Lock
+                    className={`w-4 h-4 ${
+                      selectedVisibility === "private"
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={`font-medium text-sm ${
+                      selectedVisibility === "private"
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    Private
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Only invited users can access
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Invite Users Section - Only show for private quizzes */}
+          {selectedVisibility === "private" && (
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold">Invited Users</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Manage who has access to this private quiz
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowInviteDialog(true)}
+                  className="gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  Invite User
+                </Button>
+              </div>
+              <QuizInvitationsList quizId={quizId} />
+            </div>
+          )}
+        </div>
 
         {/* Questions Section */}
         <div className="space-y-8">
@@ -309,6 +436,14 @@ export default function EditQuizPage() {
           </div>
         </div>
       </div>
+
+      {/* Invite Dialog */}
+      {showInviteDialog && (
+        <QuizInviteDialog
+          quizId={quizId}
+          onClose={() => setShowInviteDialog(false)}
+        />
+      )}
     </div>
   );
 }

@@ -9,8 +9,8 @@ export default function Page() {
         {/* Success Icon */}
         <div className="flex justify-center">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-emerald-500/30 rounded-full blur-2xl animate-pulse" />
-            <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-emerald-500/20 border border-primary/30">
+            <div className="absolute inset-0 bg-linear-to-br from-primary/30 to-emerald-500/30 rounded-full blur-2xl animate-pulse" />
+            <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-linear-to-br from-primary/20 to-emerald-500/20 border border-primary/30">
               <CheckCircle className="w-10 h-10 text-primary animate-in zoom-in duration-500" />
             </div>
           </div>

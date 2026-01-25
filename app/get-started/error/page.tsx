@@ -9,13 +9,11 @@ import Link from "next/link";
 import { BookOpen, AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default async function Page({
+export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: { error?: string };
 }) {
-  const params = await searchParams;
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Header */}
@@ -62,10 +60,10 @@ export default async function Page({
               </div>
             </div>
 
-            {params?.error && (
+            {searchParams?.error && (
               <div className="p-4 bg-card border border-border/50 rounded-lg">
                 <p className="text-xs font-mono text-muted-foreground break-all">
-                  {params.error}
+                  {searchParams.error}
                 </p>
               </div>
             )}

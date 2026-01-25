@@ -66,18 +66,26 @@ export async function PUT(
       category,
       time_limit_minutes,
       is_published,
+      visibility,
     } = body;
+
+    const updateData: any = {
+      title,
+      description,
+      difficulty_level,
+      category,
+      time_limit_minutes,
+      is_published,
+    };
+
+    // Only include visibility if it's provided
+    if (visibility !== undefined) {
+      updateData.visibility = visibility;
+    }
 
     const { data: updatedQuiz, error } = await client
       .from("quizzes")
-      .update({
-        title,
-        description,
-        difficulty_level,
-        category,
-        time_limit_minutes,
-        is_published,
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();

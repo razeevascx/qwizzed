@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreateQuizInput } from "@/lib/types/quiz";
-import { Clock, BookOpen, Zap, AlertCircle } from "lucide-react";
+import { Clock, BookOpen, Zap, AlertCircle, Globe, Lock } from "lucide-react";
 
 interface CreateQuizFormProps {
   onSubmit: (data: CreateQuizInput) => Promise<void>;
@@ -20,6 +20,7 @@ export function CreateQuizForm({
     difficulty_level: "medium",
     category: "",
     time_limit_minutes: null,
+    visibility: "public",
   });
 
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -59,6 +60,21 @@ export function CreateQuizForm({
     { value: "easy", label: "Easy", color: "emerald" },
     { value: "medium", label: "Medium", color: "amber" },
     { value: "hard", label: "Hard", color: "rose" },
+  ];
+
+  const visibilityOptions = [
+    {
+      value: "public",
+      label: "Public",
+      icon: Globe,
+      description: "Anyone can find and take this quiz",
+    },
+    {
+      value: "private",
+      label: "Private",
+      icon: Lock,
+      description: "Only invited users can access",
+    },
   ];
 
   return (
@@ -178,6 +194,59 @@ export function CreateQuizForm({
               </label>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Visibility */}
+      <div>
+        <Label className="text-base font-semibold mb-4 block">
+          Quiz Visibility <span className="text-destructive">*</span>
+        </Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {visibilityOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <label
+                key={option.value}
+                className={`flex flex-col items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  formData.visibility === option.value
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border/50 hover:border-border/80 hover:bg-accent/50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="visibility"
+                  value={option.value}
+                  checked={formData.visibility === option.value}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  className="sr-only"
+                />
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon
+                    className={`w-4 h-4 ${
+                      formData.visibility === option.value
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={`font-medium text-sm ${
+                      formData.visibility === option.value
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {option.label}
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {option.description}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
