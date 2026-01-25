@@ -33,7 +33,7 @@ export function ForgotPasswordForm({
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/get-started/update-password`,
       });
       if (error) throw error;
       setSuccess(true);
@@ -75,7 +75,7 @@ export function ForgotPasswordForm({
                 </p>
               </div>
             </div>
-            <Link href="/auth/login" className="block">
+            <Link href="/get-started/login" className="block">
               <Button className="w-full h-11" size="lg">
                 Back to login
               </Button>
@@ -142,7 +142,7 @@ export function ForgotPasswordForm({
                     </span>
                   </div>
                 </div>
-                <Link href="/auth/login" className="block">
+                <Link href="/get-started/login" className="block">
                   <Button
                     type="button"
                     variant="outline"

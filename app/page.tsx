@@ -1,18 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap } from "lucide-react";
+import Layout from "@/components/layout/Layout";
 
 export default function Home() {
   return (
     <main className="flex flex-col bg-background text-foreground">
       {/* Hero Section with Image */}
       <section className="relative w-full px-4 py-24 md:py-40 overflow-hidden">
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="mx-auto max-w-7xl">
+        <Layout>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Content */}
             <div className="space-y-10">
@@ -146,12 +142,12 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
+        </Layout>
       </section>
 
       {/* Feature Showcase with Image */}
       <section className="w-full py-20 md:py-28 px-4 border-t border-border">
-        <div className="mx-auto max-w-6xl">
+        <Layout>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Image */}
             <div className="order-2 md:order-1">
@@ -204,12 +200,12 @@ export default function Home() {
               </Link>
             </div>
           </div>
-        </div>
+        </Layout>
       </section>
 
       {/* Second Feature with Image */}
       <section className="w-full py-20 md:py-28 px-4 bg-muted/30 border-t border-border">
-        <div className="mx-auto max-w-6xl">
+        <Layout>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Content */}
             <div className="space-y-6">
@@ -259,7 +255,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </Layout>
       </section>
     </main>
   );

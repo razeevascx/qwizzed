@@ -41,7 +41,7 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
 
   // Define public paths that don't require authentication
-  const publicPaths = ["/", "/auth", "/quizzes"];
+  const publicPaths = ["/", "/get-started", "/quizzes"];
   const isPublicPath = publicPaths.some(
     (path) =>
       request.nextUrl.pathname === path ||
@@ -49,13 +49,9 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Only redirect to login if user is not authenticated and trying to access protected routes
-  if (
-    !user &&
-    !isPublicPath &&
-    request.nextUrl.pathname.startsWith("/protected")
-  ) {
+  if (!user && !isPublicPath && request.nextUrl.pathname.startsWith("/quiz")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/get-started/";
     return NextResponse.redirect(url);
   }
 

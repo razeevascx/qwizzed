@@ -4,7 +4,6 @@ import { BookOpen, ArrowRight } from "lucide-react";
 
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Button } from "@/components/ui/button";
 
 export function SiteHeader() {
   return (

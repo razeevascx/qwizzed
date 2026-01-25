@@ -111,7 +111,7 @@ export function FetchDataSteps() {
         <p>
           You can learn more about RLS in the{" "}
           <a
-            href="https://supabase.com/docs/guides/auth/row-level-security"
+            href="https://supabase.com/docs/guides/get-started/row-level-security"
             className="font-bold hover:underline text-foreground/80"
             target="_blank"
             rel="noreferrer"

@@ -52,26 +52,13 @@ export default function CreateQuizPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className=" bg-background text-foreground">
       {/* Header with gradient */}
       <div className="relative overflow-hidden border-b border-border/50">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10">
           <div className="space-y-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                <Sparkles className="w-4 h-4" />
-                Create New Quiz
-              </div>
               <div>
                 <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-3">
                   Build Your Quiz
@@ -89,7 +76,7 @@ export default function CreateQuizPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+      <div className="max-w-7xl mx-auto p-10">
         {error && (
           <div className="mb-8 p-6 bg-destructive/10 border border-destructive/30 rounded-xl text-destructive text-sm">
             <div className="font-semibold mb-2">Error creating quiz</div>
@@ -97,8 +84,8 @@ export default function CreateQuizPage() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-8 sm:p-12 lg:p-16 shadow-sm hover:shadow-md transition-shadow">
-          <div className="space-y-2 mb-8">
+        <div className=" bg-card/50 backdrop-blur-sm p-6 lg:p-16 shadow-sm hover:shadow-md transition-shadow">
+          <div className="space-y-2 mb-2">
             <h2 className="text-2xl sm:text-3xl font-bold">Quiz Details</h2>
             <p className="text-muted-foreground">
               Fill in the basic information to get started with your new quiz

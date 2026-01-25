@@ -1,59 +1,52 @@
 import { SignUpForm } from "@/components/sign-up-form";
 import Link from "next/link";
-import { BookOpen, ArrowLeft } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export default function Page() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* Header */}
-      <div className="w-full p-6 border-b border-border">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
-      </div>
+    <div className="w-full h-full flex flex-col items-center justify-center px-4 sm:px-8">
+      <div className="w-full max-w-md space-y-8">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/10 to-emerald-500/10 border border-primary/20">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span className="text-xs font-semibold text-primary">
+            Join thousands of creators
+          </span>
+        </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md space-y-8">
-          {/* Brand */}
-          <div className="text-center space-y-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 justify-center group"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <BookOpen className="w-6 h-6 text-primary" />
-              </div>
-              <span className="text-2xl font-bold text-foreground">
-                Qwizzed
-              </span>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold mb-1">Create your account</h1>
-              <p className="text-sm text-muted-foreground">
-                Start making quizzes in minutes
-              </p>
-            </div>
-          </div>
-
-          {/* Form */}
-          <SignUpForm />
-
-          {/* Login link */}
-          <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              href="/get-started/login"
-              className="font-semibold text-primary hover:underline"
-            >
-              Sign in
-            </Link>
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Get started
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-sm">
+            Create your free account and start building amazing quizzes today
           </p>
         </div>
+
+        {/* Form */}
+        <div className="pt-4">
+          <SignUpForm />
+        </div>
+
+        {/* Terms */}
+        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          By creating an account, you agree to{" "}
+          <Link
+            href="/terms"
+            className="underline hover:text-foreground transition-colors"
+          >
+            Qwizzed's Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/privacy"
+            className="underline hover:text-foreground transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

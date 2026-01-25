@@ -3,19 +3,12 @@
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AlertCircle, Loader2, Check } from "lucide-react";
+import { AlertCircle, Loader2, Check, Mail, Lock } from "lucide-react";
 
 export function SignUpForm({
   className,
@@ -54,11 +47,11 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/get-started/confirm?next=/quiz`,
         },
       });
       if (error) throw error;
-      router.push("/auth/sign-up-success");
+      router.push("/get-started/sign-up-success");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -67,143 +60,153 @@ export function SignUpForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="border-2">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">
-            Create an account
-          </CardTitle>
-          <CardDescription className="text-base">
-            Sign up to start creating and taking quizzes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp}>
-            <div className="flex flex-col gap-4">
-              {error && (
-                <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-800 dark:text-red-300">
-                    {error}
-                  </p>
-                </div>
+    <div className={cn("w-full", className)} {...props}>
+      <form onSubmit={handleSignUp} className="space-y-6">
+        {/* Error Alert */}
+        {error && (
+          <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl animate-in fade-in">
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Email Field */}
+        <div className="space-y-2.5">
+          <Label htmlFor="email" className="text-sm font-semibold">
+            Email address
+          </Label>
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="your@email.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              className="h-11 pl-11 pr-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Password Field */}
+        <div className="space-y-2.5">
+          <Label htmlFor="password" className="text-sm font-semibold">
+            Password
+          </Label>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              id="password"
+              type="password"
+              placeholder="Create a strong password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              className="h-11 pl-11 pr-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all"
+            />
+          </div>
+          {password.length > 0 && (
+            <div className="flex items-center gap-2 text-xs">
+              {passwordLongEnough ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border-2 border-border"></div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  className="h-11"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Create a password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="h-11"
-                />
-                {password.length > 0 && (
-                  <div className="flex items-center gap-2 text-xs">
-                    {passwordLongEnough ? (
-                      <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <div className="w-3 h-3 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
-                    )}
-                    <span
-                      className={
-                        passwordLongEnough
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-600 dark:text-gray-400"
-                      }
-                    >
-                      At least 8 characters
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="repeat-password">Confirm password</Label>
-                <Input
-                  id="repeat-password"
-                  type="password"
-                  placeholder="Repeat your password"
-                  required
-                  value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="h-11"
-                />
-                {repeatPassword.length > 0 && (
-                  <div className="flex items-center gap-2 text-xs">
-                    {passwordsMatch ? (
-                      <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
-                    )}
-                    <span
-                      className={
-                        passwordsMatch
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
-                      }
-                    >
-                      {passwordsMatch
-                        ? "Passwords match"
-                        : "Passwords don't match"}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <Button
-                type="submit"
-                className="w-full h-11 mt-2"
-                disabled={isLoading}
-                size="lg"
+              <span
+                className={
+                  passwordLongEnough
+                    ? "text-emerald-600 font-medium"
+                    : "text-muted-foreground"
+                }
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  "Create account"
-                )}
-              </Button>
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white dark:bg-gray-900 px-2 text-gray-500 dark:text-gray-400">
-                    Already have an account?
-                  </span>
-                </div>
-              </div>
-              <Link href="/auth/login" className="block">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-11"
-                  size="lg"
-                >
-                  Sign in instead
-                </Button>
-              </Link>
+                At least 8 characters
+              </span>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          )}
+        </div>
+
+        {/* Confirm Password Field */}
+        <div className="space-y-2.5">
+          <Label htmlFor="repeat-password" className="text-sm font-semibold">
+            Confirm password
+          </Label>
+          <div className="relative group">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              id="repeat-password"
+              type="password"
+              placeholder="Repeat your password"
+              required
+              value={repeatPassword}
+              onChange={(e) => setRepeatPassword(e.target.value)}
+              disabled={isLoading}
+              className="h-11 pl-11 pr-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all"
+            />
+          </div>
+          {repeatPassword.length > 0 && (
+            <div className="flex items-center gap-2 text-xs">
+              {passwordsMatch ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-destructive" />
+              )}
+              <span
+                className={
+                  passwordsMatch
+                    ? "text-emerald-600 font-medium"
+                    : "text-destructive font-medium"
+                }
+              >
+                {passwordsMatch ? "Passwords match" : "Passwords don't match"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Sign Up Button */}
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full h-11 mt-8 bg-gradient-to-br from-primary via-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 text-primary-foreground font-semibold rounded-lg transition-all duration-200 group"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create free account"
+          )}
+        </Button>
+
+        {/* Divider */}
+        <div className="relative py-3">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border/30" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-background px-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+              Already have an account?
+            </span>
+          </div>
+        </div>
+
+        {/* Sign In Link */}
+        <Link href="/get-started" className="block">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            className="w-full h-11 border border-border/60 hover:border-border/80 hover:bg-muted/40 font-semibold rounded-lg transition-all"
+          >
+            Sign in instead
+          </Button>
+        </Link>
+      </form>
     </div>
   );
 }

@@ -67,18 +67,17 @@ export default function QuizDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header with gradient */}
-      <div className="relative overflow-hidden border-b border-border/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
+    <div className=" bg-background text-foreground">
+      {/* Header */}
+      <div className="border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1">
-              <h1 className="text-5xl font-bold tracking-tight mb-3">
-                Welcome back, {user?.email?.split("@")[0] || "User"}!
+              <h1 className="text-4xl font-bold tracking-tight mb-2">
+                Welcome back, {user?.email?.split("@")[0] || "User"}
               </h1>
               <p className="text-xl text-muted-foreground">
-                Create, manage, and track your quiz performance
+                Manage your quizzes and track your performance
               </p>
             </div>
             <Button
@@ -87,7 +86,7 @@ export default function QuizDashboard() {
               className="gap-2 mt-2"
             >
               <Plus className="w-5 h-5" />
-              New Quiz
+              Create Quiz
             </Button>
           </div>
         </div>
@@ -95,6 +94,48 @@ export default function QuizDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {/* Create Quiz Card */}
+          <button
+            onClick={() => router.push("/quiz/create")}
+            className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden p-8"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+            <div className="relative space-y-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Plus className="w-6 h-6 text-primary" />
+              </div>
+              <div className="text-left space-y-2">
+                <h3 className="text-xl font-bold">Create New Quiz</h3>
+                <p className="text-muted-foreground">
+                  Start building a new quiz with custom questions
+                </p>
+              </div>
+            </div>
+          </button>
+
+          {/* Browse Quizzes Card */}
+          <button
+            onClick={() => router.push("/quiz/my-quizzes")}
+            className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden p-8"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+            <div className="relative space-y-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <BookOpen className="w-6 h-6 text-primary" />
+              </div>
+              <div className="text-left space-y-2">
+                <h3 className="text-xl font-bold">Manage Quizzes</h3>
+                <p className="text-muted-foreground">
+                  Edit, publish, and manage your quiz collection
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {/* Total Quizzes */}
@@ -158,64 +199,6 @@ export default function QuizDashboard() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {/* Create Quiz Card */}
-          <button
-            onClick={() => router.push("/quiz/create")}
-            className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden p-8"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-            <div className="relative space-y-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Plus className="w-6 h-6 text-primary" />
-              </div>
-              <div className="text-left space-y-2">
-                <h3 className="text-xl font-bold">Create New Quiz</h3>
-                <p className="text-muted-foreground">
-                  Start building a new quiz with custom questions
-                </p>
-              </div>
-            </div>
-          </button>
-
-          {/* Browse Quizzes Card */}
-          <button
-            onClick={() => router.push("/quiz/my-quizzes")}
-            className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden p-8"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-            <div className="relative space-y-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <BookOpen className="w-6 h-6 text-primary" />
-              </div>
-              <div className="text-left space-y-2">
-                <h3 className="text-xl font-bold">Manage Quizzes</h3>
-                <p className="text-muted-foreground">
-                  Edit, publish, and manage your quiz collection
-                </p>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Browse Public Quizzes */}
-        <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur p-8 text-center space-y-4">
-          <h2 className="text-2xl font-bold">Want to take quizzes?</h2>
-          <p className="text-muted-foreground">
-            Check out our collection of public quizzes created by the community
-          </p>
-          <Button
-            onClick={() => router.push("/quizzes")}
-            variant="outline"
-            size="lg"
-          >
-            Browse Public Quizzes
-          </Button>
         </div>
       </div>
     </div>

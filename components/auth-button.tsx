@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "./logout-button";
 import { ArrowRight } from "lucide-react";
-import { Avatar } from "./ui/avatar";
 import { CurrentUserAvatar } from "./current-user-avatar";
 
 export async function AuthButton() {
@@ -17,7 +15,6 @@ export async function AuthButton() {
   return user ? (
     <div className="flex items-center gap-4">
       <CurrentUserAvatar />
-      <LogoutButton />
     </div>
   ) : (
     <Button
