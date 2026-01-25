@@ -6,6 +6,7 @@ import type {
   QuizSubmission,
   CreateQuizInput,
   CreateQuestionInput,
+  UpdateQuizInput,
 } from "@/lib/types/quiz";
 
 export class QuizService {
@@ -77,7 +78,7 @@ export class QuizService {
 
   static async updateQuiz(
     quizId: string,
-    data: Partial<CreateQuizInput>,
+    data: UpdateQuizInput,
   ): Promise<Quiz> {
     const client = await createClient();
 

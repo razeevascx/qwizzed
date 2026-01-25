@@ -74,3 +74,9 @@ export interface SubmitAnswerInput {
   question_id: string;
   user_answer: string;
 }
+
+// Update types
+export interface UpdateQuizInput extends Partial<CreateQuizInput> {
+  is_published?: boolean;
+  total_questions?: number;
+}
