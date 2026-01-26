@@ -135,12 +135,11 @@ async function getQuizAnalytics(quizId: string, userId: string) {
   };
 }
 
-export default async function QuizAnalyticsDetailPage({
+export default function QuizAnalyticsDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
   return (
     <Suspense
       fallback={
@@ -149,12 +148,17 @@ export default async function QuizAnalyticsDetailPage({
         </div>
       }
     >
-      <QuizAnalyticsContent id={id} />
+      <QuizAnalyticsContent params={params} />
     </Suspense>
   );
 }
 
-async function QuizAnalyticsContent({ id }: { id: string }) {
+async function QuizAnalyticsContent({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const supabase = await createClient();
 
   const {
@@ -201,14 +205,12 @@ async function QuizAnalyticsContent({ id }: { id: string }) {
     uniqueUsers,
     avgScore,
     highestScore,
-    lowestScore,
     perfectScores,
     goodScores,
     fairScores,
     poorScores,
     avgTimeTaken,
     recentSubmissions,
-    submissionsByWeek,
   } = analytics;
 
   const formatDate = (date: string) => {
