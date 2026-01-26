@@ -45,7 +45,6 @@ export async function generateMetadata({
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div>
-      <h1>Blog Post</h1>
       <Suspense fallback={<div>Loading...</div>}>
         {params.then(({ id }) => (
           <TakeQuizClient quizId={id} />
