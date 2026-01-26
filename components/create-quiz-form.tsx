@@ -78,11 +78,11 @@ export function CreateQuizForm({
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Quiz Title & Description */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <Label htmlFor="title" className="text-base font-semibold mb-3 block">
+          <Label htmlFor="title" className="text-sm font-semibold mb-2 block">
             Quiz Title <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -95,11 +95,11 @@ export function CreateQuizForm({
             onBlur={handleBlur}
             required
             disabled={isLoading}
-            className="bg-background border-border/50 text-lg h-12 focus:ring-primary/50"
+            className="bg-card/50 border-border/40 h-10 focus:ring-primary/50 focus:border-primary/60"
           />
           {touched.title && !formData.title && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="w-4 h-4" />
+            <div className="mt-1.5 flex items-center gap-2 text-xs text-destructive">
+              <AlertCircle className="w-3.5 h-3.5" />
               Quiz title is required
             </div>
           )}
@@ -108,7 +108,7 @@ export function CreateQuizForm({
         <div>
           <Label
             htmlFor="description"
-            className="text-base font-semibold mb-3 block"
+            className="text-sm font-semibold mb-2 block"
           >
             Description <span className="text-destructive">*</span>
           </Label>
@@ -121,12 +121,12 @@ export function CreateQuizForm({
             onBlur={handleBlur}
             required
             disabled={isLoading}
-            rows={4}
-            className="w-full px-4 py-3 border border-border/50 rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            rows={3}
+            className="w-full px-3 py-2 border border-border/40 rounded-md bg-card/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 resize-none text-sm"
           />
           {touched.description && !formData.description && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="w-4 h-4" />
+            <div className="mt-1.5 flex items-center gap-2 text-xs text-destructive">
+              <AlertCircle className="w-3.5 h-3.5" />
               Description is required
             </div>
           )}
@@ -134,13 +134,13 @@ export function CreateQuizForm({
       </div>
 
       {/* Grid: Category & Difficulty */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Label
             htmlFor="category"
-            className="text-base font-semibold mb-3 flex items-center gap-2"
+            className="text-sm font-semibold mb-2 flex items-center gap-1.5"
           >
-            <BookOpen className="w-4 h-4 text-primary" />
+            <BookOpen className="w-3.5 h-3.5 text-primary/70" />
             Category <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -153,32 +153,32 @@ export function CreateQuizForm({
             onBlur={handleBlur}
             required
             disabled={isLoading}
-            className="bg-background border-border/50 h-11 focus:ring-primary/50"
+            className="bg-card/50 border-border/40 h-10 focus:ring-primary/50 focus:border-primary/60"
           />
           {touched.category && !formData.category && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="w-4 h-4" />
+            <div className="mt-1.5 flex items-center gap-2 text-xs text-destructive">
+              <AlertCircle className="w-3.5 h-3.5" />
               Category is required
             </div>
           )}
         </div>
 
         <div>
-          <Label className="text-base font-semibold mb-4 block">
+          <Label className="text-sm font-semibold mb-2 block">
             Difficulty Level <span className="text-destructive">*</span>
           </Label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex gap-2">
             {difficultyOptions.map((option) => (
               <label
                 key={option.value}
-                className={`flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all font-medium text-sm ${
+                className={`flex-1 flex items-center justify-center p-2.5 rounded-md border cursor-pointer transition-all font-medium text-xs ${
                   formData.difficulty_level === option.value
                     ? option.color === "emerald"
-                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 shadow-sm"
+                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                       : option.color === "amber"
-                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 shadow-sm"
-                        : "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 shadow-sm"
-                    : "border-border/50 hover:border-border/80 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        ? "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                        : "border-rose-500/50 bg-rose-500/10 text-rose-700 dark:text-rose-300"
+                    : "border-border/40 hover:border-border/60 text-muted-foreground hover:text-foreground hover:bg-card/50"
                 }`}
               >
                 <input
@@ -199,7 +199,7 @@ export function CreateQuizForm({
 
       {/* Visibility */}
       <div>
-        <Label className="text-base font-semibold mb-4 block">
+        <Label className="text-sm font-semibold mb-2 block">
           Quiz Visibility <span className="text-destructive">*</span>
         </Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -208,10 +208,10 @@ export function CreateQuizForm({
             return (
               <label
                 key={option.value}
-                className={`flex flex-col items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
                   formData.visibility === option.value
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-border/50 hover:border-border/80 hover:bg-accent/50"
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border/40 hover:border-border/60 hover:bg-card/50"
                 }`}
               >
                 <input
@@ -223,15 +223,15 @@ export function CreateQuizForm({
                   disabled={isLoading}
                   className="sr-only"
                 />
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon
-                    className={`w-4 h-4 ${
-                      formData.visibility === option.value
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                  <span
+                <Icon
+                  className={`w-4 h-4 flex-shrink-0 ${
+                    formData.visibility === option.value
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  }`}
+                />
+                <div className="flex-1 min-w-0">
+                  <div
                     className={`font-medium text-sm ${
                       formData.visibility === option.value
                         ? "text-foreground"
@@ -239,11 +239,11 @@ export function CreateQuizForm({
                     }`}
                   >
                     {option.label}
-                  </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {option.description}
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {option.description}
-                </span>
               </label>
             );
           })}
@@ -254,11 +254,13 @@ export function CreateQuizForm({
       <div>
         <Label
           htmlFor="time_limit_minutes"
-          className="text-base font-semibold mb-3 flex items-center gap-2"
+          className="text-sm font-semibold mb-2 flex items-center gap-1.5"
         >
-          <Clock className="w-4 h-4 text-primary" />
+          <Clock className="w-3.5 h-3.5 text-primary/70" />
           Time Limit{" "}
-          <span className="text-muted-foreground font-normal">(Optional)</span>
+          <span className="text-muted-foreground font-normal text-xs">
+            (Optional)
+          </span>
         </Label>
         <div className="relative">
           <Input
@@ -270,13 +272,13 @@ export function CreateQuizForm({
             onChange={handleChange}
             min="1"
             disabled={isLoading}
-            className="bg-background border-border/50 pr-16 h-11 focus:ring-primary/50"
+            className="bg-card/50 border-border/40 pr-16 h-10 focus:ring-primary/50 focus:border-primary/60"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">
             minutes
           </span>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Set a time limit for quiz takers to complete the quiz, or leave empty
           for unlimited time
         </p>
@@ -292,16 +294,16 @@ export function CreateQuizForm({
           !formData.category
         }
         size="lg"
-        className="w-full gap-2 h-12 text-base font-semibold"
+        className="w-full gap-2 h-10 text-sm font-semibold mt-8"
       >
         {isLoading ? (
           <>
-            <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
             Creating Quiz...
           </>
         ) : (
           <>
-            <Zap className="w-5 h-5" />
+            <Zap className="w-4 h-4" />
             Create Quiz
           </>
         )}

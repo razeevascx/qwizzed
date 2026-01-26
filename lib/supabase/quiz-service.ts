@@ -435,16 +435,21 @@ export class QuizService {
   }
 
   static async getUserInvitations(userId: string): Promise<QuizInvitation[]> {
+    // Use admin client to avoid RLS gaps where invitee_email is allowed but invitee_id is null
+    // (e.g., invited users without an account yet). We still filter by the authenticated user's email.
     const client = await createClient();
+    const adminClient = createAdminClient();
 
     const { data: user } = await client.auth.getUser();
     if (!user.user) throw new Error("Not authenticated");
 
-    const { data, error } = await client
+    const email = user.user.email;
+
+    const { data, error } = await adminClient
       .from("quiz_invitations")
       .select("*, quizzes(title, description, difficulty_level)")
-      .or(`invitee_email.eq.${user.user.email},invitee_id.eq.${userId}`)
       .eq("status", "pending")
+      .or(`invitee_email.eq.${email},invitee_id.eq.${userId}`)
       .order("invited_at", { ascending: false });
 
     if (error) throw error;
@@ -465,9 +470,15 @@ export class QuizService {
       })
       .eq("id", invitationId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!invitation) {
+      const notFoundError = new Error("Invitation not found");
+      // @ts-expect-error attach HTTP-friendly status for route handler
+      notFoundError.status = 404;
+      throw notFoundError;
+    }
     return invitation;
   }
 

@@ -3,13 +3,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BarChart3, Share2, Zap } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export default function Home() {
   return (
-    <main className="flex flex-col bg-background text-foreground">
-      {/* Hero Section with Image */}
-      <section className="relative w-full  md:py-40 overflow-hidden">
-        <Layout>
+    <>
+      <SiteHeader />
+      <main className="flex flex-col bg-background text-foreground">
+        {/* Hero Section with Image */}
+        <Layout className="relative w-full  md:py-40 overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-16 items-center">
             {/* Left Content */}
             <div className="">
@@ -123,11 +126,9 @@ export default function Home() {
             ))}
           </div>
         </Layout>
-      </section>
 
-      {/* Feature Showcase with Image */}
-      <section className="w-full py-20 md:py-28 px-4 border-t border-border">
-        <Layout>
+        {/* Feature Showcase with Image */}
+        <Layout className="py-20 md:py-28 px-4 border-t border-border">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Image */}
             <div className="order-2 md:order-1">
@@ -177,61 +178,62 @@ export default function Home() {
             </div>
           </div>
         </Layout>
-      </section>
 
-      {/* Second Feature with Image */}
-      <section className="w-full py-20 md:py-28 px-4 bg-muted/30 border-t border-border">
-        <Layout>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            {/* Left Content */}
-            <div className="space-y-6">
+        {/* Second Feature with Image */}
+        <section className="w-full py-20 md:py-28 px-4 bg-muted/30 border-t border-border">
+          <Layout>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+              {/* Left Content */}
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-4xl font-bold mb-4">Simple & Powerful</h2>
+                  <p className="text-lg text-muted-foreground">
+                    Create beautiful quizzes without technical knowledge. Our
+                    intuitive editor handles all question types and
+                    automatically grades responses.
+                  </p>
+                </div>
+
+                <ul className="space-y-4">
+                  {[
+                    "Drag-and-drop question builder",
+                    "Multiple choice, true/false, and short answers",
+                    "Automatic scoring and feedback",
+                    "Customize branding and colors",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-sm font-semibold">✓</span>
+                      </div>
+                      <span className="text-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href="/quiz/create">
+                  <Button className="gap-2">
+                    Start Creating <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Right Image */}
               <div>
-                <h2 className="text-4xl font-bold mb-4">Simple & Powerful</h2>
-                <p className="text-lg text-muted-foreground">
-                  Create beautiful quizzes without technical knowledge. Our
-                  intuitive editor handles all question types and automatically
-                  grades responses.
-                </p>
-              </div>
-
-              <ul className="space-y-4">
-                {[
-                  "Drag-and-drop question builder",
-                  "Multiple choice, true/false, and short answers",
-                  "Automatic scoring and feedback",
-                  "Customize branding and colors",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-sm font-semibold">✓</span>
-                    </div>
-                    <span className="text-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link href="/quiz/create">
-                <Button className="gap-2">
-                  Start Creating <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Right Image */}
-            <div>
-              <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden border border-border/40 bg-card">
-                <Image
-                  src="/quiz-editor.png"
-                  alt="Quiz editor preview"
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 768px) 45vw, 90vw"
-                />
+                <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden border border-border/40 bg-card">
+                  <Image
+                    src="/quiz-editor.png"
+                    alt="Quiz editor preview"
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 768px) 45vw, 90vw"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </Layout>
-      </section>
-    </main>
+          </Layout>
+        </section>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

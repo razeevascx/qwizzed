@@ -29,8 +29,8 @@ async function getQuizAnalytics(quizId: string, userId: string) {
     .eq("id", quizId)
     .single();
 
-  if (quizError || !quiz) return null;
-  if (quiz.creator_id !== userId) return null;
+  if (quizError || !quiz) return { kind: "not_found" as const };
+  if (quiz.creator_id !== userId) return { kind: "forbidden" as const };
 
   // Get all submissions
   const { data: submissions } = await supabase
@@ -117,6 +117,7 @@ async function getQuizAnalytics(quizId: string, userId: string) {
   );
 
   return {
+    kind: "ok" as const,
     quiz,
     questions: questions || [],
     totalAttempts,
@@ -134,11 +135,12 @@ async function getQuizAnalytics(quizId: string, userId: string) {
   };
 }
 
-export default function QuizAnalyticsDetailPage({
+export default async function QuizAnalyticsDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
+  const { id } = params;
   return (
     <Suspense
       fallback={
@@ -147,7 +149,7 @@ export default function QuizAnalyticsDetailPage({
         </div>
       }
     >
-      <QuizAnalyticsContent id={params.id} />
+      <QuizAnalyticsContent id={id} />
     </Suspense>
   );
 }
@@ -165,8 +167,31 @@ async function QuizAnalyticsContent({ id }: { id: string }) {
 
   const analytics = await getQuizAnalytics(id, user.id);
 
-  if (!analytics) {
+  if (analytics.kind === "not_found") {
     notFound();
+  }
+
+  if (analytics.kind === "forbidden") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-md space-y-4 text-center">
+          <AlertCircle className="h-10 w-10 text-amber-500 mx-auto" />
+          <h1 className="text-2xl font-semibold">
+            You dont have access to this quizs analytics.
+          </h1>
+          <p className="text-muted-foreground">
+            Analytics are only available to the quiz owner. If you believe this
+            is an error, ensure youre signed in with the correct account.
+          </p>
+          <Link
+            href="/quiz/analytics"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
+            Back to Analytics
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const {

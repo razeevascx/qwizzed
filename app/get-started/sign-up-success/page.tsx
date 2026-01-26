@@ -18,17 +18,17 @@ export default function Page() {
 
         {/* Heading */}
         <div className="text-center space-y-3">
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl font-bold bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             Account created!
           </h1>
           <p className="text-lg text-muted-foreground">
-            We've sent you a verification email
+            We&apos;ve sent you a verification email
           </p>
         </div>
 
         {/* Email Notification */}
         <div className="flex items-start gap-4 p-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 transition-colors">
-          <Mail className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+          <Mail className="w-5 h-5 text-primary mt-1 shrink-0" />
           <div className="space-y-2">
             <p className="font-semibold text-sm">Check your inbox</p>
             <p className="text-sm text-muted-foreground leading-relaxed">

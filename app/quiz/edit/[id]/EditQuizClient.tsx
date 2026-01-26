@@ -1,31 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { CreateQuestionForm } from "@/components/create-question-form";
+import { QuizInviteDialog } from "@/components/quiz-invite-dialog";
+import { QuizInvitationsList } from "@/components/quiz-invitations-list";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Quiz,
   Question,
   CreateQuestionInput,
   QuizVisibility,
 } from "@/lib/types/quiz";
-import { QuizInviteDialog } from "@/components/quiz-invite-dialog";
-import { QuizInvitationsList } from "@/components/quiz-invitations-list";
 import {
-  Trash2,
-  CheckCircle,
-  Sparkles,
-  ArrowLeft,
-  Clock,
-  BookOpen,
-  Zap,
   AlertCircle,
+  ArrowLeft,
+  CheckCircle,
   Globe,
   Lock,
-  Mail,
+  Trash2,
 } from "lucide-react";
 
 export default function EditQuizPage() {
@@ -38,6 +31,7 @@ export default function EditQuizPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showAddQuestionForm, setShowAddQuestionForm] = useState(false);
   const [selectedVisibility, setSelectedVisibility] =
     useState<QuizVisibility>("public");
 
@@ -76,6 +70,7 @@ export default function EditQuizPage() {
 
       if (!response.ok) throw new Error("Failed to add question");
       await loadQuiz();
+      setShowAddQuestionForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }
@@ -149,301 +144,224 @@ export default function EditQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header with gradient */}
-      <div className="relative overflow-hidden border-b border-border/50">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10">
-          <div className="space-y-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                <Sparkles className="w-4 h-4" />
-                Edit Quiz
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-6">
-                  <div className="flex-1">
-                    <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-3">
-                      {quiz.title}
-                    </h1>
-                    <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
-                      {quiz.description}
-                    </p>
-                  </div>
-                  {quiz.is_published ? (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-sm font-semibold whitespace-nowrap flex-shrink-0 mt-2">
-                      <CheckCircle className="w-4 h-4" />
-                      Published
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={handlePublishQuiz}
-                      size="lg"
-                      className="mt-2 gap-2"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      Publish Quiz
-                    </Button>
-                  )}
-                </div>
-              </div>
+    <div className="bg-background text-foreground">
+      <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ArrowLeft className="h-4 w-4" />
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="hover:text-foreground transition"
+              >
+                Back
+              </button>
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold leading-tight">
+                {quiz.title}
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                {quiz.description}
+              </p>
             </div>
           </div>
+          {quiz.is_published ? (
+            <div className="flex items-center gap-2 rounded-full border border-emerald-400/40 px-3 py-1.5 text-emerald-600 text-xs font-semibold">
+              <CheckCircle className="h-4 w-4" />
+              Published
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={handlePublishQuiz}>
+              Publish
+            </Button>
+          )}
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
         {error && (
-          <div className="mb-8 p-6 bg-destructive/10 border border-destructive/30 rounded-xl text-destructive text-sm">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5" />
               <div>
-                <div className="font-semibold mb-1">Error</div>
-                <div className="text-destructive/90">{error}</div>
+                <div className="font-medium">Error</div>
+                <p className="text-destructive/80">{error}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Quiz Visibility & Invitations */}
-        <div className="mb-12 pb-12 border-b border-border/30">
-          {/* Visibility Selector */}
-          <div className="space-y-4">
-            <Label className="text-base font-semibold">Quiz Visibility</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleVisibilityChange("public")}
-                className={`flex flex-col items-start p-4 rounded-lg border-2 transition-all ${
-                  selectedVisibility === "public"
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-border/50 hover:border-border/80 hover:bg-accent/50"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Globe
-                    className={`w-4 h-4 ${
-                      selectedVisibility === "public"
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                  <span
-                    className={`font-medium text-sm ${
-                      selectedVisibility === "public"
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    Public
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Anyone can find and take this quiz
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleVisibilityChange("private")}
-                className={`flex flex-col items-start p-4 rounded-lg border-2 transition-all ${
-                  selectedVisibility === "private"
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-border/50 hover:border-border/80 hover:bg-accent/50"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Lock
-                    className={`w-4 h-4 ${
-                      selectedVisibility === "private"
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                  <span
-                    className={`font-medium text-sm ${
-                      selectedVisibility === "private"
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    Private
-                  </span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Only invited users can access
-                </span>
-              </button>
-            </div>
+        {/* Visibility */}
+        <section className="space-y-4 rounded-lg border border-border/60 p-5">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Visibility</h2>
+            <p className="text-sm text-muted-foreground">
+              Choose who can access this quiz.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleVisibilityChange("public")}
+              className={`flex flex-col gap-1 rounded-md border px-3 py-3 text-left transition ${
+                selectedVisibility === "public"
+                  ? "border-primary bg-primary/5"
+                  : "border-border/60 hover:border-border"
+              }`}
+            >
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Globe className="h-4 w-4" /> Public
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Anyone with the link can view and take the quiz.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVisibilityChange("private")}
+              className={`flex flex-col gap-1 rounded-md border px-3 py-3 text-left transition ${
+                selectedVisibility === "private"
+                  ? "border-primary bg-primary/5"
+                  : "border-border/60 hover:border-border"
+              }`}
+            >
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Lock className="h-4 w-4" /> Private
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Only invited users can access this quiz.
+              </p>
+            </button>
           </div>
 
-          {/* Invite Users Section - Only show for private quizzes */}
           {selectedVisibility === "private" && (
-            <div className="mt-8 space-y-4">
+            <div className="space-y-3 border-t border-border/60 pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-lg font-semibold">Invited Users</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Manage who has access to this private quiz
+                  <p className="text-sm font-medium">Invitations</p>
+                  <p className="text-xs text-muted-foreground">
+                    Invite people to take this private quiz.
                   </p>
                 </div>
-                <Button
-                  onClick={() => setShowInviteDialog(true)}
-                  className="gap-2"
-                >
-                  <Mail className="w-4 h-4" />
-                  Invite User
+                <Button size="sm" onClick={() => setShowInviteDialog(true)}>
+                  Invite
                 </Button>
               </div>
               <QuizInvitationsList quizId={quizId} />
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Questions Section */}
-        <div className="space-y-8">
-          <div>
-            <div className="space-y-2 mb-8">
-              <h2 className="text-3xl font-bold">Questions</h2>
-              <p className="text-muted-foreground">
-                Manage your quiz questions and build engaging assessments
+        {/* Questions */}
+        <section className="space-y-4 rounded-lg border border-border/60 p-5">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Questions</h2>
+              <p className="text-sm text-muted-foreground">
+                Review and manage your questions.
               </p>
             </div>
-            <div className="space-y-3">
-              {questions.length === 0 ? (
-                <div className="text-center py-8 rounded-xl border border-border/50 bg-card/50 backdrop-blur">
-                  <Sparkles className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-muted-foreground text-sm">
-                    No questions yet. Add your first question below to get
-                    started
-                  </p>
-                </div>
-              ) : (
-                questions.map((question, index) => (
-                  <div
-                    key={question.id}
-                    className="group relative rounded-lg border border-border/50 bg-card/50 hover:bg-card hover:border-primary/40 transition-all duration-200 p-5 hover:shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                            {index + 1}
-                          </span>
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                            {question.question_type}
-                          </span>
-                        </div>
-                        <p className="text-foreground font-medium line-clamp-2 text-base">
-                          {question.question_text}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteQuestion(question.id)}
-                        className="flex-shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+            <Button
+              size="sm"
+              variant={showAddQuestionForm ? "ghost" : "outline"}
+              onClick={() => setShowAddQuestionForm(!showAddQuestionForm)}
+            >
+              {showAddQuestionForm ? "Close" : "Add question"}
+            </Button>
+          </div>
+
+          {showAddQuestionForm && (
+            <div className="rounded-md border border-border/60 p-4">
+              <div className="mb-4 space-y-1">
+                <p className="text-sm font-medium">New question</p>
+                <p className="text-xs text-muted-foreground">
+                  Provide the prompt, choices, and the correct answer.
+                </p>
+              </div>
+              <CreateQuestionForm onSubmit={handleAddQuestion} />
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {questions.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
+                No questions yet. Start by adding your first one.
+              </div>
+            ) : (
+              questions.map((question, index) => (
+                <div
+                  key={question.id}
+                  className="flex items-start justify-between gap-3 rounded-md border border-border/60 p-4"
+                >
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-medium">
+                        {index + 1}
+                      </span>
+                      <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
+                        {question.question_type}
+                      </span>
                     </div>
+                    <p className="text-sm text-foreground leading-snug">
+                      {question.question_text}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteQuestion(question.id)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))
+            )}
           </div>
+        </section>
 
-          {/* Add Question Form */}
-          <div className="space-y-4 pt-4 border-t border-border/30">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-bold">Add New Question</h3>
-              <p className="text-muted-foreground">
-                Create a new question for your quiz
-              </p>
-            </div>
-            <CreateQuestionForm onSubmit={handleAddQuestion} />
-          </div>
-        </div>
-
-        {/* Quiz Stats */}
-        <div className="mt-12 pt-12 border-t border-border/30">
-          <div className="space-y-4 mb-8">
-            <h3 className="text-2xl font-bold">Quiz Overview</h3>
-            <p className="text-muted-foreground">
-              Key metrics and information about your quiz
+        {/* Overview */}
+        <section className="space-y-4 rounded-lg border border-border/60 p-5">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Overview</h2>
+            <p className="text-sm text-muted-foreground">
+              Quick facts about this quiz.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-colors">
-              <div className="text-sm font-medium text-muted-foreground mb-2">
-                Questions
-              </div>
-              <div className="text-4xl font-bold text-primary">
-                {quiz.total_questions}
-              </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-md border border-border/60 p-4">
+              <p className="text-xs text-muted-foreground">Questions</p>
+              <p className="text-2xl font-semibold">{quiz.total_questions}</p>
             </div>
-            <div className="p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-4 h-4 text-primary" />
-                <div className="text-sm font-medium text-muted-foreground">
-                  Difficulty
-                </div>
-              </div>
-              <div
-                className={`text-2xl font-bold capitalize ${
-                  quiz.difficulty_level === "easy"
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : quiz.difficulty_level === "medium"
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-rose-600 dark:text-rose-400"
-                }`}
-              >
+            <div className="rounded-md border border-border/60 p-4">
+              <p className="text-xs text-muted-foreground">Difficulty</p>
+              <p className="text-lg font-semibold capitalize">
                 {quiz.difficulty_level}
-              </div>
+              </p>
             </div>
-            <div className="p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <div className="text-sm font-medium text-muted-foreground">
-                  Category
-                </div>
-              </div>
-              <div className="text-2xl font-bold">{quiz.category}</div>
+            <div className="rounded-md border border-border/60 p-4">
+              <p className="text-xs text-muted-foreground">Category</p>
+              <p className="text-lg font-semibold">{quiz.category}</p>
             </div>
-            <div className="p-6 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:border-border transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <div className="text-sm font-medium text-muted-foreground">
-                  Time Limit
-                </div>
-              </div>
-              <div className="text-2xl font-bold">
+            <div className="rounded-md border border-border/60 p-4">
+              <p className="text-xs text-muted-foreground">Time limit</p>
+              <p className="text-lg font-semibold">
                 {quiz.time_limit_minutes
                   ? `${quiz.time_limit_minutes}m`
-                  : "Unlimited"}
-              </div>
+                  : "None"}
+              </p>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Invite Dialog */}
-      {showInviteDialog && (
-        <QuizInviteDialog
-          quizId={quizId}
-          onClose={() => setShowInviteDialog(false)}
-        />
-      )}
+        {showInviteDialog && (
+          <QuizInviteDialog
+            quizId={quizId}
+            onClose={() => setShowInviteDialog(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

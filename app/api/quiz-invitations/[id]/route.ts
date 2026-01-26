@@ -32,9 +32,10 @@ export async function PATCH(
     return NextResponse.json(invitation);
   } catch (error: any) {
     console.error("Error responding to invitation:", error);
+    const status = error?.status === 404 ? 404 : 500;
     return NextResponse.json(
       { error: error.message || "Failed to respond to invitation" },
-      { status: 500 },
+      { status },
     );
   }
 }

@@ -7,5 +7,9 @@ export default function Layout({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn(`mx-auto max-w-7xl ${className}`)}>{children}</div>;
+  return (
+    <section className={cn("mx-auto w-full max-w-7xl ", className)}>
+      {children}
+    </section>
+  );
 }
