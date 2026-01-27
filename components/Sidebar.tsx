@@ -10,19 +10,13 @@ import {
   UserCircle,
   BarChart3,
   Menu,
-  X,
   LogOut,
   Mail,
-  BookOpen,
-  Home,
   ShieldCheck,
   ScrollText,
   ChevronLeft,
   ChevronRight,
   Code,
-  FileText,
-  User,
-  Settings,
   ChevronDown,
 } from "lucide-react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
@@ -46,37 +40,37 @@ const navItems: SidebarItem[] = [
   },
   {
     label: "Invitations",
-    href: "/invitations",
+    href: "/dashboard/invitations",
     icon: <Mail className="w-4 h-4" />,
     section: "Main",
   },
   {
     label: "Quizzes",
-    href: "/quizzes",
+    href: "/dashboard/quizzes",
     icon: <UserCircle className="w-4 h-4" />,
     section: "Workspace",
     subItems: [
       {
         label: "My Quizzes",
-        href: "/quizzes",
+        href: "/dashboard/quizzes",
         icon: <UserCircle className="w-4 h-4" />,
       },
       {
         label: "Create New",
-        href: "/create",
+        href: "/dashboard/create",
         icon: <PlusCircle className="w-4 h-4" />,
       },
     ],
   },
   {
     label: "Analytics",
-    href: "/analytics",
+    href: "/dashboard/analytics",
     icon: <BarChart3 className="w-4 h-4" />,
     section: "Insights",
   },
   {
     label: "Developer",
-    href: "/developer",
+    href: "/dashboard/developer",
     icon: <Code className="w-4 h-4" />,
     section: "Platform",
   },
@@ -238,7 +232,7 @@ export function Sidebar() {
           Menu
         </button>
         <Link
-          href="/create"
+          href="/dashboard/create"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
         >
           <PlusCircle className="h-4 w-4" />

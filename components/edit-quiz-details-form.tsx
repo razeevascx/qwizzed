@@ -24,6 +24,7 @@ export function EditQuizDetailsForm({
     difficulty_level: quiz.difficulty_level,
     category: quiz.category,
     time_limit_minutes: quiz.time_limit_minutes,
+    organizer_name: quiz.organizer_name || undefined,
   });
 
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -108,6 +109,23 @@ export function EditQuizDetailsForm({
             disabled={isLoading}
             rows={3}
             className="w-full px-3 py-2 border border-border/40 rounded-md bg-card/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 resize-none text-sm"
+          />
+        </div>
+
+        <div>
+           <Label htmlFor="organizer_name" className="text-sm font-semibold mb-2 block">
+            Organized By <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+          </Label>
+          <Input
+            id="organizer_name"
+            name="organizer_name"
+            type="text"
+            placeholder="e.g., Prof. Smith, Tech Community, etc."
+            value={formData.organizer_name || ""}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            disabled={isLoading}
+            className="bg-card/50 border-border/40 h-10"
           />
         </div>
       </div>

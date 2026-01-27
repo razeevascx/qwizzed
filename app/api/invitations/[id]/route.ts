@@ -23,7 +23,6 @@ export async function PATCH(
     const invitation = await QuizService.respondToInvitation(id, status);
     return NextResponse.json(invitation);
   } catch (error: any) {
-    console.error("Error responding to invitation:", error);
     return NextResponse.json(
       { error: error.message || "Failed to respond to invitation" },
       { status: 500 },
@@ -49,7 +48,6 @@ export async function DELETE(
     await QuizService.deleteInvitation(id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Error deleting invitation:", error);
     return NextResponse.json(
       { error: error.message || "Failed to delete invitation" },
       { status: 500 },

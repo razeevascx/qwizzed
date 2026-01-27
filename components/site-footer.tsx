@@ -37,9 +37,9 @@ export function SiteFooter() {
             </h3>
             <ul className="space-y-3">
               {[
-                { name: "Browse Quizzes", href: "/quizzes/public" },
-                { name: "Create Quiz", href: "/create" },
-                { name: "My Quizzes", href: "/quizzes" },
+                { name: "Browse Quizzes", href: "/quiz" },
+                { name: "Create Quiz", href: "/dashboard/create" },
+                { name: "My Quizzes", href: "/dashboard/quizzes" },
               ].map((link) => (
                 <li key={link.name}>
                   <Link

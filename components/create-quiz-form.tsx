@@ -21,6 +21,7 @@ export function CreateQuizForm({
     category: "",
     time_limit_minutes: null,
     visibility: "public",
+    organizer_name: "",
   });
 
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -130,6 +131,23 @@ export function CreateQuizForm({
               Description is required
             </div>
           )}
+        </div>
+
+        <div>
+          <Label htmlFor="organizer_name" className="text-sm font-semibold mb-2 block">
+            Organized By <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+          </Label>
+          <Input
+            id="organizer_name"
+            name="organizer_name"
+            type="text"
+            placeholder="e.g., Prof. Smith, Tech Community, etc."
+            value={formData.organizer_name || ""}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            disabled={isLoading}
+            className="bg-card/50 border-border/40 h-10 focus:ring-primary/50 focus:border-primary/60"
+          />
         </div>
       </div>
 

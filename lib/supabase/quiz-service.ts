@@ -31,6 +31,7 @@ export class QuizService {
           is_published: false,
           visibility: data.visibility || "private",
           total_questions: 0,
+          organizer_name: data.organizer_name,
         },
       ])
       .select()

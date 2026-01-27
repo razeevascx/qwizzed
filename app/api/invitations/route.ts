@@ -30,7 +30,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(invitation, { status: 201 });
   } catch (error: any) {
-    console.error("Error inviting user:", error);
     return NextResponse.json(
       { error: error.message || "Failed to invite user" },
       { status: 500 },
@@ -60,7 +59,6 @@ export async function GET(request: Request) {
       return NextResponse.json(invitations);
     }
   } catch (error: any) {
-    console.error("Error fetching invitations:", error);
     return NextResponse.json(
       { error: error.message || "Failed to fetch invitations" },
       { status: 500 },

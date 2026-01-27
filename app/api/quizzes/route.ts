@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
       accessType: "owner" as const,
     }));
 
-    // Combine and sort by updated time or invite time to surface newest first
     const combined = [...owned, ...invitedQuizzes].sort((a, b) => {
       const aDate = new Date(
         a.updated_at || a.invited_at || a.created_at,
@@ -56,7 +55,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(combined);
   } catch (error) {
-    console.error("Error in GET /api/quizzes:", error);
     return NextResponse.json(
       {
         error:
@@ -87,6 +85,7 @@ export async function POST(request: NextRequest) {
       category,
       time_limit_minutes,
       visibility = "public",
+      organizer_name,
     } = body;
 
     const { data: quiz, error } = await client
@@ -102,23 +101,21 @@ export async function POST(request: NextRequest) {
           is_published: false,
           total_questions: 0,
           visibility,
+          organizer_name,
         },
       ])
       .select()
       .single();
 
     if (error) {
-      console.error("Database error creating quiz:", error);
       throw error;
     }
 
     return NextResponse.json(quiz, { status: 201 });
   } catch (error) {
-    console.error("Error creating quiz:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to create quiz",
-        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     );

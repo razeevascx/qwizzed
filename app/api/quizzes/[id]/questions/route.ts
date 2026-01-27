@@ -45,7 +45,6 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify quiz ownership
     const { data: quiz } = await client
       .from("quizzes")
       .select()
@@ -59,7 +58,6 @@ export async function POST(
     const body = await request.json();
     const { question_text, question_type, points, options } = body;
 
-    // Get current question count
     const { count } = await client
       .from("questions")
       .select("*", { count: "exact" })
@@ -83,7 +81,6 @@ export async function POST(
 
     if (error) throw error;
 
-    // Add options if provided
     if (options && options.length > 0) {
       const optionsData = options.map((opt: any, index: number) => ({
         question_id: question.id,
@@ -95,7 +92,6 @@ export async function POST(
       await client.from("question_options").insert(optionsData);
     }
 
-    // Update quiz question count
     await client
       .from("quizzes")
       .update({ total_questions: order })
@@ -109,12 +105,10 @@ export async function POST(
 
     return NextResponse.json(fullQuestion, { status: 201 });
   } catch (error) {
-    console.error("Error creating question:", error);
     return NextResponse.json(
       {
         error:
           error instanceof Error ? error.message : "Failed to create question",
-        details: error,
       },
       { status: 500 },
     );
