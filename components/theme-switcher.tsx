@@ -8,7 +8,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Laptop, Moon, Sun } from "lucide-react";
+import { Laptop, Moon, Sun, Check } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -22,52 +22,85 @@ const ThemeSwitcher = () => {
   }, []);
 
   if (!mounted) {
-    return null;
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-9 w-9 animate-pulse bg-muted"
+      />
+    );
   }
 
-  const ICON_SIZE = 16;
+  const ICON_SIZE = 18;
+
+  const getCurrentIcon = () => {
+    if (theme === "light") {
+      return <Sun size={ICON_SIZE} className="text-amber-500" />;
+    }
+    if (theme === "dark") {
+      return <Moon size={ICON_SIZE} className="text-indigo-400" />;
+    }
+    return <Laptop size={ICON_SIZE} className="text-muted-foreground" />;
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
-          {theme === "light" ? (
-            <Sun
-              key="light"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : theme === "dark" ? (
-            <Moon
-              key="dark"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : (
-            <Laptop
-              key="system"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 w-9 rounded-lg hover:bg-secondary/50 hover:text-foreground transition-all duration-200 group"
+        >
+          <span className="relative">{getCurrentIcon()}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
+      <DropdownMenuContent
+        className="w-40 p-1.5 bg-background/95 backdrop-blur-xl border border-border/50 shadow-lg"
+        align="end"
+        sideOffset={8}
+      >
         <DropdownMenuRadioGroup
           value={theme}
           onValueChange={(e) => setTheme(e)}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Light</span>
+          <DropdownMenuRadioItem
+            value="light"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors duration-150 focus:bg-secondary/50"
+          >
+            <Sun
+              size={ICON_SIZE}
+              className="text-amber-500 group-hover:text-amber-400 transition-colors"
+            />
+            <span className="text-sm">Light</span>
+            {theme === "light" && (
+              <Check size={14} className="ml-auto text-primary" />
+            )}
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Dark</span>
+          <DropdownMenuRadioItem
+            value="dark"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors duration-150 focus:bg-secondary/50"
+          >
+            <Moon
+              size={ICON_SIZE}
+              className="text-indigo-400 group-hover:text-indigo-300 transition-colors"
+            />
+            <span className="text-sm">Dark</span>
+            {theme === "dark" && (
+              <Check size={14} className="ml-auto text-primary" />
+            )}
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>System</span>
+          <DropdownMenuRadioItem
+            value="system"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors duration-150 focus:bg-secondary/50"
+          >
+            <Laptop
+              size={ICON_SIZE}
+              className="text-muted-foreground group-hover:text-foreground transition-colors"
+            />
+            <span className="text-sm">System</span>
+            {theme === "system" && (
+              <Check size={14} className="ml-auto text-primary" />
+            )}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>

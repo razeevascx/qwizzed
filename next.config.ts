@@ -4,6 +4,15 @@ import createMDX from "@next/mdx";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 const withMDX = createMDX({

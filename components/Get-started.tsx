@@ -6,23 +6,23 @@ import { Button } from "./ui/button";
 export default function GetStarted() {
   return (
     <section className="relative  ">
-      <Layout>
-        <div className="relative rounded-3xl overflow-hidden">
-          {/* Background */}
-          <div className="absolute inset-0 bg-linear-to-br from-primary via-primary to-violet-600" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-size-[4rem_4rem]" />
+      {/* Background */}
+      <div className="absolute inset-0 bg-linear-to-br from-primary via-primary to-violet-600" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-size-[4rem_4rem]" />
 
+      <Layout>
+        <div className=" overflow-hidden  ">
           {/* Content */}
-          <div className="relative px-6 py-16 sm:px-12 sm:py-20 lg:px-20 lg:py-24 text-center">
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6">
+          <div className="relative  py-16  sm:py-20  lg:py-24 flex-col md:flex-row flex justify-between ">
+            <h2 className="text-xl md:text-5xl  font-bold text-primary-foreground mb-6">
               Ready to create your first quiz?
             </h2>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center px-2">
               <Link href="/dashboard/create">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto gap-2 text-base h-12 px-8 rounded-full bg-background text-foreground hover:bg-background/90 hover:scale-105 transition-all shadow-xl"
+                  className="w-full sm:w-auto gap-2 text-base h-12 px-8  bg-background text-foreground hover:bg-background/90 hover:scale-105 transition-all shadow-xl"
                 >
                   Get Started Free
                 </Button>
@@ -30,8 +30,8 @@ export default function GetStarted() {
               <Link href="/quiz">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto gap-2 text-base h-12 px-8 rounded-full border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:border-primary-foreground/50 transition-all"
+                  variant="secondary"
+                  className="w-full sm:w-auto gap-2 text-base h-12 px-8  border-primary-foreground/30 text-white hover:bg-primary-foreground/10 hover:border-primary-foreground/50 transition-all"
                 >
                   See Examples
                 </Button>
