@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
-import GetStarted from "./Get-started";
 
 export function SiteFooter() {
   return (
@@ -75,7 +74,6 @@ export function SiteFooter() {
             </ul>
           </div>
         </div>
-        <GetStarted />
       </div>
     </footer>
   );
