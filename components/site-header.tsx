@@ -7,7 +7,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export function SiteHeader() {
   return (
-    <header className="relative border-b border-border/50 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="relative border-b border-border/50 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
       {/* Gradient accent line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 

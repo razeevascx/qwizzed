@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import TakeQuizClient from "./client";
+import TakeQuizClient from "./TakeQuizClient";
 
 export async function generateMetadata({
   params,

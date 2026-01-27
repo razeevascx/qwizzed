@@ -188,7 +188,7 @@ async function QuizAnalyticsContent({
             is an error, ensure youre signed in with the correct account.
           </p>
           <Link
-            href="/quiz/analytics"
+            href="/analytics"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
           >
             Back to Analytics
@@ -234,7 +234,7 @@ async function QuizAnalyticsContent({
       {/* Header */}
       <div className="space-y-4">
         <Link
-          href="/quiz/analytics"
+          href="/analytics"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -270,7 +270,7 @@ async function QuizAnalyticsContent({
             </div>
           </div>
           <Link
-            href={`/quiz/edit/${quiz.id}`}
+            href={`/quizzes/edit/${quiz.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Edit Quiz
@@ -556,7 +556,7 @@ async function QuizAnalyticsContent({
             Share your quiz to start receiving submissions and analytics
           </p>
           <Link
-            href={`/quiz/edit/${quiz.id}`}
+            href={`/quizzes/edit/${quiz.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Manage Quiz

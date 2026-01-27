@@ -205,7 +205,7 @@ export function PendingInvitations() {
                       {invitation.quizzes?.difficulty_level || "Unrated"}
                     </span>
                     <Link
-                      href={`/quizzes/${invitation.quiz_id}`}
+                      href={`/${invitation.quiz_id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:text-primary/80"
                     >
                       View quiz

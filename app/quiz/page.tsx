@@ -1,196 +1,214 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { QuizCard } from "@/components/quiz-card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, BarChart3, TrendingUp } from "lucide-react";
 import { Quiz } from "@/lib/types/quiz";
+import { useRouter } from "next/navigation";
+import { Sparkles, BookOpen, Zap } from "lucide-react";
 
-export default function QuizDashboard() {
+export default function QuizzesPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalQuizzes: 0,
-    publishedQuizzes: 0,
-    totalQuestions: 0,
-  });
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        const client = createClient();
-        const {
-          data: { user },
-        } = await client.auth.getUser();
-        setUser(user);
-
-        // Load quizzes
-        const response = await fetch("/api/quizzes");
-        if (response.ok) {
-          const data = await response.json();
-          setQuizzes(data);
-
-          // Calculate stats
-          const totalQuestions = data.reduce(
-            (sum: number, quiz: Quiz) => sum + quiz.total_questions,
-            0,
-          );
-          const publishedCount = data.filter(
-            (q: Quiz) => q.is_published,
-          ).length;
-
-          setStats({
-            totalQuizzes: data.length,
-            publishedQuizzes: publishedCount,
-            totalQuestions,
-          });
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadDashboard();
+    loadQuizzesAndCheckAuth();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-10">
-        <div className="text-muted-foreground">Loading dashboard...</div>
-      </div>
-    );
-  }
+  const loadQuizzesAndCheckAuth = async () => {
+    try {
+      const client = createClient();
+      const {
+        data: { user },
+      } = await client.auth.getUser();
+      setUser(user);
+
+      // Load public quizzes
+      const response = await fetch("/api/quizzes/published");
+      if (!response.ok) throw new Error("Failed to load quizzes");
+      const publicQuizzes = await response.json();
+
+      // If user is authenticated, also load invited quizzes
+      let invitedQuizzes: Quiz[] = [];
+      if (user) {
+        try {
+          const invitationsResponse = await fetch("/api/quizzes/invitations");
+          if (invitationsResponse.ok) {
+            const invitations = await invitationsResponse.json();
+            // Get quiz details for each invitation
+            const quizPromises = invitations.map(async (inv: any) => {
+              const quizResponse = await fetch(`/api/quizzes/${inv.quiz_id}`);
+              if (quizResponse.ok) {
+                const quiz = await quizResponse.json();
+                return { ...quiz, isInvited: true };
+              }
+              return null;
+            });
+            invitedQuizzes = (await Promise.all(quizPromises)).filter(
+              (q) => q !== null,
+            );
+          }
+        } catch (err) {
+          console.error("Failed to load invitations:", err);
+        }
+      }
+
+      // Combine and deduplicate quizzes
+      const allQuizzes = [...publicQuizzes, ...invitedQuizzes];
+      const uniqueQuizzes = allQuizzes.filter(
+        (quiz, index, self) =>
+          index === self.findIndex((q) => q.id === quiz.id),
+      );
+
+      setQuizzes(uniqueQuizzes);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const publicQuizzes = quizzes.filter((q: any) => !q.isInvited);
+  const invitedQuizzes = quizzes.filter((q: any) => q.isInvited);
 
   return (
-    <div className="space-y-12 w-full min-w-0">
-      {/* Header (no external border/max-width; layout's card provides padding) */}
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex-1">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">
-            Welcome back, {user?.email?.split("@")[0] || "User"}
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Manage your quizzes and track your performance
-          </p>
+    <>
+      <div className="min-h-screen bg-background text-foreground">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden border-b border-border/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+
+          <div className="max-w-6xl mx-auto px-4 py-16 sm:py-20 relative z-10">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  <Zap className="w-4 h-4" />
+                  Test Your Knowledge
+                </div>
+                <h1 className="text-5xl sm:text-6xl font-bold mb-3 tracking-tight">
+                  Available Quizzes
+                </h1>
+                <p className="text-xl text-muted-foreground max-w-xl">
+                  Challenge yourself with our curated collection of quizzes.
+                  Choose from various difficulty levels and topics.
+                </p>
+              </div>
+              {user && (
+                <Button
+                  onClick={() => router.push("/quizzes")}
+                  variant="outline"
+                  className="mt-4 sm:mt-0"
+                  size="lg"
+                >
+                  My Quizzes
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-        <Button
-          onClick={() => router.push("/quiz/create")}
-          size="lg"
-          className="gap-2 mt-2"
-        >
-          <Plus className="w-5 h-5" />
-          Create Quiz
-        </Button>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Create Quiz Card */}
-        <button
-          onClick={() => router.push("/quiz/create")}
-          className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden p-8"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-          <div className="relative space-y-4">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-              <Plus className="w-6 h-6 text-primary" />
-            </div>
-            <div className="text-left space-y-2">
-              <h3 className="text-xl font-bold">Create New Quiz</h3>
-              <p className="text-muted-foreground">
-                Start building a new quiz with custom questions
-              </p>
-            </div>
-          </div>
-        </button>
-
-        {/* Browse Quizzes Card */}
-        <button
-          onClick={() => router.push("/quiz/my-quizzes")}
-          className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden p-8"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-          <div className="relative space-y-4">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-              <BookOpen className="w-6 h-6 text-primary" />
-            </div>
-            <div className="text-left space-y-2">
-              <h3 className="text-xl font-bold">Manage Quizzes</h3>
-              <p className="text-muted-foreground">
-                Edit, publish, and manage your quiz collection
-              </p>
-            </div>
-          </div>
-        </button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Total Quizzes */}
-        <div className="rounded-xl border border-border/50 bg-card p-6 hover:border-primary/30 transition-colors">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                Total Quizzes
-              </span>
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-                <BookOpen className="w-5 h-5 text-primary" />
+        {/* Content Section */}
+        <div className="max-w-6xl mx-auto px-4 py-16">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center">
+                  <div className="animate-pulse flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10">
+                    <BookOpen className="w-7 h-7 text-primary" />
+                  </div>
+                </div>
+                <p className="text-lg text-muted-foreground">
+                  Loading quizzes...
+                </p>
               </div>
             </div>
-            <div>
-              <div className="text-4xl font-bold">{stats.totalQuizzes}</div>
-              <p className="text-sm text-muted-foreground mt-1">
-                All your quizzes
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Published Quizzes */}
-        <div className="rounded-xl border border-border/50 bg-card p-6 hover:border-primary/30 transition-colors">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                Published
-              </span>
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
-                <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          ) : quizzes.length === 0 ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="text-center space-y-4 p-12 rounded-xl border border-border/50 bg-card/50 backdrop-blur">
+                <div className="flex justify-center">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold">
+                    No quizzes available yet
+                  </h2>
+                  <p className="text-muted-foreground text-lg">
+                    New quizzes coming soon. Check back later!
+                  </p>
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-4xl font-bold">{stats.publishedQuizzes}</div>
-              <p className="text-sm text-muted-foreground mt-1">Live quizzes</p>
-            </div>
-          </div>
-        </div>
+          ) : (
+            <div className="space-y-12">
+              {/* Invited Quizzes Section */}
+              {user && invitedQuizzes.length > 0 && (
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-bold mb-2">Invited Quizzes</h2>
+                    <p className="text-muted-foreground">
+                      Private quizzes you've been invited to
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
+                    {invitedQuizzes.map((quiz) => (
+                      <QuizCard key={quiz.id} quiz={quiz} showActions={false} />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Total Questions */}
-        <div className="rounded-xl border border-border/50 bg-card p-6 hover:border-primary/30 transition-colors">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                Questions
-              </span>
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/30">
-                <BarChart3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              </div>
+              {/* Public Quizzes Section */}
+              {publicQuizzes.length > 0 && (
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-bold mb-2">
+                      Public Quizzes
+                      <span className="ml-3 text-lg font-normal text-muted-foreground">
+                        {publicQuizzes.length}{" "}
+                        {publicQuizzes.length === 1 ? "quiz" : "quizzes"}
+                      </span>
+                    </h2>
+                    <p className="text-muted-foreground">
+                      Open to everyone - test your knowledge!
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
+                    {publicQuizzes.map((quiz) => (
+                      <QuizCard key={quiz.id} quiz={quiz} showActions={false} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No quizzes message */}
+              {publicQuizzes.length === 0 && invitedQuizzes.length === 0 && (
+                <div className="flex items-center justify-center py-24">
+                  <div className="text-center space-y-4 p-12 rounded-xl border border-border/50 bg-card/50 backdrop-blur">
+                    <div className="flex justify-center">
+                      <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10">
+                        <Sparkles className="w-8 h-8 text-primary" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold">
+                        No quizzes available yet
+                      </h2>
+                      <p className="text-muted-foreground text-lg">
+                        New quizzes coming soon. Check back later!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <div className="text-4xl font-bold">{stats.totalQuestions}</div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Total questions
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

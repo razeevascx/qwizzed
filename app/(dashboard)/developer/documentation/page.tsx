@@ -14,7 +14,7 @@ export default function DocumentationPage() {
           </p>
         </div>
         <Link
-          href="/quiz"
+          href="/quizzes/public"
           className="inline-flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-sm font-semibold transition hover:bg-muted/80"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -82,7 +82,7 @@ export default function DocumentationPage() {
             <p className="text-xs text-muted-foreground">
               Navigate to{" "}
               <span className="font-mono bg-muted/50 px-1 rounded">
-                /quiz/create
+                /create
               </span>{" "}
               to create your first quiz with our intuitive form builder
             </p>
@@ -104,7 +104,7 @@ export default function DocumentationPage() {
             <CodeBlock
               code={`// Public: Anyone with the link can take the quiz
 Published → Visibility: Public
-Share link: https://qwizzed.io/quiz/quiz_123
+Share link: https://qwizzed.io/quiz_123
 
 // Private: Only invited users can access
 Published → Visibility: Private
@@ -262,7 +262,7 @@ Available Parameters:
           </p>
           <CodeBlock
             code={`How to Access Your Quizzes:
-1. Go to /quiz/my-quizzes
+1. Go to /quizzes
 2. View all your quizzes in a grid layout
 3. Each card shows:
    - Quiz title and description
@@ -302,7 +302,7 @@ Manage Individual Quizzes:
           </p>
           <CodeBlock
             code={`How to Publish a Quiz:
-1. Go to /quiz/my-quizzes
+1. Go to /quizzes
 2. Find your quiz and click Edit
 3. Set status to "Published"
 4. Choose visibility:
@@ -314,7 +314,7 @@ How to Share Your Quiz:
 1. From My Quizzes, click Share button
 2. Options available:
    a) Copy Link
-      - Share direct URL: https://qwizzed.io/quiz/quiz_123
+      - Share direct URL: https://qwizzed.io/quiz_123
       - Short, memorable URLs
       - Automatic tracking enabled
 
@@ -352,7 +352,7 @@ Share Settings:
           </p>
           <CodeBlock
             code={`How to Find Public Quizzes:
-1. Navigate to /quiz/public
+1. Navigate to /quizzes/public
 2. Browse all published public quizzes
 3. Use search to filter by title or description
 4. View quiz preview with:
@@ -434,7 +434,7 @@ Features:
    - Normal for newly created quizzes
 
 How to Check Status:
-1. View /quiz/my-quizzes
+1. View /quizzes
 2. Look at status badges on each card
 3. Icons show visibility and activity
 4. Green badge = ready to share
@@ -509,7 +509,7 @@ Using These Components:
           </p>
           <CodeBlock
             code={`How to Send Quiz Invitations:
-1. Go to /quiz/my-quizzes
+1. Go to /quizzes
 2. Find your quiz and click "Invite" or "Send Invitations"
 3. Enter email addresses:
    - One per line
@@ -557,7 +557,7 @@ Best Practices:
           <li className="flex gap-3">
             <span className="text-primary font-bold">1</span>
             <span>
-              <strong>Create Your Quiz:</strong> Navigate to /quiz/create and
+              <strong>Create Your Quiz:</strong> Navigate to /create and
               use the form builder to add questions. Choose from
               multiple_choice, true_false, fill_in_blank, or multiple_select
               question types.
@@ -566,7 +566,7 @@ Best Practices:
           <li className="flex gap-3">
             <span className="text-primary font-bold">2</span>
             <span>
-              <strong>Review and Edit:</strong> Go to /quiz/my-quizzes to see
+              <strong>Review and Edit:</strong> Go to /quizzes to see
               all your quizzes. Click any quiz to view, edit, or delete it. Save
               changes before publishing.
             </span>
@@ -576,7 +576,7 @@ Best Practices:
             <span>
               <strong>Publish Your Quiz:</strong> Set quiz status to "Published"
               and choose visibility (Public or Private). Public quizzes appear
-              in /quiz/public directory.
+              in /quizzes/public directory.
             </span>
           </li>
           <li className="flex gap-3">
@@ -614,7 +614,7 @@ Best Practices:
           <li className="flex gap-3">
             <span className="text-primary font-bold">8</span>
             <span>
-              <strong>Discover Public Quizzes:</strong> Visit /quiz/public to
+              <strong>Discover Public Quizzes:</strong> Visit /quizzes/public to
               browse thousands of quizzes from other creators. Use search to
               find specific topics.
             </span>
@@ -679,7 +679,7 @@ Best Practices:
             <span className="text-primary font-bold">✓</span>
             <span>
               <strong>Track Analytics:</strong> Monitor performance via
-              /quiz/analytics to understand user engagement and scores
+              /analytics to understand user engagement and scores
             </span>
           </li>
           <li className="flex gap-3">

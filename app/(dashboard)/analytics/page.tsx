@@ -211,7 +211,7 @@ async function AnalyticsContent() {
           </p>
         </div>
         <Link
-          href="/quiz/create"
+          href="/create"
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
         >
           <BarChart3 className="h-4 w-4" />
@@ -306,7 +306,7 @@ async function AnalyticsContent() {
             {quizDetails.map((quiz) => (
               <Link
                 key={quiz.id}
-                href={`/quiz/analytics/${quiz.id}`}
+                href={`/analytics/${quiz.id}`}
                 className="group rounded-lg border border-border/40 bg-card/50 p-4 transition hover:border-border/60 hover:bg-card/70"
               >
                 <div className="space-y-3">
@@ -388,7 +388,7 @@ async function AnalyticsContent() {
               Create your first quiz to start tracking analytics
             </p>
             <Link
-              href="/quiz/create"
+              href="/create"
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               <BarChart3 className="h-4 w-4" />

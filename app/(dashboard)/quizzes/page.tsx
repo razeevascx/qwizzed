@@ -109,7 +109,7 @@ export default function MyQuizzesPage() {
               </div>
             </div>
             <Button
-              onClick={() => router.push("/quiz/create")}
+              onClick={() => router.push("/create")}
               size="lg"
               className="w-full gap-2"
             >

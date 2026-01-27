@@ -386,7 +386,7 @@ export class QuizService {
             invited_to_quiz_id: data.quiz_id,
             quiz_title: quiz.title,
           },
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quizzes/${data.quiz_id}`,
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/${data.quiz_id}`,
         });
 
       if (inviteError) {

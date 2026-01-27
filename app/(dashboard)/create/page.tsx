@@ -43,7 +43,7 @@ export default function CreateQuizPage() {
       }
 
       const quiz = await response.json();
-      router.push(`/quiz/edit/${quiz.id}`);
+      router.push(`/quizzes/edit/${quiz.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

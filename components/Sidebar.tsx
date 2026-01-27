@@ -19,7 +19,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
-  ExternalLink,
+  FileText,
+  User,
+  Settings,
+  ChevronDown,
 } from "lucide-react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { CurrentUserAvatar } from "./current-user-avatar";
@@ -30,50 +33,75 @@ interface SidebarItem {
   href: string;
   icon: React.ReactNode;
   section?: string;
+  subItems?: SidebarItem[];
 }
 
 const navItems: SidebarItem[] = [
   {
-    label: "Home",
-    href: "/",
-    icon: <Home className="w-4 h-4" />,
+    label: "Overview",
+    href: "/dashboard",
+    icon: <LayoutGrid className="w-4 h-4" />,
     section: "Main",
   },
   {
-    label: "Dashboard",
-    href: "/quiz",
-    icon: <LayoutGrid className="w-4 h-4" />,
-    section: "Workspace",
-  },
-  {
-    label: "My Quizzes",
-    href: "/quiz/my-quizzes",
+    label: "Quizzes",
+    href: "/quizzes",
     icon: <UserCircle className="w-4 h-4" />,
     section: "Workspace",
-  },
-  {
-    label: "Create Quiz",
-    href: "/quiz/create",
-    icon: <PlusCircle className="w-4 h-4" />,
-    section: "Workspace",
+    subItems: [
+      {
+        label: "My Quizzes",
+        href: "/quizzes",
+        icon: <UserCircle className="w-4 h-4" />,
+      },
+      {
+        label: "Create New",
+        href: "/create",
+        icon: <PlusCircle className="w-4 h-4" />,
+      },
+    ],
   },
   {
     label: "Analytics",
-    href: "/quiz/analytics",
+    href: "/analytics",
     icon: <BarChart3 className="w-4 h-4" />,
     section: "Insights",
   },
   {
-    label: "Privacy",
-    href: "/privacy",
-    icon: <ShieldCheck className="w-4 h-4" />,
-    section: "Legal",
+    label: "Developer",
+    href: "/developer",
+    icon: <Code className="w-4 h-4" />,
+    section: "Platform",
+    subItems: [
+      {
+        label: "Documentation",
+        href: "/developer/documentation",
+        icon: <FileText className="w-4 h-4" />,
+      },
+      {
+        label: "API Reference",
+        href: "/developer/api-reference",
+        icon: <Code className="w-4 h-4" />,
+      },
+    ],
   },
   {
-    label: "Terms",
-    href: "/terms",
-    icon: <ScrollText className="w-4 h-4" />,
-    section: "Legal",
+    label: "Legal",
+    href: "/legal",
+    icon: <ShieldCheck className="w-4 h-4" />,
+    section: "Management",
+    subItems: [
+      {
+        label: "Privacy Policy",
+        href: "/privacy",
+        icon: <ShieldCheck className="w-4 h-4" />,
+      },
+      {
+        label: "Terms of Service",
+        href: "/terms",
+        icon: <ScrollText className="w-4 h-4" />,
+      },
+    ],
   },
 ];
 
@@ -82,6 +110,12 @@ export function Sidebar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
+    Quizzes: true,
+    Developer: true,
+    Settings: true,
+    Legal: false,
+  });
   const name = useCurrentUserName();
 
   useEffect(() => {
@@ -91,6 +125,13 @@ export function Sidebar() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
+
+  const toggleSection = (label: string) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
 
   const grouped = navItems.reduce<Record<string, SidebarItem[]>>(
     (acc, item) => {
@@ -110,6 +151,70 @@ export function Sidebar() {
     router.push("/get-started");
   };
 
+  const renderNavItem = (item: SidebarItem, isSubItem = false) => {
+    const hasSubItems = item.subItems && item.subItems.length > 0;
+    const isExpanded = expandedItems[item.label];
+    const normalizedHref = item.href.split("#")[0];
+    const isActive = pathname === normalizedHref || (normalizedHref !== "/" && pathname.startsWith(`${normalizedHref}/`));
+
+    return (
+      <div key={item.href} className="space-y-1">
+        {hasSubItems ? (
+          <button
+            onClick={() => !isCollapsed && toggleSection(item.label)}
+            className={cn(
+              "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              isActive && !hasSubItems
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground/80 hover:bg-muted hover:text-foreground",
+              isCollapsed && "justify-center"
+            )}
+          >
+            <span className={cn("transition-transform", isActive ? "scale-110" : "")}>
+              {item.icon}
+            </span>
+            {!isCollapsed && <span className="flex-1 text-left">{item.label}</span>}
+            {!isCollapsed && (
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  isExpanded ? "rotate-180" : ""
+                )}
+              />
+            )}
+          </button>
+        ) : (
+          <Link
+            href={item.href}
+            onClick={close}
+            className={cn(
+              "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground/80 hover:bg-muted hover:text-foreground",
+              isCollapsed && "justify-center",
+              isSubItem && "ml-4"
+            )}
+          >
+            <span className={cn("transition-transform", isActive ? "scale-110" : "")}>
+              {item.icon}
+            </span>
+            {!isCollapsed && <span className="flex-1">{item.label}</span>}
+            {isActive && !isCollapsed && !isSubItem && (
+               <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+            )}
+          </Link>
+        )}
+
+        {!isCollapsed && hasSubItems && isExpanded && (
+          <div className="space-y-1">
+            {item.subItems!.map((sub) => renderNavItem(sub, true))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="sm:hidden mb-4 flex items-center justify-between gap-2 px-1">
@@ -124,7 +229,7 @@ export function Sidebar() {
           Menu
         </button>
         <Link
-          href="/quiz/create"
+          href="/create"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
         >
           <PlusCircle className="h-4 w-4" />
@@ -142,114 +247,29 @@ export function Sidebar() {
       <aside
         id="quiz-sidebar"
         className={cn(
-          "fixed sm:static z-50 inset-y-0 left-0 w-[78%] max-w-sm",
-          isCollapsed ? "sm:w-16 lg:w-20" : "sm:w-64 lg:w-72",
-          "transform transition-transform duration-200 ease-in-out",
+          "fixed sm:static z-50 inset-y-0 left-0 transition-all duration-300",
+          isCollapsed ? "sm:w-20" : "sm:w-64 lg:w-72",
           isOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0",
-          "shrink-0 bg-gradient-to-b from-background via-background to-primary/5 backdrop-blur-md border-r border-border/60",
-          "flex h-screen sm:h-[calc(100vh-2rem)] flex-col rounded-r-2xl sm:rounded-none shadow-xl sm:shadow-none",
-          "sm:top-4 sm:bottom-4 sm:sticky",
+          "shrink-0 bg-background border-r border-border/60",
+          "flex h-screen sm:h-screen flex-col shadow-xl sm:shadow-none",
+          "sm:sticky sm:top-0"
         )}
       >
-        <div className="space-y-6 flex-1 overflow-y-auto p-4 sm:p-5">
-          <div className="flex items-center justify-between gap-3 pb-6 border-b border-border/60">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-sm">
-                Q
-              </div>
-              {!isCollapsed && (
-                <div className="leading-tight">
-                  <p className="text-base font-bold tracking-tight">Qwizzed</p>
-                  <p className="text-xs text-muted-foreground">Quiz platform</p>
-                </div>
-              )}
+        <div className="flex items-center justify-between gap-3 p-4 border-b border-border/60">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-sm">
+              Q
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 hover:bg-muted/60"
-                onClick={toggleCollapse}
-                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4" />
-                )}
-              </button>
-              <button
-                type="button"
-                className="sm:hidden inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 hover:bg-muted/60"
-                onClick={close}
-                aria-label="Close navigation"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {Object.entries(grouped).map(([section, items]) => (
-              <div key={section || "default"} className="space-y-2">
-                {section && !isCollapsed && (
-                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    {section}
-                  </p>
-                )}
-                <div className="space-y-1">
-                  {items.map((item) => {
-                    const normalizedHref = item.href.split("#")[0];
-                    const isDashboard = normalizedHref === "/quiz";
-                    const isHome = normalizedHref === "/";
-                    const allowPrefix = !isDashboard && !isHome;
-                    const isActive =
-                      pathname === normalizedHref ||
-                      (allowPrefix &&
-                        pathname.startsWith(`${normalizedHref}/`));
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={close}
-                        className={cn(
-                          "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-foreground/80 hover:bg-muted hover:text-foreground",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "transition-transform group-hover:scale-110",
-                            isActive ? "scale-110" : "",
-                          )}
-                        >
-                          {item.icon}
-                        </span>
-                        {isCollapsed ? (
-                          <span className="sr-only">{item.label}</span>
-                        ) : (
-                          <span className="leading-none">{item.label}</span>
-                        )}
-                        {isActive && !isCollapsed && (
-                          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
+            {!isCollapsed && (
+              <div className="leading-tight truncate">
+                <p className="text-base font-bold tracking-tight">Qwizzed</p>
+                <p className="text-xs text-muted-foreground">Quiz platform</p>
               </div>
-            ))}
+            )}
           </div>
-        </div>
-
-        <div className="border-t border-border/60 p-4 sm:p-5 bg-background/70 backdrop-blur flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-            {!isCollapsed && <span>Collapse</span>}
-          </span>
           <button
             type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 hover:bg-muted/60"
+            className="hidden sm:inline-flex shrink-0 h-8 w-8 items-center justify-center rounded-lg border border-border/60 hover:bg-muted/60"
             onClick={toggleCollapse}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -261,34 +281,57 @@ export function Sidebar() {
           </button>
         </div>
 
-        <div className="mt-auto border-t border-border/60 p-4 sm:p-5 bg-background/80 backdrop-blur">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-6">
+          {Object.entries(grouped).map(([section, items]) => (
+            <div key={section || "default"} className="space-y-2">
+              {section && !isCollapsed && (
+                <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                  {section}
+                </p>
+              )}
+              <div className="space-y-1">
+                {items.map((item) => renderNavItem(item))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-border/60 p-4 bg-muted/20">
           <div
             className={cn(
-              "flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-2.5",
-              isCollapsed && "justify-center",
+              "flex items-center gap-3",
+              isCollapsed ? "justify-center" : ""
             )}
           >
             <CurrentUserAvatar size="sm" />
             {!isCollapsed && (
-              <div className="flex-1 leading-tight">
-                <p className="text-sm font-semibold text-foreground">
+              <div className="flex-1 leading-tight truncate">
+                <p className="text-sm font-semibold text-foreground truncate">
                   {name || "User"}
                 </p>
               </div>
             )}
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={cn(
-              "mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50",
-              isCollapsed && "justify-center px-2",
+            {!isCollapsed && (
+               <button
+               type="button"
+               onClick={handleLogout}
+               className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+               title="Logout"
+             >
+               <LogOut className="h-4 w-4" />
+             </button>
             )}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            {!isCollapsed && <span>Logout</span>}
-            {isCollapsed && <span className="sr-only">Logout</span>}
-          </button>
+          </div>
+          {isCollapsed && (
+             <button
+             type="button"
+             onClick={handleLogout}
+             className="mt-3 w-full h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+             title="Logout"
+           >
+             <LogOut className="h-4 w-4" />
+           </button>
+          )}
         </div>
       </aside>
     </>

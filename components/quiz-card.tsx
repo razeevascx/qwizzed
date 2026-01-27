@@ -13,12 +13,14 @@ import {
   Mail,
   Lock,
   Globe,
+  Share2,
 } from "lucide-react";
 
 interface QuizCardProps {
   quiz: Quiz;
   onDelete?: (id: string) => void;
   onInvite?: (id: string) => void;
+  onShare?: (id: string) => void;
   showActions?: boolean;
   accessType?: "owner" | "invited";
   invitationStatus?: "pending" | "accepted" | "declined";
@@ -28,6 +30,7 @@ export function QuizCard({
   quiz,
   onDelete,
   onInvite,
+  onShare,
   showActions = false,
   accessType,
   invitationStatus,
@@ -58,6 +61,7 @@ export function QuizCard({
   const isInvited = accessType === "invited";
   const canDelete = !isInvited && Boolean(onDelete);
   const canInvite = !isInvited && Boolean(onInvite);
+  const canShare = !isInvited && (Boolean(onShare) || showActions);
 
   const cardContent = (
     <div className="group relative h-full rounded-2xl border border-border/50 bg-card hover:bg-card/80 hover:border-primary/40 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer flex flex-col">
@@ -166,7 +170,7 @@ export function QuizCard({
         {/* Actions */}
         {showActions ? (
           <div className="space-y-2 pt-4 border-t border-border/30">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -174,7 +178,7 @@ export function QuizCard({
                 className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
                 title="Edit quiz"
               >
-                <Link href={`/quiz/edit/${quiz.id}`}>
+                <Link href={`/quizzes/edit/${quiz.id}`}>
                   <Edit className="w-3.5 h-3.5" />
                   <span>Edit</span>
                 </Link>
@@ -186,9 +190,21 @@ export function QuizCard({
                 className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
                 title="Preview quiz"
               >
-                <Link href={`/quizzes/${quiz.id}`}>
+                <Link href={`/quiz/${quiz.id}`}>
                   <Eye className="w-3.5 h-3.5" />
                   <span>View</span>
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
+                title="Share quiz"
+              >
+                <Link href={`/quizzes/share/${quiz.id}`}>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share</span>
                 </Link>
               </Button>
               {canDelete ? (
@@ -251,7 +267,7 @@ export function QuizCard({
   }
 
   return (
-    <Link href={`/quizzes/${quiz.id}`} className="block h-full">
+    <Link href={`/quiz/${quiz.id}`} className="block h-full">
       {cardContent}
     </Link>
   );
