@@ -72,18 +72,6 @@ const navItems: SidebarItem[] = [
     href: "/developer",
     icon: <Code className="w-4 h-4" />,
     section: "Platform",
-    subItems: [
-      {
-        label: "Documentation",
-        href: "/developer/documentation",
-        icon: <FileText className="w-4 h-4" />,
-      },
-      {
-        label: "API Reference",
-        href: "/developer/api-reference",
-        icon: <Code className="w-4 h-4" />,
-      },
-    ],
   },
   {
     label: "Legal",
@@ -155,7 +143,9 @@ export function Sidebar() {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems[item.label];
     const normalizedHref = item.href.split("#")[0];
-    const isActive = pathname === normalizedHref || (normalizedHref !== "/" && pathname.startsWith(`${normalizedHref}/`));
+    const isActive =
+      pathname === normalizedHref ||
+      (normalizedHref !== "/" && pathname.startsWith(`${normalizedHref}/`));
 
     return (
       <div key={item.href} className="space-y-1">
@@ -167,18 +157,25 @@ export function Sidebar() {
               isActive && !hasSubItems
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-foreground/80 hover:bg-muted hover:text-foreground",
-              isCollapsed && "justify-center"
+              isCollapsed && "justify-center",
             )}
           >
-            <span className={cn("transition-transform", isActive ? "scale-110" : "")}>
+            <span
+              className={cn(
+                "transition-transform",
+                isActive ? "scale-110" : "",
+              )}
+            >
               {item.icon}
             </span>
-            {!isCollapsed && <span className="flex-1 text-left">{item.label}</span>}
+            {!isCollapsed && (
+              <span className="flex-1 text-left">{item.label}</span>
+            )}
             {!isCollapsed && (
               <ChevronDown
                 className={cn(
                   "h-4 w-4 transition-transform",
-                  isExpanded ? "rotate-180" : ""
+                  isExpanded ? "rotate-180" : "",
                 )}
               />
             )}
@@ -193,15 +190,20 @@ export function Sidebar() {
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-foreground/80 hover:bg-muted hover:text-foreground",
               isCollapsed && "justify-center",
-              isSubItem && "ml-4"
+              isSubItem && "ml-4",
             )}
           >
-            <span className={cn("transition-transform", isActive ? "scale-110" : "")}>
+            <span
+              className={cn(
+                "transition-transform",
+                isActive ? "scale-110" : "",
+              )}
+            >
               {item.icon}
             </span>
             {!isCollapsed && <span className="flex-1">{item.label}</span>}
             {isActive && !isCollapsed && !isSubItem && (
-               <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground" />
             )}
           </Link>
         )}
@@ -252,7 +254,7 @@ export function Sidebar() {
           isOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0",
           "shrink-0 bg-background border-r border-border/60",
           "flex h-screen sm:h-screen flex-col shadow-xl sm:shadow-none",
-          "sm:sticky sm:top-0"
+          "sm:sticky sm:top-0",
         )}
       >
         <div className="flex items-center justify-between gap-3 p-4 border-b border-border/60">
@@ -300,7 +302,7 @@ export function Sidebar() {
           <div
             className={cn(
               "flex items-center gap-3",
-              isCollapsed ? "justify-center" : ""
+              isCollapsed ? "justify-center" : "",
             )}
           >
             <CurrentUserAvatar size="sm" />
@@ -312,25 +314,25 @@ export function Sidebar() {
               </div>
             )}
             {!isCollapsed && (
-               <button
-               type="button"
-               onClick={handleLogout}
-               className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-               title="Logout"
-             >
-               <LogOut className="h-4 w-4" />
-             </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             )}
           </div>
           {isCollapsed && (
-             <button
-             type="button"
-             onClick={handleLogout}
-             className="mt-3 w-full h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-             title="Logout"
-           >
-             <LogOut className="h-4 w-4" />
-           </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-3 w-full h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           )}
         </div>
       </aside>

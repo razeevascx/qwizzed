@@ -27,7 +27,7 @@ export default function QuizzesPage() {
       setUser(user);
 
       // Load public quizzes
-      const response = await fetch("/api/quizzes/published");
+      const response = await fetch("/api/quiz");
       if (!response.ok) throw new Error("Failed to load quizzes");
       const publicQuizzes = await response.json();
 

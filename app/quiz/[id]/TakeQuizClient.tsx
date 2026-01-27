@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import Link from "next/link";
 import Layout from "@/components/layout/Layout";
+import { toggleFullscreen } from "@/lib/fullscreen";
 
 interface QuestionWithOptions extends Question {
   question_options?: QuestionOption[];
@@ -48,6 +50,14 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
 
     return () => clearTimeout(timer);
   }, [timeLeft, submissionId]);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
 
   const loadQuiz = async () => {
     try {
@@ -374,29 +384,8 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleFullscreenToggle = async () => {
-    try {
-      const elem = document.documentElement;
-      if (!isFullscreen) {
-        if (elem.requestFullscreen) {
-          await elem.requestFullscreen();
-        } else if ((elem as any).webkitRequestFullscreen) {
-          await (elem as any).webkitRequestFullscreen();
-        } else if ((elem as any).mozRequestFullScreen) {
-          await (elem as any).mozRequestFullScreen();
-        } else if ((elem as any).msRequestFullscreen) {
-          await (elem as any).msRequestFullscreen();
-        }
-        setIsFullscreen(true);
-      } else {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        }
-        setIsFullscreen(false);
-      }
-    } catch (err) {
-      console.error("Error toggling fullscreen:", err);
-    }
+  const handleFullscreenToggle = () => {
+    toggleFullscreen(document.documentElement);
   };
 
   return (

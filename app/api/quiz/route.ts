@@ -7,8 +7,20 @@ export async function GET(request: NextRequest) {
 
     const { data: quizzes, error } = await client
       .from("quizzes")
-      .select()
+      .select(`
+        id,
+        title,
+        description,
+        is_published,
+        visibility,
+        total_questions,
+        difficulty_level,
+        category,
+        created_at,
+        creator_id
+      `)
       .eq("is_published", true)
+      .eq("visibility", "public")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -18,7 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Failed to fetch quizzes",
+          error instanceof Error ? error.message : "Failed to fetch public quizzes",
       },
       { status: 500 },
     );
