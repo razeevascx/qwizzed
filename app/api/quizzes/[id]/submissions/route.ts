@@ -47,10 +47,9 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if quiz exists and is published
     const { data: quiz } = await client
       .from("quizzes")
-      .select()
+      .select("id, visibility, creator_id")
       .eq("id", id)
       .single();
 
@@ -58,8 +57,21 @@ export async function POST(
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    // Create submission
-    const { data: submission, error } = await client
+    const email = user.email;
+    if (email) {
+      await client
+        .from("quiz_invitations")
+        .update({
+          status: "accepted",
+          invitee_id: user.id,
+          responded_at: new Date().toISOString(),
+        })
+        .eq("quiz_id", id)
+        .eq("invitee_email", email)
+        .eq("status", "pending");
+    }
+
+    const { data: submission, error: submissionError } = await client
       .from("quiz_submissions")
       .insert([
         {
@@ -73,7 +85,15 @@ export async function POST(
       .select()
       .single();
 
-    if (error) throw error;
+    if (submissionError) {
+      return NextResponse.json(
+        {
+          error: "You don't have permission to take this quiz.",
+          details: submissionError.message,
+        },
+        { status: 403 },
+      );
+    }
 
     return NextResponse.json(submission, { status: 201 });
   } catch (error) {
@@ -82,7 +102,7 @@ export async function POST(
         error:
           error instanceof Error
             ? error.message
-            : "Failed to create submission",
+            : "Failed to initialize quiz session",
       },
       { status: 500 },
     );

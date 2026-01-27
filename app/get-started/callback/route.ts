@@ -13,16 +13,13 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Successfully exchanged code for session
       return NextResponse.redirect(`${origin}${next}`);
     } else {
-      // Failed to exchange code
       return NextResponse.redirect(
         `${origin}/get-started/error?error=${encodeURIComponent(error.message)}`,
       );
     }
   }
 
-  // No code provided, redirect to login page
   return NextResponse.redirect(`${origin}/get-started`);
 }

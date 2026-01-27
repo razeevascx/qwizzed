@@ -14,6 +14,7 @@ export interface Quiz {
   time_limit_minutes: number | null;
   difficulty_level: "easy" | "medium" | "hard";
   category: string;
+  organizer_name: string | null;
 }
 
 export interface Question {
@@ -47,6 +48,7 @@ export interface QuizSubmission {
   submitted_at: string;
   score: number;
   total_points: number;
+  time_taken?: number;
   status: "in_progress" | "submitted" | "graded";
 }
 
@@ -80,6 +82,7 @@ export interface CreateQuizInput {
   category: string;
   time_limit_minutes: number | null;
   visibility?: QuizVisibility;
+  organizer_name?: string;
 }
 
 export interface CreateQuestionInput {

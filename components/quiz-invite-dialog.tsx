@@ -29,7 +29,7 @@ export function QuizInviteDialog({
     setSuccess(false);
 
     try {
-      const response = await fetch("/api/quiz-invitations", {
+      const response = await fetch("/api/invitations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

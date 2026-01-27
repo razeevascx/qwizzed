@@ -51,7 +51,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify quiz ownership
     const { data: quiz } = await client
       .from("quizzes")
       .select()
@@ -63,18 +62,58 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { question_text, question_type } = body;
+    const { question_text, question_type, points, options } = body;
 
     const { data: question, error } = await client
       .from("questions")
-      .update({ question_text, question_type })
+      .update({
+        question_text,
+        question_type,
+        points: points || 1,
+      })
       .eq("id", questionId)
       .select("*, question_options(*)")
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json(question);
+    if (options && options.length > 0) {
+      const { data: existingOptions } = await client
+        .from("question_options")
+        .select("id")
+        .eq("question_id", questionId);
+
+      const existingIds = existingOptions?.map((o) => o.id) || [];
+      const updatedIds = options.filter((o: any) => o.id).map((o: any) => o.id);
+
+      const idsToDelete = existingIds.filter((id) => !updatedIds.includes(id));
+
+      if (idsToDelete.length > 0) {
+        await client.from("question_options").delete().in("id", idsToDelete);
+      }
+
+      const optionsToUpsert = options.map((opt: any, index: number) => ({
+        id: opt.id || undefined,
+        question_id: questionId,
+        option_text: opt.option_text,
+        is_correct: opt.is_correct,
+        order: index + 1,
+      }));
+
+      const { error: optionsError } = await client
+        .from("question_options")
+        .upsert(optionsToUpsert);
+
+      if (optionsError) throw optionsError;
+    }
+
+    const { data: fullQuestion } = await client
+      .from("questions")
+      .select("*, question_options(*)")
+      .eq("id", questionId)
+      .single();
+
+    return NextResponse.json(fullQuestion);
   } catch (error) {
     return NextResponse.json(
       {
@@ -102,7 +141,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify quiz ownership
     const { data: quiz } = await client
       .from("quizzes")
       .select()
@@ -120,7 +158,6 @@ export async function DELETE(
 
     if (error) throw error;
 
-    // Update question count
     const { count } = await client
       .from("questions")
       .select("*", { count: "exact" })

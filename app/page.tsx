@@ -42,7 +42,7 @@ export default function Home() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Link href="/quiz/create" className="flex-1 sm:flex-none">
+                <Link href="/dashboard/create" className="flex-1 sm:flex-none">
                   <Button
                     size="lg"
                     className="w-full sm:w-auto gap-2 text-base"
@@ -50,7 +50,7 @@ export default function Home() {
                     Create Quiz Free <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Link href="/quizzes" className="flex-1 sm:flex-none">
+                <Link href="/quiz" className="flex-1 sm:flex-none">
                   <Button
                     size="lg"
                     variant="outline"
@@ -170,7 +170,7 @@ export default function Home() {
                 ))}
               </ul>
 
-              <Link href="/quizzes">
+              <Link href="/dashboard/quizzes">
                 <Button variant="outline" className="gap-2">
                   Explore Quizzes <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -210,7 +210,7 @@ export default function Home() {
                   ))}
                 </ul>
 
-                <Link href="/quiz/create">
+                <Link href="/dashboard/create">
                   <Button className="gap-2">
                     Start Creating <ArrowRight className="w-4 h-4" />
                   </Button>

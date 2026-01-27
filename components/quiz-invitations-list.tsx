@@ -26,7 +26,7 @@ export function QuizInvitationsList({ quizId }: QuizInvitationsListProps) {
 
   const fetchInvitations = async () => {
     try {
-      const response = await fetch(`/api/quiz-invitations?quiz_id=${quizId}`);
+      const response = await fetch(`/api/invitations?quiz_id=${quizId}`);
       if (response.ok) {
         const data = await response.json();
         setInvitations(data);
@@ -42,7 +42,7 @@ export function QuizInvitationsList({ quizId }: QuizInvitationsListProps) {
     if (!confirm("Are you sure you want to delete this invitation?")) return;
 
     try {
-      const response = await fetch(`/api/quiz-invitations/${invitationId}`, {
+      const response = await fetch(`/api/invitations/${invitationId}`, {
         method: "DELETE",
       });
 

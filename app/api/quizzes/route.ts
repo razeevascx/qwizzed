@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
     const client = await createClient();
-    const adminClient = createAdminClient();
     const {
       data: { user },
       error: userError,
@@ -22,12 +21,9 @@ export async function GET(request: NextRequest) {
 
     if (ownedError) throw ownedError;
 
-    const email = user.email;
-
-    const { data: invitedRows, error: invitedError } = await adminClient
+    const { data: invitedRows, error: invitedError } = await client
       .from("quiz_invitations")
       .select("status, invited_at, quiz_id, quizzes(*)")
-      .or(`invitee_email.eq.${email},invitee_id.eq.${user.id}`)
       .in("status", ["pending", "accepted"])
       .order("invited_at", { ascending: false });
 
@@ -47,7 +43,6 @@ export async function GET(request: NextRequest) {
       accessType: "owner" as const,
     }));
 
-    // Combine and sort by updated time or invite time to surface newest first
     const combined = [...owned, ...invitedQuizzes].sort((a, b) => {
       const aDate = new Date(
         a.updated_at || a.invited_at || a.created_at,
@@ -90,6 +85,7 @@ export async function POST(request: NextRequest) {
       category,
       time_limit_minutes,
       visibility = "public",
+      organizer_name,
     } = body;
 
     const { data: quiz, error } = await client
@@ -105,23 +101,21 @@ export async function POST(request: NextRequest) {
           is_published: false,
           total_questions: 0,
           visibility,
+          organizer_name,
         },
       ])
       .select()
       .single();
 
     if (error) {
-      console.error("Database error creating quiz:", error);
       throw error;
     }
 
     return NextResponse.json(quiz, { status: 201 });
   } catch (error) {
-    console.error("Error creating quiz:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to create quiz",
-        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     );

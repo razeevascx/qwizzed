@@ -47,7 +47,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify ownership
     const { data: quiz } = await client
       .from("quizzes")
       .select()
@@ -78,7 +77,6 @@ export async function PUT(
       is_published,
     };
 
-    // Only include visibility if it's provided
     if (visibility !== undefined) {
       updateData.visibility = visibility;
     }
@@ -119,7 +117,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify ownership
     const { data: quiz } = await client
       .from("quizzes")
       .select()

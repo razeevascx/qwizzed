@@ -31,6 +31,7 @@ export class QuizService {
           is_published: false,
           visibility: data.visibility || "private",
           total_questions: 0,
+          organizer_name: data.organizer_name,
         },
       ])
       .select()
@@ -386,7 +387,7 @@ export class QuizService {
             invited_to_quiz_id: data.quiz_id,
             quiz_title: quiz.title,
           },
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quizzes/${data.quiz_id}`,
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/quiz/${data.quiz_id}`,
         });
 
       if (inviteError) {
