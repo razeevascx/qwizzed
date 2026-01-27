@@ -12,7 +12,7 @@ export default function Landing() {
           variant="square"
           pixelSize={10}
           color="#B19EEF"
-          patternScale={4}
+          patternScale={6}
           patternDensity={1}
           pixelSizeJitter={0}
           enableRipples
@@ -24,12 +24,13 @@ export default function Landing() {
           liquidRadius={1.2}
           liquidWobbleSpeed={5}
           speed={0.5}
-          edgeFade={0.25}
+          edgeFade={0}
           transparent
         />
       </div>
       {/* Linear Gradient Overlay: From Top to Bottom */}
-      <div className="absolute inset-0 bg-linear-to-b from-background via-background/20 to-background pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-t from-background via-background/20 to-background " />
+
       <section className="h-dvh relative">
         <Layout className="relative w-full z-10 py-16 md:py-32 overflow-hidden h-full flex flex-col justify-end ">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-10 items-center ">
@@ -47,7 +48,7 @@ export default function Landing() {
               <div className="space-y-6">
                 <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1]">
                   Create{" "}
-                  <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
+                  <span className="bg-linear-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
                     Quizzes
                   </span>
                   <br />
@@ -72,12 +73,12 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm font-medium">
                   Join engaging quizzes today.
                 </div>
               </div>
               <div className="space-y-6">
-                <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
+                <p className="text-lg text font-medium max-w-xl leading-relaxed">
                   Build interactive quizzes in minutes. Share with a link. Track
                   results instantly. Perfect for teachers, trainers, and teams.
                 </p>
