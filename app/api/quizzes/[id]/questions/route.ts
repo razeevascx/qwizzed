@@ -109,10 +109,12 @@ export async function POST(
 
     return NextResponse.json(fullQuestion, { status: 201 });
   } catch (error) {
+    console.error("Error creating question:", error);
     return NextResponse.json(
       {
         error:
           error instanceof Error ? error.message : "Failed to create question",
+        details: error,
       },
       { status: 500 },
     );

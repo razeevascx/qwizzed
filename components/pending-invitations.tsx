@@ -40,7 +40,7 @@ export function PendingInvitations() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch("/api/quiz-invitations");
+      const response = await fetch("/api/invitations");
       if (response.ok) {
         const data = await response.json();
         setInvitations(data);
@@ -67,7 +67,7 @@ export function PendingInvitations() {
   ) => {
     try {
       setRespondingId(invitationId);
-      const response = await fetch(`/api/quiz-invitations/${invitationId}`, {
+      const response = await fetch(`/api/invitations/${invitationId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -100,145 +100,95 @@ export function PendingInvitations() {
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-5 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.35)]">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/30">
-            <Mail className="h-5 w-5 text-primary" />
-          </div>
-          <div className="space-y-2">
-            <div className="h-3 w-40 rounded-full bg-muted" />
-            <div className="h-3 w-56 rounded-full bg-muted/70" />
-          </div>
-        </div>
-        <div className="mt-5 space-y-3">
-          {[0, 1].map((key) => (
-            <div
-              key={key}
-              className="rounded-xl border border-border/60 bg-card/70 p-4"
-            >
-              <div className="h-4 w-48 rounded-full bg-muted" />
-              <div className="mt-2 h-3 w-full rounded-full bg-muted/70" />
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <div className="h-9 rounded-lg bg-muted" />
-                <div className="h-9 rounded-lg bg-muted/70" />
-              </div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="animate-pulse rounded-2xl border border-border/40 bg-card/60 p-6 flex flex-col md:flex-row gap-6 items-center">
+            <div className="w-16 h-16 rounded-2xl bg-muted shrink-0" />
+            <div className="flex-1 space-y-3 w-full">
+               <div className="h-4 w-1/3 bg-muted rounded-full" />
+               <div className="h-3 w-2/3 bg-muted/60 rounded-full" />
             </div>
-          ))}
-        </div>
+            <div className="w-full md:w-48 h-10 bg-muted rounded-xl" />
+          </div>
+        ))}
       </div>
     );
   }
 
-  const showPanel = invitations.length > 0 || error;
-  if (!showPanel) {
-    return null;
+  if (invitations.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 rounded-3xl border-2 border-dashed border-border/60 bg-muted/5">
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+          <Mail className="w-10 h-10 text-primary/40" />
+        </div>
+        <h3 className="text-xl font-bold text-foreground mb-2">No pending invitations</h3>
+        <p className="text-muted-foreground text-center max-w-sm">
+          You're all caught up! When someone invites you to a private quiz, it will appear here.
+        </p>
+        <Button
+          variant="outline"
+          onClick={fetchInvitations}
+          className="mt-8 rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Check for new invites
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-background p-5 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.35)]">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/30">
-            <Mail className="h-5 w-5 text-primary" />
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-foreground">
-                Quiz invitations
-              </h3>
-              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/30">
-                {invitations.length} pending
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Each invite is personal to you—join before it expires.
-            </p>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Pending Invitations</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {invitations.length} {invitations.length === 1 ? "invitation" : "invitations"} waiting for your response
+          </p>
         </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={fetchInvitations}
-          className="inline-flex items-center gap-2 text-primary hover:bg-primary/10"
-        >
-          <RotateCcw className="h-4 w-4" />
-          Reload
+        <Button variant="ghost" size="sm" onClick={fetchInvitations}>
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Refresh
         </Button>
       </div>
 
-      <div className="mt-5 space-y-3">
-        {invitations.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border/60 bg-card/70 p-4 text-sm text-muted-foreground">
-            No pending invitations.{" "}
-            {error ? "Tap reload if you expected one." : ""}
-          </div>
-        ) : (
-          invitations.map((invitation) => (
-            <div
-              key={invitation.id}
-              className="relative overflow-hidden rounded-xl border border-border/70 bg-card/70 p-4 transition hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg hover:shadow-primary/10"
-            >
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-primary/15 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-                      Pending
-                    </span>
-                    <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-                      Invited {formatDate(invitation.invited_at)}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-base font-semibold text-foreground">
-                      {invitation.quizzes?.title || "Quiz"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {invitation.quizzes?.description ||
-                        "No description provided."}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-foreground">
-                    <span className="inline-flex items-center rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-primary/30">
-                      {invitation.quizzes?.difficulty_level || "Unrated"}
-                    </span>
-                    <Link
-                      href={`/${invitation.quiz_id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:text-primary/80"
-                    >
-                      View quiz
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Link>
-                  </div>
+      <div className="grid grid-cols-1 gap-4">
+        {invitations.map((invitation) => (
+          <div
+            key={invitation.id}
+            className="rounded-xl border border-border/60 bg-card p-6 shadow-sm transition-all hover:border-primary/40"
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary">
+                  <Mail className="w-3 h-3" />
+                  Invitation Received • {formatDate(invitation.invited_at)}
                 </div>
+                <h3 className="text-xl font-bold">{invitation.quizzes?.title || "Quiz"}</h3>
+                <p className="text-muted-foreground line-clamp-2">
+                  {invitation.quizzes?.description || "No description provided."}
+                </p>
+              </div>
 
-                <div className="grid w-full grid-cols-1 gap-2 md:w-64">
-                  <Button
-                    size="sm"
-                    onClick={() => handleRespond(invitation.id, "accepted")}
-                    className="w-full justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                    disabled={respondingId === invitation.id}
-                  >
-                    <Check className="h-4 w-4" />
-                    {respondingId === invitation.id ? "Working..." : "Accept"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleRespond(invitation.id, "declined")}
-                    className="w-full justify-center gap-2 border-border bg-transparent text-foreground hover:border-destructive/60 hover:text-destructive disabled:opacity-60"
-                    disabled={respondingId === invitation.id}
-                  >
-                    <X className="h-4 w-4" />
-                    {respondingId === invitation.id ? "Working..." : "Decline"}
-                  </Button>
-                </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => handleRespond(invitation.id, "accepted")}
+                  disabled={respondingId === invitation.id}
+                  className="px-6"
+                >
+                  {respondingId === invitation.id ? "Joining..." : "Accept"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleRespond(invitation.id, "declined")}
+                  disabled={respondingId === invitation.id}
+                >
+                  Decline
+                </Button>
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CreateQuestionForm } from "@/components/create-question-form";
+import { UpdateQuestionForm } from "@/components/update-question-form";
+import { EditQuizDetailsForm } from "@/components/edit-quiz-details-form";
 import { QuizInviteDialog } from "@/components/quiz-invite-dialog";
 import { QuizInvitationsList } from "@/components/quiz-invitations-list";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import {
   Globe,
   Lock,
   Trash2,
+  Edit2,
+  Save,
 } from "lucide-react";
 
 export default function EditQuizPage() {
@@ -27,11 +31,14 @@ export default function EditQuizPage() {
   const quizId = params?.id as string;
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showAddQuestionForm, setShowAddQuestionForm] = useState(false);
+  const [showEditDetails, setShowEditDetails] = useState(false);
   const [selectedVisibility, setSelectedVisibility] =
     useState<QuizVisibility>("public");
 
@@ -57,6 +64,47 @@ export default function EditQuizPage() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUpdateQuizDetails = async (data: any) => {
+    try {
+      setIsUpdating(true);
+      setError(null);
+      const response = await fetch(`/api/quizzes/${quizId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error("Failed to update quiz details");
+      const updatedQuiz = await response.json();
+      setQuiz(updatedQuiz);
+      setShowEditDetails(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update details");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdateQuestion = async (data: any) => {
+    if (!editingQuestionId) return;
+    try {
+      setIsUpdating(true);
+      const response = await fetch(`/api/quizzes/${quizId}/questions/${editingQuestionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error("Failed to update question");
+      await loadQuiz();
+      setEditingQuestionId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -290,69 +338,115 @@ export default function EditQuizPage() {
               </div>
             ) : (
               questions.map((question, index) => (
-                <div
-                  key={question.id}
-                  className="flex items-start justify-between gap-3 rounded-md border border-border/60 p-4"
-                >
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-medium">
-                        {index + 1}
-                      </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
-                        {question.question_type}
-                      </span>
+                <div key={question.id}>
+                  {editingQuestionId === question.id ? (
+                    <UpdateQuestionForm
+                      question={question}
+                      onSubmit={handleUpdateQuestion}
+                      onCancel={() => setEditingQuestionId(null)}
+                      isLoading={isUpdating}
+                    />
+                  ) : (
+                    <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 p-4 transition-all hover:bg-muted/5 group">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="rounded-full border border-border/60 px-2 py-0.5 text-[11px] font-medium">
+                            {index + 1}
+                          </span>
+                          <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
+                            {question.question_type.replace("_", " ")}
+                          </span>
+                          <span className="text-primary font-bold ml-1">• {question.points || 1} pts</span>
+                        </div>
+                        <p className="text-sm text-foreground leading-snug">
+                          {question.question_text}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingQuestionId(question.id)}
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteQuestion(question.id)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-foreground leading-snug">
-                      {question.question_text}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteQuestion(question.id)}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  )}
                 </div>
               ))
             )}
           </div>
         </section>
 
-        {/* Overview */}
+        {/* Quiz Details */}
         <section className="space-y-4 rounded-lg border border-border/60 p-5">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold">Overview</h2>
-            <p className="text-sm text-muted-foreground">
-              Quick facts about this quiz.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-md border border-border/60 p-4">
-              <p className="text-xs text-muted-foreground">Questions</p>
-              <p className="text-2xl font-semibold">{quiz.total_questions}</p>
-            </div>
-            <div className="rounded-md border border-border/60 p-4">
-              <p className="text-xs text-muted-foreground">Difficulty</p>
-              <p className="text-lg font-semibold capitalize">
-                {quiz.difficulty_level}
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">Quiz Details</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage the basic information of your quiz.
               </p>
             </div>
-            <div className="rounded-md border border-border/60 p-4">
-              <p className="text-xs text-muted-foreground">Category</p>
-              <p className="text-lg font-semibold">{quiz.category}</p>
-            </div>
-            <div className="rounded-md border border-border/60 p-4">
-              <p className="text-xs text-muted-foreground">Time limit</p>
-              <p className="text-lg font-semibold">
-                {quiz.time_limit_minutes
-                  ? `${quiz.time_limit_minutes}m`
-                  : "None"}
-              </p>
-            </div>
+            <Button
+              size="sm"
+              variant={showEditDetails ? "ghost" : "outline"}
+              onClick={() => setShowEditDetails(!showEditDetails)}
+              className="gap-2"
+            >
+              {showEditDetails ? (
+                "Close"
+              ) : (
+                <>
+                  <Edit2 className="w-4 h-4" /> Edit Details
+                </>
+              )}
+            </Button>
           </div>
+
+          {showEditDetails ? (
+            <div className="rounded-md border border-border/60 p-4 bg-muted/5">
+              <EditQuizDetailsForm
+                quiz={quiz}
+                onSubmit={handleUpdateQuizDetails}
+                isLoading={isUpdating}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-md border border-border/60 p-4">
+                <p className="text-xs text-muted-foreground transition-colors group-hover:text-primary">Questions</p>
+                <p className="text-2xl font-semibold">{quiz.total_questions}</p>
+              </div>
+              <div className="rounded-md border border-border/60 p-4">
+                <p className="text-xs text-muted-foreground">Difficulty</p>
+                <p className="text-lg font-semibold capitalize">
+                  {quiz.difficulty_level}
+                </p>
+              </div>
+              <div className="rounded-md border border-border/60 p-4">
+                <p className="text-xs text-muted-foreground">Category</p>
+                <p className="text-lg font-semibold">{quiz.category}</p>
+              </div>
+              <div className="rounded-md border border-border/60 p-4">
+                <p className="text-xs text-muted-foreground">Time limit</p>
+                <p className="text-lg font-semibold">
+                  {quiz.time_limit_minutes
+                    ? `${quiz.time_limit_minutes}m`
+                    : "None"}
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         {showInviteDialog && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,13 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
 
     return () => clearTimeout(timer);
   }, [timeLeft, submissionId]);
+
+  // Handle time out
+  useEffect(() => {
+    if (timeLeft === 0 && !showResults && !isSubmitting) {
+      handleSubmitQuiz();
+    }
+  }, [timeLeft, showResults, isSubmitting]);
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -109,55 +117,37 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
     }));
   };
 
-  const handleNextQuestion = async () => {
-    const currentQuestion = questions[currentQuestionIndex];
-    const userAnswer = answers[currentQuestion.id];
-
-    if (!userAnswer) {
-      alert("Please select an answer");
-      return;
-    }
-
-    if (!submissionId) {
-      alert("Submission not created. Please reload and try again.");
-      return;
-    }
-
-    try {
-      // Save answer
-      await fetch(`/api/quizzes/${quizId}/submissions/${submissionId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question_id: currentQuestion.id,
-          user_answer: userAnswer,
-        }),
-      });
-
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      } else {
-        handleSubmitQuiz();
-      }
-    } catch (err) {
-      console.error("Failed to save answer:", err);
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      handleSubmitQuiz();
     }
   };
 
+
+
   const handleSubmitQuiz = async () => {
     if (!submissionId) {
-      alert("Submission not created. Please reload and try again.");
+      toast.error("Submission session lost. Please reload the quiz.", "Error");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      console.log("Submitting quiz:", { quizId, submissionId });
+      // Format answers for batch submission
+      const batchAnswers = Object.entries(answers).map(([qId, val]) => ({
+        question_id: qId,
+        user_answer: val,
+      }));
+
+      console.log("Submitting quiz:", { quizId, submissionId, answerCount: batchAnswers.length });
       const response = await fetch(
         `/api/quizzes/${quizId}/submissions/${submissionId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers: batchAnswers }),
         },
       );
 
@@ -181,12 +171,14 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
       const result = await response.json();
       setSubmissionResult(result);
       setShowResults(true);
+      toast.success("Quiz submitted successfully! Great work.", "Success");
     } catch (err) {
       console.error("Failed to submit quiz:", err);
-      alert(
+      toast.error(
         err instanceof Error
           ? err.message
           : "Failed to submit quiz. Please try again.",
+        "Submission Failed"
       );
     } finally {
       setIsSubmitting(false);

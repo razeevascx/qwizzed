@@ -27,7 +27,7 @@ export default function QuizzesPage() {
       setUser(user);
 
       // Load public quizzes
-      const response = await fetch("/api/quiz");
+      const response = await fetch("/api/quizzes/public");
       if (!response.ok) throw new Error("Failed to load quizzes");
       const publicQuizzes = await response.json();
 
@@ -35,7 +35,7 @@ export default function QuizzesPage() {
       let invitedQuizzes: Quiz[] = [];
       if (user) {
         try {
-          const invitationsResponse = await fetch("/api/quizzes/invitations");
+          const invitationsResponse = await fetch("/api/invitations");
           if (invitationsResponse.ok) {
             const invitations = await invitationsResponse.json();
             // Get quiz details for each invitation

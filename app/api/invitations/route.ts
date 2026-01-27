@@ -23,15 +23,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(invitee_email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 },
-      );
-    }
-
     const invitation = await QuizService.inviteUserToQuiz(user.id, {
       quiz_id,
       invitee_email,
@@ -62,11 +53,9 @@ export async function GET(request: Request) {
     const quizId = searchParams.get("quiz_id");
 
     if (quizId) {
-      // Get invitations for a specific quiz
       const invitations = await QuizService.getQuizInvitations(quizId);
       return NextResponse.json(invitations);
     } else {
-      // Get all invitations for the user
       const invitations = await QuizService.getUserInvitations(user.id);
       return NextResponse.json(invitations);
     }

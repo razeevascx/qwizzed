@@ -47,10 +47,10 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if quiz exists and is published
+    // Check if quiz exists
     const { data: quiz } = await client
       .from("quizzes")
-      .select()
+      .select("id, visibility, creator_id")
       .eq("id", id)
       .single();
 
@@ -58,8 +58,24 @@ export async function POST(
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    // Create submission
-    const { data: submission, error } = await client
+    // Auto-accept invitation if user was invited by email or has a pending invite
+    const email = user.email;
+    if (email) {
+      // Try to accept any pending invitation for this user/email
+      await client
+        .from("quiz_invitations")
+        .update({
+          status: "accepted",
+          invitee_id: user.id,
+          responded_at: new Date().toISOString(),
+        })
+        .eq("quiz_id", id)
+        .eq("invitee_email", email)
+        .eq("status", "pending");
+    }
+
+    // Create the submission
+    const { data: submission, error: submissionError } = await client
       .from("quiz_submissions")
       .insert([
         {
@@ -73,16 +89,26 @@ export async function POST(
       .select()
       .single();
 
-    if (error) throw error;
+    if (submissionError) {
+      console.error("Critical: Error creating submission:", submissionError);
+      return NextResponse.json(
+        {
+          error: "You don't have permission to take this quiz.",
+          details: submissionError.message
+        },
+        { status: 403 }
+      );
+    }
 
     return NextResponse.json(submission, { status: 201 });
   } catch (error) {
+    console.error("Submission POST handler crashed:", error);
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to create submission",
+            : "Failed to initialize quiz session",
       },
       { status: 500 },
     );

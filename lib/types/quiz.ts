@@ -47,6 +47,7 @@ export interface QuizSubmission {
   submitted_at: string;
   score: number;
   total_points: number;
+  time_taken?: number;
   status: "in_progress" | "submitted" | "graded";
 }
 

@@ -63,19 +63,68 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { question_text, question_type } = body;
+    const { question_text, question_type, points, options } = body;
 
+    // Update question details
     const { data: question, error } = await client
       .from("questions")
-      .update({ question_text, question_type })
+      .update({
+        question_text,
+        question_type,
+        points: points || 1,
+      })
       .eq("id", questionId)
       .select("*, question_options(*)")
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json(question);
+    // Handle options update if provided
+    if (options && options.length > 0) {
+      // 1. Get existing options to identify which ones to delete
+      const { data: existingOptions } = await client
+        .from("question_options")
+        .select("id")
+        .eq("question_id", questionId);
+
+      const existingIds = existingOptions?.map((o) => o.id) || [];
+      const updatedIds = options
+        .filter((o: any) => o.id)
+        .map((o: any) => o.id);
+
+      const idsToDelete = existingIds.filter((id) => !updatedIds.includes(id));
+
+      // 2. Delete removed options
+      if (idsToDelete.length > 0) {
+        await client.from("question_options").delete().in("id", idsToDelete);
+      }
+
+      // 3. Upsert current options
+      const optionsToUpsert = options.map((opt: any, index: number) => ({
+        id: opt.id || undefined, // Supabase will insert if id is undefined
+        question_id: questionId,
+        option_text: opt.option_text,
+        is_correct: opt.is_correct,
+        order: index + 1,
+      }));
+
+      const { error: optionsError } = await client
+        .from("question_options")
+        .upsert(optionsToUpsert);
+
+      if (optionsError) throw optionsError;
+    }
+
+    // Fetch the final state
+    const { data: fullQuestion } = await client
+      .from("questions")
+      .select("*, question_options(*)")
+      .eq("id", questionId)
+      .single();
+
+    return NextResponse.json(fullQuestion);
   } catch (error) {
+    console.error("Error updating question:", error);
     return NextResponse.json(
       {
         error:

@@ -24,11 +24,19 @@ DROP POLICY IF EXISTS "Users can update their own quizzes" ON quizzes;
 DROP POLICY IF EXISTS "Users can delete their own quizzes" ON quizzes;
 
 -- Recreate simplified policies (without quiz_invitations dependency for now)
-CREATE POLICY "Anyone can view public quizzes"
+CREATE POLICY "Anyone can view accessible quizzes"
   ON quizzes FOR SELECT
   USING (
     (visibility = 'public' AND is_published = true)
     OR creator_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM quiz_invitations
+      WHERE quiz_invitations.quiz_id = quizzes.id
+      AND (
+        quiz_invitations.invitee_id = auth.uid()
+        OR quiz_invitations.invitee_email = auth.jwt() ->> 'email'
+      )
+    )
   );
 
 CREATE POLICY "Users can create quizzes"
@@ -55,6 +63,15 @@ CREATE POLICY "Users can view questions from accessible quizzes"
       AND (
         (quizzes.visibility = 'public' AND quizzes.is_published = true)
         OR quizzes.creator_id = auth.uid()
+        OR EXISTS (
+          SELECT 1 FROM quiz_invitations
+          WHERE quiz_invitations.quiz_id = quizzes.id
+          AND quiz_invitations.status = 'accepted'
+          AND (
+            quiz_invitations.invitee_id = auth.uid()
+            OR quiz_invitations.invitee_email = auth.jwt() ->> 'email'
+          )
+        )
       )
     )
   );
@@ -72,6 +89,15 @@ CREATE POLICY "Users can view options from accessible questions"
       AND (
         (quizzes.visibility = 'public' AND quizzes.is_published = true)
         OR quizzes.creator_id = auth.uid()
+        OR EXISTS (
+          SELECT 1 FROM quiz_invitations
+          WHERE quiz_invitations.quiz_id = quizzes.id
+          AND quiz_invitations.status = 'accepted'
+          AND (
+            quiz_invitations.invitee_id = auth.uid()
+            OR quiz_invitations.invitee_email = auth.jwt() ->> 'email'
+          )
+        )
       )
     )
   );
@@ -87,7 +113,63 @@ CREATE POLICY "Users can create submissions for accessible quizzes"
     AND EXISTS (
       SELECT 1 FROM quizzes
       WHERE quizzes.id = quiz_submissions.quiz_id
-      AND quizzes.visibility = 'public'
-      AND quizzes.is_published = true
+      AND (
+        (quizzes.visibility = 'public' AND quizzes.is_published = true)
+        OR quizzes.creator_id = auth.uid()
+        OR EXISTS (
+          SELECT 1 FROM quiz_invitations
+          WHERE quiz_invitations.quiz_id = quizzes.id
+          AND quiz_invitations.status = 'accepted'
+          AND (
+            quiz_invitations.invitee_id = auth.uid()
+            OR quiz_invitations.invitee_email = auth.jwt() ->> 'email'
+          )
+        )
+      )
+    )
+  );
+
+CREATE POLICY "Users can view their own submissions"
+  ON quiz_submissions FOR SELECT
+  USING (
+    user_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM quizzes
+      WHERE quizzes.id = quiz_submissions.quiz_id
+      AND quizzes.creator_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update their own submissions"
+  ON quiz_submissions FOR UPDATE
+  USING (user_id = auth.uid());
+
+-- Update quiz_answers policies
+DROP POLICY IF EXISTS "Users can view their own answers" ON quiz_answers;
+DROP POLICY IF EXISTS "Users can save answers for their submissions" ON quiz_answers;
+
+CREATE POLICY "Users can view answers"
+  ON quiz_answers FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM quiz_submissions
+      WHERE quiz_submissions.id = quiz_answers.submission_id
+      AND quiz_submissions.user_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM quiz_submissions
+      JOIN quizzes ON quizzes.id = quiz_submissions.quiz_id
+      WHERE quiz_submissions.id = quiz_answers.submission_id
+      AND quizzes.creator_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can save answers"
+  ON quiz_answers FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM quiz_submissions
+      WHERE quiz_submissions.id = quiz_answers.submission_id
+      AND quiz_submissions.user_id = auth.uid()
     )
   );

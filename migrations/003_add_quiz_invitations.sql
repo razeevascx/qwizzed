@@ -36,12 +36,14 @@ CREATE POLICY "Users can view their invitations"
   USING (
     invitee_id = auth.uid()
     OR inviter_id = auth.uid()
+    OR invitee_email = auth.jwt() ->> 'email'
   );
 
 CREATE POLICY "Invitees can update their invitation status"
   ON quiz_invitations FOR UPDATE
   USING (
     invitee_id = auth.uid()
+    OR invitee_email = auth.jwt() ->> 'email'
   );
 
 CREATE POLICY "Quiz owners can delete invitations"
@@ -90,7 +92,10 @@ CREATE POLICY "Users can view questions from accessible quizzes"
           AND (
             quiz_invitations.invitee_id = auth.uid()
             OR quiz_invitations.invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid())
-          )quiz_invitations.invitee_id = auth.uid(
+          )
+        )
+      )
+    )
   );
 
 -- Update submissions RLS policy to include invited users
@@ -112,5 +117,8 @@ CREATE POLICY "Users can create submissions for accessible quizzes"
           AND (
             quiz_invitations.invitee_id = auth.uid()
             OR quiz_invitations.invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid())
-          )quiz_invitations.invitee_id = auth.uid(
+          )
+        )
+      )
+    )
   );

@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   LogOut,
+  Mail,
   BookOpen,
   Home,
   ShieldCheck,
@@ -41,6 +42,12 @@ const navItems: SidebarItem[] = [
     label: "Overview",
     href: "/dashboard",
     icon: <LayoutGrid className="w-4 h-4" />,
+    section: "Main",
+  },
+  {
+    label: "Invitations",
+    href: "/invitations",
+    icon: <Mail className="w-4 h-4" />,
     section: "Main",
   },
   {

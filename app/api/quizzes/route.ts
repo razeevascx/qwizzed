@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
     const client = await createClient();
-    const adminClient = createAdminClient();
     const {
       data: { user },
       error: userError,
@@ -22,12 +21,9 @@ export async function GET(request: NextRequest) {
 
     if (ownedError) throw ownedError;
 
-    const email = user.email;
-
-    const { data: invitedRows, error: invitedError } = await adminClient
+    const { data: invitedRows, error: invitedError } = await client
       .from("quiz_invitations")
       .select("status, invited_at, quiz_id, quizzes(*)")
-      .or(`invitee_email.eq.${email},invitee_id.eq.${user.id}`)
       .in("status", ["pending", "accepted"])
       .order("invited_at", { ascending: false });
 
@@ -60,6 +56,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(combined);
   } catch (error) {
+    console.error("Error in GET /api/quizzes:", error);
     return NextResponse.json(
       {
         error:

@@ -60,7 +60,7 @@ export async function POST(
         (opt: any) => opt.is_correct,
       );
       isCorrect = correctOption && correctOption.id === user_answer;
-      pointsEarned = isCorrect ? 1 : 0;
+      pointsEarned = isCorrect ? (question.points || 1) : 0;
     } else {
       // For short answer, mark as submitted (manual grading)
       pointsEarned = 0;
@@ -126,7 +126,57 @@ export async function PUT(
       );
     }
 
-    // Get all answers for this submission
+    const body = await request.json();
+    const { answers: batchAnswers } = body;
+
+    // Use admin client if we need to bypass any potential RLS delays but prefer standard for safety
+    // For now, standard is fine because user owns the submission.
+
+    // 2. Batch save answers if provided
+    if (batchAnswers && Array.isArray(batchAnswers)) {
+      const answersToInsert = batchAnswers.map((ans: any) => ({
+        submission_id: submissionId,
+        question_id: ans.question_id,
+        user_answer: ans.user_answer,
+        // We'll calculate correctness during fetch to maintain consistency
+      }));
+
+      // For multiple choice, we need to determine points_earned before inserting
+      // Fetch all questions for this quiz
+      const { data: questions } = await client
+        .from("questions")
+        .select("*, question_options(*)")
+        .eq("quiz_id", quizId);
+
+      const inserts = answersToInsert.map((ans: any) => {
+        const q = questions?.find(q => q.id === ans.question_id);
+        let isCorrect = false;
+        let pointsEarned = 0;
+
+        if (q && (q.question_type === "multiple_choice" || q.question_type === "true_false")) {
+          const correctOption = q.question_options.find((opt: any) => opt.is_correct);
+          isCorrect = correctOption && correctOption.id === ans.user_answer;
+          pointsEarned = isCorrect ? (q.points || 1) : 0;
+        }
+
+        return {
+          ...ans,
+          is_correct: isCorrect,
+          points_earned: pointsEarned
+        };
+      });
+
+      const { error: batchError } = await client
+        .from("quiz_answers")
+        .insert(inserts);
+
+      if (batchError) {
+        console.error("Batch save error:", batchError);
+        throw new Error("Failed to save quiz results");
+      }
+    }
+
+    // 3. Get all answers (refetch to ensure we have batch + any previous)
     const { data: answers, error: answersError } = await client
       .from("quiz_answers")
       .select("*")
@@ -135,7 +185,7 @@ export async function PUT(
     if (answersError) {
       console.error("Error fetching answers:", answersError);
       return NextResponse.json(
-        { error: "Failed to fetch answers" },
+        { error: "Failed to fetch final results" },
         { status: 500 },
       );
     }

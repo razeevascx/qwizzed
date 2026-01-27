@@ -80,11 +80,6 @@ export default function MyQuizzesPage() {
         </div>
       )}
 
-      {/* Pending Invitations */}
-      <div className="mb-6">
-        <PendingInvitations />
-      </div>
-
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
