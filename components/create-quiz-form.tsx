@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreateQuizInput } from "@/lib/types/quiz";
 import { Clock, BookOpen, Zap, AlertCircle, Globe, Lock } from "lucide-react";
+import { ReleaseDateTimePicker } from "@/components/release-datetime-picker";
 
 interface CreateQuizFormProps {
   onSubmit: (data: CreateQuizInput) => Promise<void>;
@@ -20,6 +21,7 @@ export function CreateQuizForm({
     difficulty_level: "medium",
     category: "",
     time_limit_minutes: null,
+    release_at: null,
     visibility: "public",
     organizer_name: "",
   });
@@ -54,7 +56,11 @@ export function CreateQuizForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    const payload: CreateQuizInput = {
+      ...formData,
+      release_at: formData.release_at || null,
+    };
+    await onSubmit(payload);
   };
 
   const difficultyOptions = [
@@ -134,8 +140,14 @@ export function CreateQuizForm({
         </div>
 
         <div>
-          <Label htmlFor="organizer_name" className="text-sm font-semibold mb-2 block">
-            Organized By <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+          <Label
+            htmlFor="organizer_name"
+            className="text-sm font-semibold mb-2 block"
+          >
+            Organized By{" "}
+            <span className="text-muted-foreground font-normal text-xs">
+              (Optional)
+            </span>
           </Label>
           <Input
             id="organizer_name"
@@ -268,38 +280,48 @@ export function CreateQuizForm({
         </div>
       </div>
 
-      {/* Time Limit */}
-      <div>
-        <Label
-          htmlFor="time_limit_minutes"
-          className="text-sm font-semibold mb-2 flex items-center gap-1.5"
-        >
-          <Clock className="w-3.5 h-3.5 text-primary/70" />
-          Time Limit{" "}
-          <span className="text-muted-foreground font-normal text-xs">
-            (Optional)
-          </span>
-        </Label>
-        <div className="relative">
-          <Input
-            id="time_limit_minutes"
-            name="time_limit_minutes"
-            type="number"
-            placeholder="Leave empty for unlimited time"
-            value={formData.time_limit_minutes ?? ""}
-            onChange={handleChange}
-            min="1"
-            disabled={isLoading}
-            className="bg-card/50 border-border/40 pr-16 h-10 focus:ring-primary/50 focus:border-primary/60"
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">
-            minutes
-          </span>
+      {/* Time & Release */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label
+            htmlFor="time_limit_minutes"
+            className="text-sm font-semibold mb-2 flex items-center gap-1.5"
+          >
+            <Clock className="w-3.5 h-3.5 text-primary/70" />
+            Time Limit{" "}
+            <span className="text-muted-foreground font-normal text-xs">
+              (Optional)
+            </span>
+          </Label>
+          <div className="relative">
+            <Input
+              id="time_limit_minutes"
+              name="time_limit_minutes"
+              type="number"
+              placeholder="Leave empty for unlimited time"
+              value={formData.time_limit_minutes ?? ""}
+              onChange={handleChange}
+              min="1"
+              disabled={isLoading}
+              className="bg-card/50 border-border/40 pr-16 h-10 focus:ring-primary/50 focus:border-primary/60"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">
+              minutes
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Set a time limit for quiz takers to complete the quiz, or leave
+            empty for unlimited time
+          </p>
         </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Set a time limit for quiz takers to complete the quiz, or leave empty
-          for unlimited time
-        </p>
+
+        <ReleaseDateTimePicker
+          value={formData.release_at}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, release_at: value }))
+          }
+          disabled={isLoading}
+        />
       </div>
 
       {/* Submit Button */}

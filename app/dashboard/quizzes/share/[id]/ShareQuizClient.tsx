@@ -6,13 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Quiz } from "@/lib/types/quiz";
 import Link from "next/link";
 import {
-  ArrowLeft,
   Copy,
   Check,
   Mail,
   Link2,
   Code,
-  QrCode,
   Twitter,
   Facebook,
   Linkedin,
@@ -23,6 +21,14 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { QuizQrDisplay } from "@/components/quiz-qr-display";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function ShareQuizClient() {
   const router = useRouter();
@@ -41,7 +47,7 @@ export default function ShareQuizClient() {
   const loadQuiz = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/quizzes/${quizId}`);
+      const response = await fetch(`/api/quiz/${quizId}`);
       if (!response.ok) throw new Error("Failed to load quiz");
       const quizData = await response.json();
       setQuiz(quizData);
@@ -135,19 +141,28 @@ export default function ShareQuizClient() {
 
   return (
     <div className="min-h-screen space-y-8 pb-16">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard/quizzes">
+              My Quizzes
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Share</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header Section with Properties */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link
-              href="/dashboard/quizzes"
-              className="hover:text-foreground transition"
-            >
-              Quizzes
-            </Link>
-            <span>/</span>
-            <span className="text-foreground">Share</span>
-          </div>
           <div className="space-y-1">
             <h1 className="text-4xl font-bold">{quiz.title}</h1>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pt-1">
@@ -184,9 +199,7 @@ export default function ShareQuizClient() {
           <Button
             variant="outline"
             onClick={() => router.push(`/dashboard/quizzes/edit/${quizId}`)}
-            className="gap-2"
           >
-            <ArrowLeft className="w-4 h-4" />
             Edit
           </Button>
           <Button

@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// GET /api/quiz/[id]/questions/[questionId] - get question
+// PUT /api/quiz/[id]/questions/[questionId] - update question
+// DELETE /api/quiz/[id]/questions/[questionId] - delete question
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; questionId: string }> },
 ) {
   try {
-    const { questionId } = await params;
+    const { id, questionId } = await params;
     const client = await createClient();
 
     const { data: question, error } = await client
       .from("questions")
       .select("*, question_options(*)")
       .eq("id", questionId)
+      .eq("quiz_id", id)
       .single();
 
     if (error) throw error;
@@ -64,47 +68,29 @@ export async function PUT(
     const body = await request.json();
     const { question_text, question_type, points, options } = body;
 
-    const { data: question, error } = await client
+    const { data: question, error: updateError } = await client
       .from("questions")
-      .update({
-        question_text,
-        question_type,
-        points: points || 1,
-      })
+      .update({ question_text, question_type, points })
       .eq("id", questionId)
-      .select("*, question_options(*)")
+      .select()
       .single();
 
-    if (error) throw error;
+    if (updateError) throw updateError;
 
-    if (options && options.length > 0) {
-      const { data: existingOptions } = await client
+    if (options) {
+      await client
         .from("question_options")
-        .select("id")
+        .delete()
         .eq("question_id", questionId);
 
-      const existingIds = existingOptions?.map((o) => o.id) || [];
-      const updatedIds = options.filter((o: any) => o.id).map((o: any) => o.id);
-
-      const idsToDelete = existingIds.filter((id) => !updatedIds.includes(id));
-
-      if (idsToDelete.length > 0) {
-        await client.from("question_options").delete().in("id", idsToDelete);
-      }
-
-      const optionsToUpsert = options.map((opt: any, index: number) => ({
-        id: opt.id || undefined,
+      const optionsData = options.map((opt: any, index: number) => ({
         question_id: questionId,
         option_text: opt.option_text,
         is_correct: opt.is_correct,
         order: index + 1,
       }));
 
-      const { error: optionsError } = await client
-        .from("question_options")
-        .upsert(optionsToUpsert);
-
-      if (optionsError) throw optionsError;
+      await client.from("question_options").insert(optionsData);
     }
 
     const { data: fullQuestion } = await client
@@ -151,22 +137,16 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    await client
+      .from("question_options")
+      .delete()
+      .eq("question_id", questionId);
     const { error } = await client
       .from("questions")
       .delete()
       .eq("id", questionId);
 
     if (error) throw error;
-
-    const { count } = await client
-      .from("questions")
-      .select("*", { count: "exact" })
-      .eq("quiz_id", id);
-
-    await client
-      .from("quizzes")
-      .update({ total_questions: count || 0 })
-      .eq("id", id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

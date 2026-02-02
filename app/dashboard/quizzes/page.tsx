@@ -9,6 +9,14 @@ import { Quiz } from "@/lib/types/quiz";
 import { Plus } from "lucide-react";
 import { QuizInviteDialog } from "@/components/quiz-invite-dialog";
 import { PendingInvitations } from "@/components/pending-invitations";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function MyQuizzesPage() {
   const router = useRouter();
@@ -31,7 +39,7 @@ export default function MyQuizzesPage() {
   const loadQuizzes = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/quizzes");
+      const response = await fetch("/api/quiz");
       if (!response.ok) throw new Error("Failed to load quizzes");
       const data = await response.json();
       setQuizzes(data);
@@ -46,7 +54,7 @@ export default function MyQuizzesPage() {
     if (!confirm("Are you sure you want to delete this quiz?")) return;
 
     try {
-      const response = await fetch(`/api/quizzes/${quizId}`, {
+      const response = await fetch(`/api/quiz/${quizId}`, {
         method: "DELETE",
       });
 
@@ -59,8 +67,21 @@ export default function MyQuizzesPage() {
 
   return (
     <div className="min-h-screen  text-foreground">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>My Quizzes</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
-      <div className="space-y-6 mb-8">
+      <div className="space-y-6 mb-8 mt-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-4xl font-bold tracking-tight mb-2">

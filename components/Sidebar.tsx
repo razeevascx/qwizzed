@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  LayoutGrid,
   PlusCircle,
   UserCircle,
   BarChart3,
@@ -18,6 +17,7 @@ import {
   ChevronRight,
   Code,
   ChevronDown,
+  Home,
 } from "lucide-react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { CurrentUserAvatar } from "./current-user-avatar";
@@ -33,9 +33,9 @@ interface SidebarItem {
 
 const navItems: SidebarItem[] = [
   {
-    label: "Overview",
-    href: "/dashboard",
-    icon: <LayoutGrid className="w-4 h-4" />,
+    label: "Home",
+    href: "/",
+    icon: <Home className="w-4 h-4" />,
     section: "Main",
   },
   {

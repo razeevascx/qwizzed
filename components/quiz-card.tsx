@@ -35,6 +35,25 @@ export function QuizCard({
   accessType,
   invitationStatus,
 }: QuizCardProps) {
+  const releaseAt = quiz.release_at ? new Date(quiz.release_at) : null;
+  const releaseMs = releaseAt ? releaseAt.getTime() : null;
+  const isScheduled = releaseMs !== null && releaseMs > Date.now();
+
+  const formatTimeRemaining = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
+
+  const releaseCountdown =
+    isScheduled && releaseMs !== null
+      ? formatTimeRemaining(releaseMs - Date.now())
+      : null;
   const difficultyConfig = {
     easy: {
       bg: "bg-emerald-50 dark:bg-emerald-950/30",
@@ -64,7 +83,13 @@ export function QuizCard({
   const canShare = !isInvited && (Boolean(onShare) || showActions);
 
   const cardContent = (
-    <div className="group relative h-full rounded-2xl border border-border/50 bg-card hover:bg-card/80 hover:border-primary/40 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer flex flex-col">
+    <div
+      className={`group relative h-full rounded-2xl border border-border/50 bg-card transition-all duration-300 overflow-hidden flex flex-col ${
+        isScheduled && !showActions
+          ? "cursor-default"
+          : "cursor-pointer hover:bg-card/80 hover:border-primary/40 hover:shadow-md"
+      }`}
+    >
       {/* Gradient accent bar at top */}
       <div className="h-1 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent group-hover:from-primary/60 transition-all" />
 
@@ -178,7 +203,7 @@ export function QuizCard({
                 className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
                 title="Edit quiz"
               >
-                <Link href={`/quizzes/edit/${quiz.id}`}>
+                <Link href={`/dashboard/quizzes/edit/${quiz.id}`}>
                   <Edit className="w-3.5 h-3.5" />
                   <span>Edit</span>
                 </Link>
@@ -202,7 +227,7 @@ export function QuizCard({
                 className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
                 title="Share quiz"
               >
-                <Link href={`/quizzes/share/${quiz.id}`}>
+                <Link href={`/dashboard/quizzes/share/${quiz.id}`}>
                   <Share2 className="w-3.5 h-3.5" />
                   <span>Share</span>
                 </Link>
@@ -253,9 +278,13 @@ export function QuizCard({
         ) : (
           <div className="flex items-center justify-between pt-4 border-t border-border/30 group-hover:border-primary/40 transition-colors">
             <span className="text-sm font-semibold text-foreground">
-              Take Quiz
+              {releaseCountdown
+                ? `Releases in ${releaseCountdown}`
+                : "Take Quiz"}
             </span>
-            <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-all duration-300" />
+            {!releaseCountdown && (
+              <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-all duration-300" />
+            )}
           </div>
         )}
       </div>
@@ -264,6 +293,10 @@ export function QuizCard({
 
   if (showActions) {
     return cardContent;
+  }
+
+  if (isScheduled) {
+    return <div className="block h-full">{cardContent}</div>;
   }
 
   return (

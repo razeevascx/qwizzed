@@ -14,6 +14,7 @@ import {
   CreateQuestionInput,
   QuizVisibility,
 } from "@/lib/types/quiz";
+import { quizApi } from "@/lib/api-client";
 import {
   AlertCircle,
   ArrowLeft,
@@ -23,7 +24,17 @@ import {
   Trash2,
   Edit2,
   Save,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function EditQuizPage() {
   const router = useRouter();
@@ -34,13 +45,17 @@ export default function EditQuizPage() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showAddQuestionForm, setShowAddQuestionForm] = useState(false);
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [selectedVisibility, setSelectedVisibility] =
     useState<QuizVisibility>("public");
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!quizId) return;
@@ -50,16 +65,13 @@ export default function EditQuizPage() {
   const loadQuiz = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/quizzes/${quizId}`);
-      if (!response.ok) throw new Error("Failed to load quiz");
-      const quizData = await response.json();
-      setQuiz(quizData);
-      setSelectedVisibility(quizData.visibility || "public");
-
-      const questionsResponse = await fetch(`/api/quizzes/${quizId}/questions`);
-      if (!questionsResponse.ok) throw new Error("Failed to load questions");
-      const questionsData = await questionsResponse.json();
-      setQuestions(questionsData);
+      const result = await quizApi.getQuiz(quizId);
+      if (!result.ok || !result.data) {
+        throw new Error(result.error || "Failed to load quiz");
+      }
+      setQuiz(result.data);
+      setSelectedVisibility((result.data as any).visibility || "public");
+      setQuestions((result.data as any).questions || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -71,15 +83,14 @@ export default function EditQuizPage() {
     try {
       setIsUpdating(true);
       setError(null);
-      const response = await fetch(`/api/quizzes/${quizId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const result = await quizApi.updateQuiz(quizId, {
+        ...data,
+        is_published: false,
       });
-
-      if (!response.ok) throw new Error("Failed to update quiz details");
-      const updatedQuiz = await response.json();
-      setQuiz(updatedQuiz);
+      if (!result.ok || !result.data) {
+        throw new Error(result.error || "Failed to update quiz details");
+      }
+      setQuiz(result.data);
       setShowEditDetails(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update details");
@@ -88,17 +99,25 @@ export default function EditQuizPage() {
     }
   };
 
+  const unpublishQuizIfNeeded = async () => {
+    if (quiz?.is_published) {
+      await quizApi.updateQuiz(quizId, { ...quiz, is_published: false });
+    }
+  };
+
   const handleUpdateQuestion = async (data: any) => {
     if (!editingQuestionId) return;
     try {
       setIsUpdating(true);
-      const response = await fetch(`/api/quizzes/${quizId}/questions/${editingQuestionId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) throw new Error("Failed to update question");
+      const result = await quizApi.updateQuestion(
+        quizId,
+        editingQuestionId,
+        data,
+      );
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to update question");
+      }
+      await unpublishQuizIfNeeded();
       await loadQuiz();
       setEditingQuestionId(null);
     } catch (err) {
@@ -110,13 +129,11 @@ export default function EditQuizPage() {
 
   const handleAddQuestion = async (data: CreateQuestionInput) => {
     try {
-      const response = await fetch(`/api/quizzes/${quizId}/questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) throw new Error("Failed to add question");
+      const result = await quizApi.createQuestion(quizId, data);
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to add question");
+      }
+      await unpublishQuizIfNeeded();
       await loadQuiz();
       setShowAddQuestionForm(false);
     } catch (err) {
@@ -128,31 +145,117 @@ export default function EditQuizPage() {
     if (!confirm("Are you sure you want to delete this question?")) return;
 
     try {
-      const response = await fetch(
-        `/api/quizzes/${quizId}/questions/${questionId}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      if (!response.ok) throw new Error("Failed to delete question");
+      const result = await quizApi.deleteQuestion(quizId, questionId);
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to delete question");
+      }
+      await unpublishQuizIfNeeded();
       await loadQuiz();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
+  const handleMoveQuestion = async (
+    questionId: string,
+    direction: "up" | "down",
+  ) => {
+    const currentIndex = questions.findIndex((q) => q.id === questionId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (newIndex < 0 || newIndex >= questions.length) return;
+
+    try {
+      const newQuestions = [...questions];
+      [newQuestions[currentIndex], newQuestions[newIndex]] = [
+        newQuestions[newIndex],
+        newQuestions[currentIndex],
+      ];
+
+      const updates = newQuestions.map((q, idx) => ({
+        id: q.id,
+        order: idx,
+      }));
+
+      const result = await quizApi.reorderQuestions(quizId, updates);
+      if (!result.ok)
+        throw new Error(result.error || "Failed to reorder questions");
+
+      await unpublishQuizIfNeeded();
+      setQuestions(newQuestions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reorder");
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, questionId: string) => {
+    setDraggedId(questionId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, questionId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(questionId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverId(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetQuestionId: string) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetQuestionId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const draggedIndex = questions.findIndex((q) => q.id === draggedId);
+    const targetIndex = questions.findIndex((q) => q.id === targetQuestionId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    try {
+      const newQuestions = [...questions];
+      const [draggedQuestion] = newQuestions.splice(draggedIndex, 1);
+      newQuestions.splice(targetIndex, 0, draggedQuestion);
+
+      const updates = newQuestions.map((q, idx) => ({
+        id: q.id,
+        order: idx,
+      }));
+
+      const result = await quizApi.reorderQuestions(quizId, updates);
+      if (!result.ok)
+        throw new Error(result.error || "Failed to reorder questions");
+
+      await unpublishQuizIfNeeded();
+      setQuestions(newQuestions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reorder");
+    } finally {
+      setDraggedId(null);
+      setDragOverId(null);
+    }
+  };
+
   const handlePublishQuiz = async () => {
     try {
-      const response = await fetch(`/api/quizzes/${quizId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...quiz, is_published: true }),
+      const result = await quizApi.updateQuiz(quizId, {
+        ...quiz,
+        is_published: true,
       });
-
-      if (!response.ok) throw new Error("Failed to publish quiz");
-      const updatedQuiz = await response.json();
-      setQuiz(updatedQuiz);
+      if (!result.ok || !result.data) {
+        throw new Error(result.error || "Failed to publish quiz");
+      }
+      setQuiz(result.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }
@@ -160,15 +263,14 @@ export default function EditQuizPage() {
 
   const handleVisibilityChange = async (visibility: QuizVisibility) => {
     try {
-      const response = await fetch(`/api/quizzes/${quizId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...quiz, visibility }),
+      const result = await quizApi.updateQuiz(quizId, {
+        ...quiz,
+        visibility,
       });
-
-      if (!response.ok) throw new Error("Failed to update visibility");
-      const updatedQuiz = await response.json();
-      setQuiz(updatedQuiz);
+      if (!result.ok || !result.data) {
+        throw new Error(result.error || "Failed to update visibility");
+      }
+      setQuiz(result.data);
       setSelectedVisibility(visibility);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -193,28 +295,35 @@ export default function EditQuizPage() {
 
   return (
     <div className="bg-background text-foreground">
-      <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
+      <div className="w-full px-4 py-10 space-y-10">
+        {/* Breadcrumb */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard/quizzes">
+                My Quizzes
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Edit Quiz</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ArrowLeft className="h-4 w-4" />
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="hover:text-foreground transition"
-              >
-                Back
-              </button>
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-semibold leading-tight">
-                {quiz.title}
-              </h1>
-              <p className="text-sm text-muted-foreground max-w-2xl">
-                {quiz.description}
-              </p>
-            </div>
+            <h1 className="text-3xl font-semibold leading-tight">
+              {quiz.title}
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              {quiz.description}
+            </p>
           </div>
           {quiz.is_published ? (
             <div className="flex items-center gap-2 rounded-full border border-emerald-400/40 px-3 py-1.5 text-emerald-600 text-xs font-semibold">
@@ -223,10 +332,25 @@ export default function EditQuizPage() {
             </div>
           ) : (
             <Button size="sm" variant="outline" onClick={handlePublishQuiz}>
-              Publish
+              Publish Draft
             </Button>
           )}
         </div>
+
+        {!quiz.is_published && (
+          <div className="rounded-md border border-amber-200/40 bg-amber-50 dark:bg-amber-950/20 p-4 text-sm text-amber-800 dark:text-amber-300">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Changes saved as draft</p>
+                <p className="text-amber-700 dark:text-amber-400 text-xs mt-1">
+                  Your changes are saved but not yet published. Click "Publish
+                  Draft" to make them live.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
@@ -338,7 +462,21 @@ export default function EditQuizPage() {
               </div>
             ) : (
               questions.map((question, index) => (
-                <div key={question.id}>
+                <div
+                  key={question.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, question.id)}
+                  onDragOver={(e) => handleDragOver(e, question.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, question.id)}
+                  className={`transition-all cursor-move ${
+                    draggedId === question.id ? "opacity-50" : ""
+                  } ${
+                    dragOverId === question.id
+                      ? "border-t-2 border-t-primary pt-1"
+                      : ""
+                  }`}
+                >
                   {editingQuestionId === question.id ? (
                     <UpdateQuestionForm
                       question={question}
@@ -356,13 +494,37 @@ export default function EditQuizPage() {
                           <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
                             {question.question_type.replace("_", " ")}
                           </span>
-                          <span className="text-primary font-bold ml-1">• {question.points || 1} pts</span>
+                          <span className="text-primary font-bold ml-1">
+                            • {question.points || 1} pts
+                          </span>
                         </div>
                         <p className="text-sm text-foreground leading-snug">
                           {question.question_text}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleMoveQuestion(question.id, "up")}
+                          disabled={index === 0}
+                          className="h-8 w-8 text-muted-foreground hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Move up"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            handleMoveQuestion(question.id, "down")
+                          }
+                          disabled={index === questions.length - 1}
+                          className="h-8 w-8 text-muted-foreground hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Move down"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -424,7 +586,9 @@ export default function EditQuizPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-md border border-border/60 p-4">
-                <p className="text-xs text-muted-foreground transition-colors group-hover:text-primary">Questions</p>
+                <p className="text-xs text-muted-foreground transition-colors group-hover:text-primary">
+                  Questions
+                </p>
                 <p className="text-2xl font-semibold">{quiz.total_questions}</p>
               </div>
               <div className="rounded-md border border-border/60 p-4">

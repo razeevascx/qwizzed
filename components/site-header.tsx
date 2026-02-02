@@ -15,8 +15,9 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 const navItems = [
   { href: "/", label: "Home", icon: BookOpen },
   { href: "/quiz", label: "Explore", icon: List },
+  { href: "/about", label: "About", icon: BarChart3 },
   { href: "/privacy", label: "Privacy", icon: LayoutGrid },
-  { href: "/term", label: "Term", icon: Plus },
+  { href: "/terms", label: "Terms", icon: Plus },
 ];
 
 function NavLink({

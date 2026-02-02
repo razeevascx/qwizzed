@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// GET /api/quiz/[id]/submissions - get quiz submissions (creator only)
+// POST /api/quiz/[id]/submissions - create submission (taking quiz)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -8,6 +10,25 @@ export async function GET(
   try {
     const { id } = await params;
     const client = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await client.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is the quiz creator
+    const { data: quiz } = await client
+      .from("quizzes")
+      .select("creator_id")
+      .eq("id", id)
+      .single();
+
+    if (!quiz || quiz.creator_id !== user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     const { data: submissions, error } = await client
       .from("quiz_submissions")
@@ -71,6 +92,11 @@ export async function POST(
         .eq("status", "pending");
     }
 
+    const submittedByName =
+      (user.user_metadata?.full_name as string | undefined) ||
+      (user.user_metadata?.name as string | undefined) ||
+      (email ? email.split("@")[0] : "Guest");
+
     const { data: submission, error: submissionError } = await client
       .from("quiz_submissions")
       .insert([
@@ -80,6 +106,8 @@ export async function POST(
           status: "in_progress",
           score: 0,
           total_points: 0,
+          submitted_by_email: email || null,
+          submitted_by_name: submittedByName,
         },
       ])
       .select()
@@ -95,14 +123,14 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(submission, { status: 201 });
+    return NextResponse.json(submission);
   } catch (error) {
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to initialize quiz session",
+            : "Failed to create submission",
       },
       { status: 500 },
     );

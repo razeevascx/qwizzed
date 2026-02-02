@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/login-form";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -24,7 +25,13 @@ export default function Page() {
 
         {/* Form */}
         <div className="pt-4">
-          <LoginForm />
+          <Suspense
+            fallback={
+              <div className="h-10 w-full rounded-lg bg-muted animate-pulse" />
+            }
+          >
+            <LoginForm />
+          </Suspense>
         </div>
 
         {/* Terms */}

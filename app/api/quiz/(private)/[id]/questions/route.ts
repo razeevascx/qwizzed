@@ -1,34 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-    const client = await createClient();
-
-    const { data: questions, error } = await client
-      .from("questions")
-      .select("*, question_options(*)")
-      .eq("quiz_id", id)
-      .order("order", { ascending: true });
-
-    if (error) throw error;
-
-    return NextResponse.json(questions);
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to fetch questions",
-      },
-      { status: 500 },
-    );
-  }
-}
-
+// POST /api/quiz/[id]/questions - add question (authenticated)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -103,12 +76,12 @@ export async function POST(
       .eq("id", question.id)
       .single();
 
-    return NextResponse.json(fullQuestion, { status: 201 });
+    return NextResponse.json(fullQuestion);
   } catch (error) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Failed to create question",
+          error instanceof Error ? error.message : "Failed to add question",
       },
       { status: 500 },
     );

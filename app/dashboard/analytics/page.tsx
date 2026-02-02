@@ -16,6 +16,14 @@ import {
   BookOpen,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 type QuizDetail = {
   id: string;
@@ -32,9 +40,19 @@ type QuizDetail = {
   highestScore: number;
   lowestScore: number;
   lastAttempt: Date | null;
+  rank: number;
 };
 
-async function getAnalyticsData(userId: string) {
+async function getAnalyticsData(
+  userId: string,
+  {
+    startDate,
+    endDate,
+  }: {
+    startDate?: string;
+    endDate?: string;
+  },
+) {
   const supabase = await createClient();
 
   const { data: quizzes, error: quizzesError } = await supabase
@@ -50,9 +68,15 @@ async function getAnalyticsData(userId: string) {
   const totalQuizzes = quizzes?.length || 0;
   const publishedQuizzes = quizzes?.filter((q) => q.is_published).length || 0;
 
-  const quizDetails: QuizDetail[] = await Promise.all(
+  const startAt = startDate ? new Date(startDate) : null;
+  if (startAt) startAt.setHours(0, 0, 0, 0);
+
+  const endAt = endDate ? new Date(endDate) : null;
+  if (endAt) endAt.setHours(23, 59, 59, 999);
+
+  const quizDetails = await Promise.all(
     quizzes?.map(async (quiz) => {
-      const { data: submissions } = await supabase
+      let submissionsQuery = supabase
         .from("quiz_submissions")
         .select(
           `
@@ -66,6 +90,22 @@ async function getAnalyticsData(userId: string) {
         )
         .eq("quiz_id", quiz.id)
         .eq("status", "graded");
+
+      if (startAt) {
+        submissionsQuery = submissionsQuery.gte(
+          "submitted_at",
+          startAt.toISOString(),
+        );
+      }
+
+      if (endAt) {
+        submissionsQuery = submissionsQuery.lte(
+          "submitted_at",
+          endAt.toISOString(),
+        );
+      }
+
+      const { data: submissions } = await submissionsQuery;
 
       const totalAttempts = submissions?.length || 0;
       const uniqueUsers = new Set(submissions?.map((s) => s.user_id) || [])
@@ -127,9 +167,25 @@ async function getAnalyticsData(userId: string) {
         highestScore: Math.round(highestScore),
         lowestScore: Math.round(lowestScore),
         lastAttempt,
+        rank: 0,
       } satisfies QuizDetail;
     }) || [],
   );
+
+  const rankedQuizDetails = [...quizDetails]
+    .sort((a, b) => {
+      if (b.totalAttempts !== a.totalAttempts) {
+        return b.totalAttempts - a.totalAttempts;
+      }
+      if (b.avgScore !== a.avgScore) {
+        return b.avgScore - a.avgScore;
+      }
+      return a.title.localeCompare(b.title);
+    })
+    .map((quiz, index) => ({
+      ...quiz,
+      rank: index + 1,
+    }));
 
   const totalAttempts = quizDetails.reduce(
     (sum, q) => sum + q.totalAttempts,
@@ -153,11 +209,15 @@ async function getAnalyticsData(userId: string) {
     totalAttempts,
     totalUniqueUsers,
     overallAvgScore,
-    quizDetails,
+    quizDetails: rankedQuizDetails,
   };
 }
 
-export default function AnalyticsPage() {
+export default function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ start?: string; end?: string }>;
+}) {
   return (
     <Suspense
       fallback={
@@ -166,12 +226,16 @@ export default function AnalyticsPage() {
         </div>
       }
     >
-      <AnalyticsContent />
+      <AnalyticsContent searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function AnalyticsContent() {
+async function AnalyticsContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ start?: string; end?: string }>;
+}) {
   const supabase = await createClient();
 
   const {
@@ -182,6 +246,10 @@ async function AnalyticsContent() {
     redirect("/get-started");
   }
 
+  const resolvedSearchParams = await searchParams;
+  const startDate = resolvedSearchParams?.start;
+  const endDate = resolvedSearchParams?.end;
+
   const {
     totalQuizzes,
     publishedQuizzes,
@@ -189,7 +257,7 @@ async function AnalyticsContent() {
     totalUniqueUsers,
     overallAvgScore,
     quizDetails,
-  } = await getAnalyticsData(user.id);
+  } = await getAnalyticsData(user.id, { startDate, endDate });
 
   const formatDate = (date: Date | null) => {
     if (!date) return "Never";
@@ -202,21 +270,76 @@ async function AnalyticsContent() {
 
   return (
     <div className="min-h-screen space-y-8 pb-16">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Analytics</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header Section */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-4xl font-bold">Analytics</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Track performance and engagement across your quizzes
           </p>
         </div>
-        <Link
-          href="/dashboard/create"
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-        >
-          <BarChart3 className="h-4 w-4" />
-          New Quiz
-        </Link>
+        <div className="flex flex-col gap-3 sm:items-end">
+          <form className="flex flex-wrap gap-2" method="get">
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-muted-foreground">
+                From
+              </label>
+              <input
+                name="start"
+                type="date"
+                defaultValue={startDate}
+                className="h-9 rounded-md border border-border/50 bg-background px-3 text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-muted-foreground">
+                To
+              </label>
+              <input
+                name="end"
+                type="date"
+                defaultValue={endDate}
+                className="h-9 rounded-md border border-border/50 bg-background px-3 text-sm"
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <button
+                type="submit"
+                className="h-9 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+              >
+                Apply
+              </button>
+              {(startDate || endDate) && (
+                <Link
+                  href="/dashboard/analytics"
+                  className="h-9 rounded-md border border-border/60 px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+                >
+                  Clear
+                </Link>
+              )}
+            </div>
+          </form>
+          <Link
+            href="/dashboard/create"
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          >
+            <BarChart3 className="h-4 w-4" />
+            New Quiz
+          </Link>
+        </div>
       </div>
 
       {/* Overview Stats */}
@@ -306,7 +429,7 @@ async function AnalyticsContent() {
             {quizDetails.map((quiz) => (
               <Link
                 key={quiz.id}
-                href={`/analytics/${quiz.id}`}
+                href={`/dashboard/analytics/${quiz.id}`}
                 className="group rounded-lg border border-border/40 bg-card/50 p-4 transition hover:border-border/60 hover:bg-card/70"
               >
                 <div className="space-y-3">
@@ -326,7 +449,10 @@ async function AnalyticsContent() {
                         </span>
                       </div>
                     </div>
-                    <div className="text-right text-xs">
+                    <div className="text-right text-xs space-y-1">
+                      <div className="inline-flex items-center justify-center rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                        Rank #{quiz.rank}
+                      </div>
                       <div className="font-semibold text-foreground">
                         {quiz.isPublished ? "Published" : "Draft"}
                       </div>

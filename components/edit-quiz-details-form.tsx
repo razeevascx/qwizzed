@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Quiz, UpdateQuizInput } from "@/lib/types/quiz";
 import { Clock, BookOpen, Save, AlertCircle } from "lucide-react";
+import { ReleaseDateTimePicker } from "@/components/release-datetime-picker";
 
 interface EditQuizDetailsFormProps {
   quiz: Quiz;
@@ -24,6 +25,7 @@ export function EditQuizDetailsForm({
     difficulty_level: quiz.difficulty_level,
     category: quiz.category,
     time_limit_minutes: quiz.time_limit_minutes,
+    release_at: quiz.release_at || null,
     organizer_name: quiz.organizer_name || undefined,
   });
 
@@ -57,7 +59,19 @@ export function EditQuizDetailsForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    const payload: UpdateQuizInput = {
+      ...formData,
+      release_at: formData.release_at || null,
+    };
+    await onSubmit(payload);
+  };
+
+  const toLocalInputValue = (iso: string | null | undefined) => {
+    if (!iso) return "";
+    const date = new Date(iso);
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
   };
 
   const difficultyOptions = [
@@ -113,8 +127,14 @@ export function EditQuizDetailsForm({
         </div>
 
         <div>
-           <Label htmlFor="organizer_name" className="text-sm font-semibold mb-2 block">
-            Organized By <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
+          <Label
+            htmlFor="organizer_name"
+            className="text-sm font-semibold mb-2 block"
+          >
+            Organized By{" "}
+            <span className="text-muted-foreground font-normal text-xs">
+              (Optional)
+            </span>
           </Label>
           <Input
             id="organizer_name"
@@ -186,23 +206,33 @@ export function EditQuizDetailsForm({
         </div>
       </div>
 
-      <div>
-        <Label
-          htmlFor="time_limit_minutes"
-          className="text-sm font-semibold mb-2 flex items-center gap-1.5"
-        >
-          <Clock className="w-3.5 h-3.5 text-primary/70" />
-          Time Limit (minutes)
-        </Label>
-        <Input
-          id="time_limit_minutes"
-          name="time_limit_minutes"
-          type="number"
-          value={formData.time_limit_minutes ?? ""}
-          onChange={handleChange}
-          min="1"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label
+            htmlFor="time_limit_minutes"
+            className="text-sm font-semibold mb-2 flex items-center gap-1.5"
+          >
+            <Clock className="w-3.5 h-3.5 text-primary/70" />
+            Time Limit (minutes)
+          </Label>
+          <Input
+            id="time_limit_minutes"
+            name="time_limit_minutes"
+            type="number"
+            value={formData.time_limit_minutes ?? ""}
+            onChange={handleChange}
+            min="1"
+            disabled={isLoading}
+            className="bg-card/50 border-border/40 h-10"
+          />
+        </div>
+
+        <ReleaseDateTimePicker
+          value={formData.release_at}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, release_at: value }))
+          }
           disabled={isLoading}
-          className="bg-card/50 border-border/40 h-10"
         />
       </div>
 

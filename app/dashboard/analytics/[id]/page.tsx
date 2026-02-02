@@ -16,6 +16,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 async function getQuizAnalytics(quizId: string, userId: string) {
   const supabase = await createClient();
@@ -43,7 +51,9 @@ async function getQuizAnalytics(quizId: string, userId: string) {
       submitted_at,
       status,
       time_taken,
-      user_id
+      user_id,
+      submitted_by_email,
+      submitted_by_name
     `,
     )
     .eq("quiz_id", quizId)
@@ -231,16 +241,27 @@ async function QuizAnalyticsContent({
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard/analytics">
+              Analytics
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{quiz.title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <div className="space-y-4">
-        <Link
-          href="/dashboard/analytics"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Analytics
-        </Link>
-
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-4xl font-bold tracking-tight mb-2">
@@ -457,6 +478,11 @@ async function QuizAnalyticsContent({
                           (submission.score / submission.total_points) * 100,
                         )
                       : 0;
+                  const displayName =
+                    submission.submitted_by_name ||
+                    (submission.submitted_by_email
+                      ? submission.submitted_by_email.split("@")[0]
+                      : "Guest");
                   return (
                     <div
                       key={submission.id}
@@ -484,6 +510,16 @@ async function QuizAnalyticsContent({
                             {submission.score} / {submission.total_points}{" "}
                             points
                           </span>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <span className="font-medium text-foreground">
+                              {displayName}
+                            </span>
+                            {submission.submitted_by_email && (
+                              <span className="ml-2 text-muted-foreground">
+                                {submission.submitted_by_email}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
