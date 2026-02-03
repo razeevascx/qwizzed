@@ -92,7 +92,6 @@ export default function EditQuizPage() {
       setError(null);
       const result = await quizApi.updateQuiz(quizId, {
         ...data,
-        is_published: false,
       });
       if (!result.ok || !result.data) {
         throw new Error(result.error || "Failed to update quiz details");
@@ -255,6 +254,8 @@ export default function EditQuizPage() {
 
   const handlePublishQuiz = async () => {
     try {
+      setIsUpdating(true);
+      setError(null);
       const result = await quizApi.updateQuiz(quizId, {
         ...quiz,
         is_published: true,
@@ -264,7 +265,11 @@ export default function EditQuizPage() {
       }
       setQuiz(result.data as any);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const errorMsg = err instanceof Error ? err.message : "An error occurred";
+      console.error("Publish error:", errorMsg);
+      setError(errorMsg);
+    } finally {
+      setIsUpdating(false);
     }
   };
 

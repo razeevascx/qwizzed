@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const { data: quizzes, error } = await client
       .from("quizzes")
       .select(
-        "id, title, description, total_questions, difficulty_level, category, time_limit_minutes",
+        "id, title, description, total_questions, difficulty_level, category, time_limit_minutes, is_published",
       )
       .eq("is_published", true)
       .eq("visibility", "public")

@@ -119,4 +119,5 @@ export interface UpdateQuizInput extends Partial<CreateQuizInput> {
   visibility?: QuizVisibility;
   is_published?: boolean;
   total_questions?: number;
+  scheduled_at?: string | null;
 }
