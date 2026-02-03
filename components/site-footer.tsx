@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import GetStarted from "./Get-started";
 import Logo from "@/components/Logo";
@@ -22,6 +25,12 @@ const resourceLinks = [
 ];
 
 export function SiteFooter() {
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <>
       <footer className="border-t border-border bg-background">
@@ -104,7 +113,9 @@ export function SiteFooter() {
           <div className="mt-12 pt-8 border-t border-border">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
-                {new Date().getFullYear()} Qwizzed. All rights reserved.
+                {year
+                  ? `${year} Qwizzed. All rights reserved.`
+                  : "Qwizzed. All rights reserved."}
               </p>
               <div className="flex gap-6">
                 {[...companyLinks, ...productLinks].map((link) => (

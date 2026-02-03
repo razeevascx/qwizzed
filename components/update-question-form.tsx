@@ -59,16 +59,20 @@ export function UpdateQuestionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-muted/5 p-4 rounded-lg border border-border/40">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 bg-muted/5 p-4 rounded-lg border border-border/40"
+    >
       <div className="space-y-4">
         <div>
-          <Label className="text-sm font-semibold mb-2 block">Question Text</Label>
-          <textarea
+          <Label className="text-sm font-semibold mb-2 block">
+            Question Text
+          </Label>
+          <Input
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             required
-            rows={3}
-            className="w-full px-3 py-2 border border-border/40 rounded-md bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="bg-transparent border-border/40"
           />
         </div>
 
@@ -85,14 +89,15 @@ export function UpdateQuestionForm({
             />
           </div>
           <div className="flex-1">
-             <Label className="text-sm font-semibold mb-2 block">Type</Label>
-             <div className="px-3 py-2 rounded-md border border-border/40 bg-muted/20 text-sm font-medium">
-                {questionType.replace("_", " ")}
-             </div>
+            <Label className="text-sm font-semibold mb-2 block">Type</Label>
+            <div className="px-3 py-2 rounded-md border border-border/40 bg-muted/20 text-sm font-medium">
+              {questionType.replace("_", " ")}
+            </div>
           </div>
         </div>
 
-        {(questionType === "multiple_choice" || questionType === "true_false") && (
+        {(questionType === "multiple_choice" ||
+          questionType === "true_false") && (
           <div className="space-y-3">
             <Label className="text-sm font-semibold mb-1 block">Options</Label>
             <div className="space-y-2">
@@ -100,7 +105,9 @@ export function UpdateQuestionForm({
                 <div key={index} className="flex items-center gap-2">
                   <Input
                     value={option.option_text}
-                    onChange={(e) => handleOptionChange(index, "option_text", e.target.value)}
+                    onChange={(e) =>
+                      handleOptionChange(index, "option_text", e.target.value)
+                    }
                     placeholder={`Option ${index + 1}`}
                     className="bg-transparent border-border/40"
                     required
@@ -109,10 +116,18 @@ export function UpdateQuestionForm({
                     <input
                       type="checkbox"
                       checked={option.is_correct}
-                      onChange={(e) => handleOptionChange(index, "is_correct", e.target.checked)}
+                      onChange={(e) =>
+                        handleOptionChange(
+                          index,
+                          "is_correct",
+                          e.target.checked,
+                        )
+                      }
                       className="w-4 h-4 accent-emerald-600"
                     />
-                    <span className="text-xs font-semibold text-muted-foreground">Correct</span>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Correct
+                    </span>
                   </label>
                   {questionType === "multiple_choice" && options.length > 2 && (
                     <Button
@@ -129,7 +144,13 @@ export function UpdateQuestionForm({
               ))}
             </div>
             {questionType === "multiple_choice" && (
-              <Button type="button" variant="outline" size="sm" onClick={handleAddOption} className="mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddOption}
+                className="mt-2"
+              >
                 <Plus className="w-3 h-3 mr-2" /> Add Option
               </Button>
             )}
@@ -140,13 +161,18 @@ export function UpdateQuestionForm({
       <div className="flex gap-2 pt-2">
         <Button type="submit" disabled={isLoading} className="flex-1 gap-2">
           {isLoading ? (
-             <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
           ) : (
             <Save className="w-4 h-4" />
           )}
           Update Question
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
           Cancel
         </Button>
       </div>

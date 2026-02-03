@@ -155,6 +155,7 @@ export default function MyQuizzesPage() {
                 key={quiz.id}
                 quiz={quiz}
                 onDelete={() => handleDeleteQuiz(quiz.id)}
+                showActions={true}
               />
             ))}
           </div>

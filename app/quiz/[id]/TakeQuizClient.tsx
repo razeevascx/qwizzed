@@ -156,7 +156,7 @@ export default function TakeQuizClient({
         return;
       }
 
-      setSubmissionId(createResult.submission.id);
+      setSubmissionId((createResult as any).submission.id);
       setAnswers(pendingAnswers);
 
       // Auto-submit pending answers since user is authenticated
@@ -201,7 +201,7 @@ export default function TakeQuizClient({
 
       const createResult = await createSubmission();
       if (createResult.kind === "ok") {
-        setSubmissionId(createResult.submission.id);
+        setSubmissionId((createResult as any).submission.id);
       }
 
       const timeLimitMinutes = Number(quizData.time_limit_minutes);
@@ -271,6 +271,10 @@ export default function TakeQuizClient({
       // Get user info from authenticated session
       // The backend will use the authenticated user's name/email
       const finalSubmissionId = submissionId;
+
+      if (!finalSubmissionId) {
+        throw new Error("Submission ID is required");
+      }
 
       // Submit answers - backend will use authenticated user's name/email
       const submitResult = await submitAnswers(finalSubmissionId, batchAnswers);

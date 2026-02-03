@@ -5,7 +5,8 @@ import { Quiz } from "@/lib/types/quiz";
 import { QuizCard } from "@/components/quiz-card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Sparkles, BookOpen, Zap } from "lucide-react";
+import { Sparkles, BookOpen, Search, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 type QuizWithInvite = Quiz & { isInvited?: boolean };
 
@@ -24,6 +25,7 @@ export default function QuizzesClient({
   const [isLoading, setIsLoading] = useState(
     initialPublicQuizzes.length === 0 && !!user,
   );
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -83,33 +85,45 @@ export default function QuizzesClient({
     [quizzes],
   );
 
-  return (
-    <>
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="relative overflow-hidden border-b border-border/50">
-          <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+  const filteredPublicQuizzes = useMemo(() => {
+    if (!searchQuery.trim()) return publicQuizzes;
+    const query = searchQuery.toLowerCase();
+    return publicQuizzes.filter(
+      (quiz) =>
+        quiz.title.toLowerCase().includes(query) ||
+        quiz.description?.toLowerCase().includes(query),
+    );
+  }, [publicQuizzes, searchQuery]);
 
-          <div className="max-w-6xl mx-auto px-4 py-16 sm:py-20 relative z-10">
-            <div className="flex items-start justify-between gap-6">
-              <div className="flex-1">
-                <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                  <Zap className="w-4 h-4" />
-                  Test Your Knowledge
-                </div>
-                <h1 className="text-5xl sm:text-6xl font-bold mb-3 tracking-tight">
-                  Available Quizzes
-                </h1>
-                <p className="text-xl text-muted-foreground max-w-xl">
-                  Challenge yourself with our curated collection of quizzes.
-                  Choose from various difficulty levels and topics.
-                </p>
-              </div>
+  const filteredInvitedQuizzes = useMemo(() => {
+    if (!searchQuery.trim()) return invitedQuizzes;
+    const query = searchQuery.toLowerCase();
+    return invitedQuizzes.filter(
+      (quiz) =>
+        quiz.title.toLowerCase().includes(query) ||
+        quiz.description?.toLowerCase().includes(query),
+    );
+  }, [invitedQuizzes, searchQuery]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground mb-2">
+                Explore Quizzes
+              </h1>
+              <p className="text-muted-foreground">
+                Discover and take quizzes from our community
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
               {user && (
                 <Button
                   onClick={() => router.push("/dashboard/quizzes")}
                   variant="outline"
-                  className="mt-4 sm:mt-0"
-                  size="lg"
+                  className="h-10"
                 >
                   My Quizzes
                 </Button>
@@ -117,102 +131,134 @@ export default function QuizzesClient({
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-16">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="text-center space-y-4">
-                <div className="flex justify-center">
-                  <div className="animate-pulse flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10">
-                    <BookOpen className="w-7 h-7 text-primary" />
-                  </div>
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="animate-pulse flex items-center justify-center w-12 h-12 rounded-lg bg-muted">
+                  <BookOpen className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-lg text-muted-foreground">
-                  Loading quizzes...
+              </div>
+              <p className="text-muted-foreground">Loading quizzes...</p>
+            </div>
+          </div>
+        ) : quizzes.length === 0 ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="text-center space-y-4 p-8 rounded-xl border border-border bg-card">
+              <div className="flex justify-center">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-muted">
+                  <Sparkles className="w-7 h-7 text-muted-foreground" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-foreground">
+                  No quizzes available yet
+                </h2>
+                <p className="text-muted-foreground">
+                  New quizzes coming soon. Check back later!
                 </p>
               </div>
             </div>
-          ) : quizzes.length === 0 ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="text-center space-y-4 p-12 rounded-xl border border-border/50 bg-card/50 backdrop-blur">
-                <div className="flex justify-center">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10">
-                    <Sparkles className="w-8 h-8 text-primary" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-bold">
-                    No quizzes available yet
-                  </h2>
-                  <p className="text-muted-foreground text-lg">
-                    New quizzes coming soon. Check back later!
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-12">
-              {user && invitedQuizzes.length > 0 && (
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-3xl font-bold mb-2">Invited Quizzes</h2>
-                    <p className="text-muted-foreground">
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {user && filteredInvitedQuizzes.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">
+                      Invited Quizzes
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
                       Private quizzes you&apos;ve been invited to
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
-                    {invitedQuizzes.map((quiz) => (
-                      <QuizCard key={quiz.id} quiz={quiz} showActions={false} />
-                    ))}
-                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {filteredInvitedQuizzes.length}{" "}
+                    {filteredInvitedQuizzes.length === 1 ? "quiz" : "quizzes"}
+                  </span>
                 </div>
-              )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredInvitedQuizzes.map((quiz) => (
+                    <QuizCard key={quiz.id} quiz={quiz} showActions={false} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-              {publicQuizzes.length > 0 && (
-                <div>
-                  <div className="mb-6">
-                    <h2 className="text-3xl font-bold mb-2">
+            {filteredPublicQuizzes.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-foreground">
                       Public Quizzes
-                      <span className="ml-3 text-lg font-normal text-muted-foreground">
-                        {publicQuizzes.length}{" "}
-                        {publicQuizzes.length === 1 ? "quiz" : "quizzes"}
-                      </span>
                     </h2>
-                    <p className="text-muted-foreground">
-                      Open to everyone - test your knowledge!
+                    <p className="text-sm text-muted-foreground">
+                      Open to everyone
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
-                    {publicQuizzes.map((quiz) => (
-                      <QuizCard key={quiz.id} quiz={quiz} showActions={false} />
-                    ))}
+                  <span className="text-sm text-muted-foreground">
+                    {filteredPublicQuizzes.length}{" "}
+                    {filteredPublicQuizzes.length === 1 ? "quiz" : "quizzes"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredPublicQuizzes.map((quiz) => (
+                    <QuizCard key={quiz.id} quiz={quiz} showActions={false} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {filteredPublicQuizzes.length === 0 &&
+              filteredInvitedQuizzes.length === 0 &&
+              searchQuery && (
+                <div className="flex items-center justify-center py-24">
+                  <div className="text-center space-y-4 p-8 rounded-xl border border-border bg-card">
+                    <div className="flex justify-center">
+                      <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-muted">
+                        <Search className="w-7 h-7 text-muted-foreground" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-semibold text-foreground">
+                        No results found
+                      </h2>
+                      <p className="text-muted-foreground">
+                        Try a different search term
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {publicQuizzes.length === 0 && invitedQuizzes.length === 0 && (
+            {filteredPublicQuizzes.length === 0 &&
+              filteredInvitedQuizzes.length === 0 &&
+              !searchQuery && (
                 <div className="flex items-center justify-center py-24">
-                  <div className="text-center space-y-4 p-12 rounded-xl border border-border/50 bg-card/50 backdrop-blur">
+                  <div className="text-center space-y-4 p-8 rounded-xl border border-border bg-card">
                     <div className="flex justify-center">
-                      <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10">
-                        <Sparkles className="w-8 h-8 text-primary" />
+                      <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-muted">
+                        <Sparkles className="w-7 h-7 text-muted-foreground" />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold">
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-semibold text-foreground">
                         No quizzes available yet
                       </h2>
-                      <p className="text-muted-foreground text-lg">
+                      <p className="text-muted-foreground">
                         New quizzes coming soon. Check back later!
                       </p>
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }

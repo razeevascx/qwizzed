@@ -13,6 +13,7 @@ export interface Quiz {
   total_questions: number;
   time_limit_minutes: number | null;
   release_at?: string | null;
+  scheduled_at?: string | null;
   difficulty_level: "easy" | "medium" | "hard";
   category: string;
   organizer_name: string | null;

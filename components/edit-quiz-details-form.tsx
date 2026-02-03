@@ -228,7 +228,7 @@ export function EditQuizDetailsForm({
         </div>
 
         <ReleaseDateTimePicker
-          value={formData.release_at}
+          value={formData.release_at || null}
           onChange={(value) =>
             setFormData((prev) => ({ ...prev, release_at: value }))
           }

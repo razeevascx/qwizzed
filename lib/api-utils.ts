@@ -10,7 +10,8 @@ import { SupabaseClient } from "@supabase/supabase-js";
  */
 export const QUIZ_FIELDS = {
   LIST: "id, title, description, total_questions, difficulty_level, category",
-  DETAIL: "id, title, description, total_questions, difficulty_level, category",
+  DETAIL:
+    "id, title, description, total_questions, difficulty_level, category, time_limit_minutes, release_at, organizer_name",
   WITH_CREATOR:
     "id, title, description, total_questions, difficulty_level, category, creator_id",
   FULL: "id, title, description, total_questions, difficulty_level, category, creator_id, is_published, visibility, organizer_name, time_limit_minutes, release_at, created_at",
@@ -65,7 +66,7 @@ export async function verifyQuizOwnership(
     throw error;
   }
 
-  if (!quiz || quiz.creator_id !== userId) {
+  if (!quiz || (quiz as any).creator_id !== userId) {
     return {
       quiz: null,
       error: NextResponse.json({ error: "Unauthorized" }, { status: 403 }),

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       const { data: ownedQuizzes, error: ownedError } = await client
         .from("quizzes")
         .select(
-          "id, title, description, total_questions, difficulty_level, category",
+          "id, title, description, total_questions, difficulty_level, category, time_limit_minutes, created_at, updated_at",
         )
         .eq("creator_id", user.id)
         .order("created_at", { ascending: false });
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       const { data: invitedRows, error: invitedError } = await client
         .from("quiz_invitations")
         .select(
-          "status, invited_at, quiz_id, quizzes(id, title, description, total_questions, difficulty_level, category)",
+          "status, invited_at, quiz_id, quizzes(id, title, description, total_questions, difficulty_level, category, time_limit_minutes, created_at, updated_at)",
         )
         .in("status", ["pending", "accepted"])
         .order("invited_at", { ascending: false });
@@ -33,12 +33,17 @@ export async function GET(request: NextRequest) {
 
       const invitedQuizzes = (invitedRows || [])
         .filter((row) => row.quizzes)
-        .map((row) => ({
-          ...row.quizzes,
-          accessType: "invited" as const,
-          invitationStatus: row.status,
-          invited_at: row.invited_at,
-        }));
+        .map((row) => {
+          const quiz = Array.isArray(row.quizzes)
+            ? row.quizzes[0]
+            : row.quizzes;
+          return {
+            ...quiz,
+            accessType: "invited" as const,
+            invitationStatus: row.status,
+            invited_at: row.invited_at,
+          };
+        });
 
       const owned = (ownedQuizzes || []).map((quiz) => ({
         ...quiz,
@@ -47,10 +52,14 @@ export async function GET(request: NextRequest) {
 
       const combined = [...owned, ...invitedQuizzes].sort((a, b) => {
         const aDate = new Date(
-          a.updated_at || a.invited_at || a.created_at,
+          (a as any).updated_at ||
+            (a as any).invited_at ||
+            (a as any).created_at,
         ).getTime();
         const bDate = new Date(
-          b.updated_at || b.invited_at || b.created_at,
+          (b as any).updated_at ||
+            (b as any).invited_at ||
+            (b as any).created_at,
         ).getTime();
         return bDate - aDate;
       });
@@ -62,7 +71,7 @@ export async function GET(request: NextRequest) {
     const { data: quizzes, error } = await client
       .from("quizzes")
       .select(
-        "id, title, description, total_questions, difficulty_level, category",
+        "id, title, description, total_questions, difficulty_level, category, time_limit_minutes",
       )
       .eq("is_published", true)
       .eq("visibility", "public")
