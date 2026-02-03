@@ -295,7 +295,6 @@ export default function EditQuizPage() {
       const result = await quizApi.updateQuiz(quizId, {
         ...quiz,
         title: titleInput.trim(),
-        is_published: false,
       });
       if (!result.ok || !result.data) {
         throw new Error(result.error || "Failed to update title");
@@ -330,7 +329,6 @@ export default function EditQuizPage() {
       const result = await quizApi.updateQuiz(quizId, {
         ...quiz,
         scheduled_at: scheduledAt,
-        is_published: false,
       });
       if (!result.ok || !result.data) {
         throw new Error(result.error || "Failed to update schedule");
@@ -338,7 +336,9 @@ export default function EditQuizPage() {
       setQuiz(result.data as any);
       setScheduleInput(
         (result.data as any).scheduled_at
-          ? new Date((result.data as any).scheduled_at).toISOString().slice(0, 16)
+          ? new Date((result.data as any).scheduled_at)
+              .toISOString()
+              .slice(0, 16)
           : "",
       );
       setEditingSchedule(false);
