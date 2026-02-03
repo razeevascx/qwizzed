@@ -18,6 +18,7 @@ import {
   Code,
   ChevronDown,
   Home,
+  X,
 } from "lucide-react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { CurrentUserAvatar } from "./current-user-avatar";
@@ -115,6 +116,10 @@ export function Sidebar() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   const toggleSection = (label: string) => {
     setExpandedItems((prev) => ({
       ...prev,
@@ -134,6 +139,7 @@ export function Sidebar() {
   const toggle = () => setIsOpen((open) => !open);
   const close = () => setIsOpen(false);
   const toggleCollapse = () => setIsCollapsed((prev) => !prev);
+
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -154,31 +160,32 @@ export function Sidebar() {
           <button
             onClick={() => !isCollapsed && toggleSection(item.label)}
             className={cn(
-              "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
               isActive && !hasSubItems
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-foreground/80 hover:bg-muted hover:text-foreground",
-              isCollapsed && "justify-center",
+                ? "bg-primary/10 text-primary"
+                : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+              isCollapsed && "justify-center px-2",
             )}
           >
             <span
               className={cn(
-                "transition-transform",
-                isActive ? "scale-110" : "",
+                "transition-all duration-200 flex-shrink-0",
+                isActive ? "text-primary" : "group-hover:text-foreground",
               )}
             >
               {item.icon}
             </span>
             {!isCollapsed && (
-              <span className="flex-1 text-left">{item.label}</span>
-            )}
-            {!isCollapsed && (
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  isExpanded ? "rotate-180" : "",
-                )}
-              />
+              <>
+                <span className="flex-1 text-left truncate">{item.label}</span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200 flex-shrink-0 text-muted-foreground",
+                    isExpanded ? "rotate-180" : "",
+                    isActive && "text-primary",
+                  )}
+                />
+              </>
             )}
           </button>
         ) : (
@@ -186,31 +193,35 @@ export function Sidebar() {
             href={item.href}
             onClick={close}
             className={cn(
-              "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
               isActive
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-foreground/80 hover:bg-muted hover:text-foreground",
-              isCollapsed && "justify-center",
-              isSubItem && "ml-4",
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+              isCollapsed && "justify-center px-2",
+              isSubItem &&
+                !isCollapsed &&
+                "ml-8 pl-4 border-l-2 border-border/30",
             )}
           >
             <span
               className={cn(
-                "transition-transform",
-                isActive ? "scale-110" : "",
+                "transition-all duration-200 flex-shrink-0",
+                isActive ? "text-primary" : "group-hover:text-foreground",
               )}
             >
               {item.icon}
             </span>
-            {!isCollapsed && <span className="flex-1">{item.label}</span>}
+            {!isCollapsed && (
+              <span className="flex-1 truncate">{item.label}</span>
+            )}
             {isActive && !isCollapsed && !isSubItem && (
-              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+              <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
             )}
           </Link>
         )}
 
         {!isCollapsed && hasSubItems && isExpanded && (
-          <div className="space-y-1">
+          <div className="space-y-1 mt-1">
             {item.subItems!.map((sub) => renderNavItem(sub, true))}
           </div>
         )}
@@ -220,59 +231,91 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="sm:hidden mb-4 flex items-center justify-between gap-2 px-1">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-lg bg-background border border-border px-4 py-3 text-sm font-semibold shadow-sm transition hover:bg-muted/50"
-          aria-expanded={isOpen}
-          aria-controls="quiz-sidebar"
-          onClick={toggle}
-        >
-          <Menu className="h-5 w-5" />
-          Menu
-        </button>
-        <Link
-          href="/dashboard/create"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-        >
-          <PlusCircle className="h-4 w-4" />
-          New
-        </Link>
+      {/* Mobile Header */}
+      <div className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+            aria-expanded={isOpen}
+            aria-controls="quiz-sidebar"
+            onClick={toggle}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="hidden sm:inline">Menu</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow-sm">
+              Q
+            </div>
+            <span className="font-bold text-base tracking-tight">Qwizzed</span>
+          </div>
+
+          <Link
+            href="/dashboard/create"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">New</span>
+          </Link>
+        </div>
       </div>
 
+      {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={close}
+          aria-hidden="true"
         />
       )}
 
+      {/* Sidebar */}
       <aside
         id="quiz-sidebar"
         className={cn(
-          "fixed sm:static z-50 inset-y-0 left-0 transition-all duration-300",
-          isCollapsed ? "sm:w-20" : "sm:w-64 lg:w-72",
-          isOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0",
-          "shrink-0 bg-background border-r border-border/60",
-          "flex h-screen sm:h-screen flex-col shadow-xl sm:shadow-none",
-          "sm:sticky sm:top-0",
+          "fixed lg:sticky z-50 inset-y-0 left-0 transition-all duration-300 ease-in-out",
+          isCollapsed ? "lg:w-16" : "lg:w-64",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "w-64",
+          "shrink-0 bg-background border-r border-border/50",
+          "flex h-screen flex-col shadow-xl lg:shadow-none",
+          "lg:top-0",
         )}
       >
-        <div className="flex items-center justify-between gap-3 p-4 border-b border-border/60">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-sm">
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-border/50">
+          <div className="flex items-center gap-3 overflow-hidden min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-[1.125rem] shadow-sm">
               Q
             </div>
             {!isCollapsed && (
-              <div className="leading-tight truncate">
-                <p className="text-base font-bold tracking-tight">Qwizzed</p>
-                <p className="text-xs text-muted-foreground">Quiz platform</p>
+              <div className="leading-tight min-w-0">
+                <p className="text-base font-bold tracking-tight truncate">
+                  Qwizzed
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  Quiz platform
+                </p>
               </div>
             )}
           </div>
+
+          {/* Close button for mobile */}
           <button
             type="button"
-            className="hidden sm:inline-flex shrink-0 h-8 w-8 items-center justify-center rounded-lg border border-border/60 hover:bg-muted/60"
+            className="lg:hidden shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-muted/60 transition-colors"
+            onClick={close}
+            aria-label="Close sidebar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Collapse button for desktop */}
+          <button
+            type="button"
+            className="hidden lg:inline-flex shrink-0 h-8 w-8 items-center justify-center rounded-lg hover:bg-muted/60 transition-colors"
             onClick={toggleCollapse}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -284,11 +327,12 @@ export function Sidebar() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-6">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-5">
           {Object.entries(grouped).map(([section, items]) => (
             <div key={section || "default"} className="space-y-2">
               {section && !isCollapsed && (
-                <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                <p className="px-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
                   {section}
                 </p>
               )}
@@ -297,43 +341,46 @@ export function Sidebar() {
               </div>
             </div>
           ))}
-        </div>
+        </nav>
 
-        <div className="border-t border-border/60 p-4 bg-muted/20">
-          <div
-            className={cn(
-              "flex items-center gap-3",
-              isCollapsed ? "justify-center" : "",
-            )}
-          >
-            <CurrentUserAvatar size="sm" />
-            {!isCollapsed && (
-              <div className="flex-1 leading-tight truncate">
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {name || "User"}
-                </p>
+        {/* User Section */}
+        <div className="border-t border-border/50 p-3 bg-muted/20">
+          {!isCollapsed ? (
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3 min-w-0">
+                <CurrentUserAvatar size="sm" className="shrink-0" />
+                <div className="leading-tight min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {name || "User"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Manage account
+                  </p>
+                </div>
               </div>
-            )}
-            {!isCollapsed && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
+                title="Logout"
+                aria-label="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-1">
+              <CurrentUserAvatar size="sm" />
               <button
                 type="button"
                 onClick={handleLogout}
                 className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 title="Logout"
+                aria-label="Logout"
               >
                 <LogOut className="h-4 w-4" />
               </button>
-            )}
-          </div>
-          {isCollapsed && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-3 w-full h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              title="Logout"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            </div>
           )}
         </div>
       </aside>

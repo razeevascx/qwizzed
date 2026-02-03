@@ -46,7 +46,7 @@ const stats = [
 
 export default function Features() {
   return (
-    <section className="border-t border-border/30 py-24 px-6 bg-background relative overflow-hidden">
+    <section className="border-t border-border/30 py-24 bg-background relative overflow-hidden">
       <Layout className="relative z-10">
         {/* Header */}
         <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-4">
