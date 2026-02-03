@@ -3,21 +3,25 @@
 import { useEffect, useState } from "react";
 import { LeaderboardEntry } from "@/lib/types/quiz";
 import { Trophy, Medal } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface QuizLeaderboardProps {
   quizId?: string;
   quizSlug?: string;
   limit?: number;
+  refreshInterval?: number; // milliseconds, optional polling fallback
 }
 
 export function QuizLeaderboard({
   quizId,
   quizSlug,
   limit = 50,
+  refreshInterval = 5000, // Default 5 seconds polling
 }: QuizLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actualQuizId, setActualQuizId] = useState<string | null>(null);
 
   const quizIdentifier = quizSlug || quizId;
 
@@ -28,13 +32,49 @@ export function QuizLeaderboard({
       return;
     }
     loadLeaderboard();
-  }, [quizIdentifier]);
+    
+    // Set up polling for real-time updates
+    const interval = setInterval(() => {
+      loadLeaderboard(true); // Silent refresh
+    }, refreshInterval);
 
-  const loadLeaderboard = async () => {
+    return () => clearInterval(interval);
+  }, [quizIdentifier, refreshInterval]);
+
+  // Set up Supabase real-time subscription
+  useEffect(() => {
+    if (!actualQuizId) return;
+
+    const supabase = createClient();
+    
+    const channel = supabase
+      .channel(`leaderboard:${actualQuizId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "quiz_submissions",
+          filter: `quiz_id=eq.${actualQuizId}`,
+        },
+        () => {
+          // Reload leaderboard when submissions change
+          loadLeaderboard(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [actualQuizId]);
+
+  const loadLeaderboard = async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       setError(null);
       if (!quizIdentifier) return;
+      
       const response = await fetch(`/api/quiz/${quizIdentifier}/leaderboard`);
 
       if (!response.ok) {
@@ -47,12 +87,17 @@ export function QuizLeaderboard({
 
       const data = await response.json();
       setLeaderboard(data.slice(0, limit));
+      
+      // Get actual quiz ID for real-time subscription
+      if (data.length > 0 && !actualQuizId) {
+        setActualQuizId(data[0].quiz_id);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load leaderboard",
       );
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
