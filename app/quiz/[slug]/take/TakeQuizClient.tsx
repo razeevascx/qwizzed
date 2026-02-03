@@ -156,12 +156,36 @@ export default function TakeQuizClient({
         return;
       }
 
-      setSubmissionId((createResult as any).submission.id);
+      const newSubmissionId = (createResult as any).submission.id;
+      setSubmissionId(newSubmissionId);
       setAnswers(pendingAnswers);
 
       // Auto-submit pending answers since user is authenticated
-      // and backend will extract name/email from session
-      setCurrentQuestionIndex(questions.length - 1);
+      toast.success("Submitting your saved answers...", "Welcome back!");
+      
+      // Format answers for batch submission
+      const batchAnswers = Object.entries(pendingAnswers).map(([qId, val]) => ({
+        question_id: qId,
+        user_answer: val,
+      }));
+
+      // Submit answers
+      const submitResult = await submitAnswers(newSubmissionId, batchAnswers);
+
+      if (submitResult.kind === "auth_required") {
+        // This shouldn't happen, but handle it just in case
+        savePendingAnswers(pendingAnswers);
+        redirectToLogin();
+        return;
+      }
+
+      // Clear pending data
+      localStorage.removeItem(pendingSubmissionKey);
+
+      // Show results
+      setSubmissionResult(submitResult.result);
+      setShowResults(true);
+      toast.success("Quiz submitted successfully! Great work.", "Success");
     } catch (err) {
       console.error("Failed to resume submission:", err);
       toast.error(
@@ -248,11 +272,12 @@ export default function TakeQuizClient({
   const handleSubmitQuiz = async () => {
     // Check if user is authenticated
     if (!submissionId) {
-      // Not authenticated - show error and redirect to login
-      toast.error("You need to login to submit your quiz", "Login Required");
+      // Not authenticated - save answers and redirect to login
+      savePendingAnswers(answers);
+      toast.success("Your answers have been saved! Please login to submit.", "Answers Saved");
       setTimeout(() => {
         redirectToLogin();
-      }, 500);
+      }, 1000);
       return;
     }
     // If logged in, submit directly

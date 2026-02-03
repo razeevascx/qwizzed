@@ -130,7 +130,9 @@ export function QuizLeaderboard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-foreground truncate">
-                {entry.submitted_by_name || entry.submitted_by_email}
+                {entry.submitted_by_name || 
+                 entry.submitted_by_email || 
+                 (entry.user_id ? `User ${entry.user_id.slice(0, 8)}` : "Anonymous")}
               </p>
             </div>
           </div>

@@ -47,7 +47,7 @@ export async function GET(
     const { data: leaderboard, error: leaderboardError } = await client
       .from("quiz_leaderboard")
       .select(
-        "submission_id, quiz_id, submitted_by_name, submitted_by_email, score, total_points, score_percentage, rank, submitted_at",
+        "submission_id, quiz_id, user_id, submitted_by_name, submitted_by_email, score, total_points, score_percentage, rank, submitted_at",
       )
       .eq("quiz_id", quiz.id)
       .order("rank", { ascending: true })

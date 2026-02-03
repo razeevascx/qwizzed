@@ -177,6 +177,7 @@ export async function POST(
         submitted_by_name: name,
         submitted_by_email: email,
         submitted_at: submittedAt,
+        status: "submitted",
       })
       .eq("id", submissionId)
       .select()
