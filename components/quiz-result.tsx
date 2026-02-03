@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Quiz } from "@/lib/types/quiz";
 import { SocialShare } from "@/components/social-share";
+import { Trophy } from "lucide-react";
 
 interface QuizResultProps {
   submissionResult: any;
   questionsCount: number;
   quiz: Quiz;
+  quizId?: string;
+  quizSlug?: string;
   onRetake: () => void;
 }
 
@@ -17,9 +20,12 @@ export function QuizResult({
   submissionResult,
   questionsCount,
   quiz,
+  quizId,
+  quizSlug,
   onRetake,
 }: QuizResultProps) {
   const router = useRouter();
+  const quizPath = quizSlug || quizId;
 
   const { scorePercentage, isPassed, timeTakenMinutes, timeTakenSeconds } =
     useMemo(() => {
@@ -43,8 +49,6 @@ export function QuizResult({
         timeTakenSeconds,
       };
     }, [submissionResult]);
-
-
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
@@ -129,7 +133,7 @@ export function QuizResult({
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Button
             onClick={() => router.push("/quiz")}
             size="lg"
@@ -137,6 +141,17 @@ export function QuizResult({
           >
             Explore More Quizzes
           </Button>
+          {quiz?.visibility === "public" && quizPath && (
+            <Button
+              onClick={() => router.push(`/quiz/${quizPath}/leaderboard`)}
+              variant="outline"
+              size="lg"
+              className="w-full h-12 rounded-lg font-medium gap-2"
+            >
+              <Trophy className="w-4 h-4" />
+              View Leaderboard
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={onRetake}
@@ -154,7 +169,6 @@ export function QuizResult({
           organizerName={quiz.organizer_name}
           className="pt-6 border-t border-dashed border-border mt-6"
         />
-
       </div>
     </div>
   );

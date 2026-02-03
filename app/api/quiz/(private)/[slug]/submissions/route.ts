@@ -5,10 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 // POST /api/quiz/[id]/submissions - create submission (taking quiz)
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { id } = await params;
+    const slug = (await params).slug;
     const client = await createClient();
     const {
       data: { user },
@@ -19,21 +19,34 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is the quiz creator
-    const { data: quiz } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
       .from("quizzes")
-      .select("creator_id")
-      .eq("id", id)
+      .select("id, creator_id")
+      .eq("slug", slug)
       .single();
 
-    if (!quiz || quiz.creator_id !== user.id) {
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
+
+    if (quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const { data: submissions, error } = await client
       .from("quiz_submissions")
       .select("*")
-      .eq("quiz_id", id)
+      .eq("quiz_id", quiz.id)
       .order("submitted_at", { ascending: false });
 
     if (error) throw error;
@@ -54,10 +67,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { id } = await params;
+    const slug = (await params).slug;
     const client = await createClient();
     const {
       data: { user },
@@ -68,11 +81,21 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: quiz } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
       .from("quizzes")
       .select("id, visibility, creator_id")
-      .eq("id", id)
+      .eq("slug", slug)
       .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, visibility, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
@@ -87,7 +110,7 @@ export async function POST(
           invitee_id: user.id,
           responded_at: new Date().toISOString(),
         })
-        .eq("quiz_id", id)
+        .eq("quiz_id", quiz.id)
         .eq("invitee_email", email)
         .eq("status", "pending");
     }
@@ -101,7 +124,7 @@ export async function POST(
       .from("quiz_submissions")
       .insert([
         {
-          quiz_id: id,
+          quiz_id: quiz.id,
           user_id: user.id,
           status: "in_progress",
           score: 0,

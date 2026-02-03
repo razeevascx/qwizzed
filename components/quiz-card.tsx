@@ -12,6 +12,7 @@ import {
   Lock,
   Globe,
   Share2,
+  Trophy,
 } from "lucide-react";
 
 interface QuizCardProps {
@@ -74,6 +75,7 @@ export function QuizCard({
   const difficulty = difficultyConfig[quiz.difficulty_level];
   const isInvited = accessType === "invited";
   const canDelete = !isInvited && Boolean(onDelete);
+  const quizPath = `/quiz/${quiz.slug || quiz.id}`;
 
   const cardContent = (
     <div
@@ -196,7 +198,7 @@ export function QuizCard({
                 asChild
                 className="h-8 text-xs font-medium"
               >
-                <Link href={`/quiz/${quiz.id}`}>
+                <Link href={quizPath}>
                   <Eye className="w-3.5 h-3.5 mr-1" />
                   View
                 </Link>
@@ -214,19 +216,33 @@ export function QuizCard({
                   Share
                 </Link>
               </Button>
-              {canDelete && (
+              {quiz.visibility === "public" && quiz.is_published ? (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onDelete?.(quiz.id);
-                  }}
-                  className="h-8 text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/5 border-destructive/20"
+                  asChild
+                  className="h-8 text-xs font-medium"
                 >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Delete
+                  <Link href={`${quizPath}/leaderboard`}>
+                    <Trophy className="w-3.5 h-3.5 mr-1" />
+                    Leaderboard
+                  </Link>
                 </Button>
+              ) : (
+                canDelete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onDelete?.(quiz.id);
+                    }}
+                    className="h-8 text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/5 border-destructive/20"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Delete
+                  </Button>
+                )
               )}
             </div>
           </div>
@@ -257,7 +273,7 @@ export function QuizCard({
   }
 
   return (
-    <Link href={`/quiz/${quiz.id}`} className="block h-full">
+    <Link href={quizPath} className="block h-full">
       {cardContent}
     </Link>
   );

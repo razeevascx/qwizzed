@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import QuizzesDataLoader from "./[id]/QuizzesDataLoader";
+import QuizzesDataLoader from "./_components/QuizzesDataLoader";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 

@@ -4,10 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 // PUT /api/quiz/[id]/questions/reorder - reorder questions
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { id } = await params;
+    const slug = (await params).slug;
     const client = await createClient();
 
     const {
@@ -19,14 +19,25 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: quiz, error: quizError } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz, error: quizError } = await client
       .from("quizzes")
-      .select()
-      .eq("id", id)
+      .select("id, creator_id")
+      .eq("slug", slug)
       .single();
 
+    if (quizError || !quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+      quizError = result.error;
+    }
+
     if (quizError) {
-      console.error("Quiz lookup error:", quizError, { id, userId: user.id });
+      console.error("Quiz lookup error:", quizError, { slug, userId: user.id });
     }
 
     if (!quiz || quiz.creator_id !== user.id) {
@@ -54,7 +65,7 @@ export async function PUT(
           .from("questions")
           .update({ order: q.order })
           .eq("id", q.id)
-          .eq("quiz_id", id),
+          .eq("quiz_id", quiz.id),
       ),
     );
 

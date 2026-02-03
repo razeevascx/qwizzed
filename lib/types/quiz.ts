@@ -6,6 +6,7 @@ export interface Quiz {
   title: string;
   description: string;
   creator_id: string;
+  slug?: string;
   created_at: string;
   updated_at: string;
   is_published: boolean;
@@ -112,6 +113,19 @@ export interface SubmitAnswerInput {
 export interface InviteUserInput {
   quiz_id: string;
   invitee_email: string;
+}
+
+export interface LeaderboardEntry {
+  submission_id: string;
+  quiz_id: string;
+  user_id?: string;
+  submitted_by_email: string;
+  submitted_by_name: string;
+  score: number;
+  total_points: number;
+  score_percentage: number;
+  rank: number;
+  submitted_at: string;
 }
 
 // Update types

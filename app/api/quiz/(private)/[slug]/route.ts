@@ -9,22 +9,34 @@ import {
   successResponse,
 } from "@/lib/api-utils";
 
-// GET /api/quiz/[id] - get quiz details with questions (public)
-// PUT /api/quiz/[id] - update quiz (authenticated, creator only)
-// DELETE /api/quiz/[id] - delete quiz (authenticated, creator only)
+// GET /api/quiz/[slug] - get quiz details with questions (public)
+// PUT /api/quiz/[slug] - update quiz (authenticated, creator only)
+// DELETE /api/quiz/[slug] - delete quiz (authenticated, creator only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const id = (await params).id;
+    const slug = (await params).slug;
     const client = await createClient();
 
-    const { data: quiz, error } = await client
+    // Try to find by slug first, then by id for backwards compatibility
+    let { data: quiz, error } = await client
       .from("quizzes")
       .select(QUIZ_FIELDS.DETAIL)
-      .eq("id", id)
+      .eq("slug", slug)
       .single();
+
+    // If not found by slug, try by id
+    if (error || !quiz) {
+      const result = await client
+        .from("quizzes")
+        .select(QUIZ_FIELDS.DETAIL)
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+      error = result.error;
+    }
 
     if (error) throw error;
     if (!quiz) {
@@ -35,7 +47,7 @@ export async function GET(
     const { data: questions, error: questionsError } = await client
       .from("questions")
       .select(QUESTION_FIELDS.DISPLAY)
-      .eq("quiz_id", id)
+      .eq("quiz_id", quiz.id)
       .order("order", { ascending: true });
 
     if (questionsError) throw questionsError;
@@ -51,18 +63,38 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
     const client = await createClient();
+
+    // Find quiz by slug or id
+    let { data: quiz } = await client
+      .from("quizzes")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return errorResponse("Quiz not found", "Quiz not found");
+    }
 
     const authResult = await requireAuth(client);
     if (authResult.error) return authResult.error;
 
     const ownershipResult = await verifyQuizOwnership(
       client,
-      id,
+      quiz.id,
       authResult.user!.id,
     );
     if (ownershipResult.error) return ownershipResult.error;
@@ -98,7 +130,7 @@ export async function PUT(
     const { data: updatedQuiz, error } = await client
       .from("quizzes")
       .update(updateData)
-      .eq("id", id)
+      .eq("id", quiz.id)
       .select()
       .single();
 
@@ -112,23 +144,43 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { id } = await params;
+    const slug = (await params).slug;
     const client = await createClient();
+
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
+      .from("quizzes")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return errorResponse("Quiz not found", "Quiz not found");
+    }
 
     const authResult = await requireAuth(client);
     if (authResult.error) return authResult.error;
 
     const ownershipResult = await verifyQuizOwnership(
       client,
-      id,
+      quiz.id,
       authResult.user!.id,
     );
     if (ownershipResult.error) return ownershipResult.error;
 
-    const { error } = await client.from("quizzes").delete().eq("id", id);
+    const { error } = await client.from("quizzes").delete().eq("id", quiz.id);
 
     if (error) throw error;
 

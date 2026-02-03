@@ -1,22 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// GET /api/quiz/[id]/questions/[questionId] - get question
-// PUT /api/quiz/[id]/questions/[questionId] - update question
-// DELETE /api/quiz/[id]/questions/[questionId] - delete question
+// GET /api/quiz/[slug]/questions/[questionId] - get question (public)
+// PUT /api/quiz/[slug]/questions/[questionId] - update question (authenticated, creator only)
+// DELETE /api/quiz/[slug]/questions/[questionId] - delete question (authenticated, creator only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; questionId: string }> },
+  { params }: { params: Promise<{ slug: string; questionId: string }> },
 ) {
   try {
-    const { id, questionId } = await params;
+    const { slug, questionId } = await params;
     const client = await createClient();
+
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
+      .from("quizzes")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
 
     const { data: question, error } = await client
       .from("questions")
       .select("*, question_options(*)")
       .eq("id", questionId)
-      .eq("quiz_id", id)
+      .eq("quiz_id", quiz.id)
       .single();
 
     if (error) throw error;
@@ -27,7 +47,16 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(question);
+    // Public response should not expose correct answers
+    const sanitizedQuestion = {
+      ...question,
+      question_options: question.question_options?.map((opt: any) => ({
+        ...opt,
+        is_correct: undefined,
+      })),
+    };
+
+    return NextResponse.json(sanitizedQuestion);
   } catch (error) {
     return NextResponse.json(
       {
@@ -41,10 +70,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; questionId: string }> },
+  { params }: { params: Promise<{ slug: string; questionId: string }> },
 ) {
   try {
-    const { id, questionId } = await params;
+    const { slug, questionId } = await params;
     const client = await createClient();
     const {
       data: { user },
@@ -55,13 +84,27 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: quiz } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
       .from("quizzes")
-      .select()
-      .eq("id", id)
+      .select("id, creator_id")
+      .eq("slug", slug)
       .single();
 
-    if (!quiz || quiz.creator_id !== user.id) {
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
+
+    if (quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -113,10 +156,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; questionId: string }> },
+  { params }: { params: Promise<{ slug: string; questionId: string }> },
 ) {
   try {
-    const { id, questionId } = await params;
+    const { slug, questionId } = await params;
     const client = await createClient();
     const {
       data: { user },
@@ -127,13 +170,27 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: quiz } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
       .from("quizzes")
-      .select()
-      .eq("id", id)
+      .select("id, creator_id")
+      .eq("slug", slug)
       .single();
 
-    if (!quiz || quiz.creator_id !== user.id) {
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
+
+    if (quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

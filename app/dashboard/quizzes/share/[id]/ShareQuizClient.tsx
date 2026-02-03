@@ -19,6 +19,7 @@ import {
   Eye,
   TrendingUp,
   PlusCircle,
+  Trophy,
 } from "lucide-react";
 import { QuizQrDisplay } from "@/components/quiz-qr-display";
 import {
@@ -58,15 +59,24 @@ export default function ShareQuizClient() {
     }
   };
 
-  const getShareUrl = () => {
+  const getLeaderboardUrl = () => {
+    const quizPath = quiz?.slug || quizId;
     if (typeof window !== "undefined") {
-      return `${window.location.origin}/quiz/${quizId}`;
+      return `${window.location.origin}/quiz/${quizPath}/leaderboard`;
     }
-    return `/quiz/${quizId}`;
+    return "";
+  };
+  const getShareUrl = () => {
+    const quizPath = quiz?.slug || quizId;
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/quiz/${quizPath}`;
+    }
+    return `/quiz/${quizPath}`;
   };
 
   const getEmbedCode = () => {
-    return `<iframe src="${window.location.origin}/quiz/${quizId}" width="100%" height="600" frameborder="0"></iframe>`;
+    const quizPath = quiz?.slug || quizId;
+    return `<iframe src="${window.location.origin}/quiz/${quizPath}" width="100%" height="600" frameborder="0"></iframe>`;
   };
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -255,6 +265,54 @@ export default function ShareQuizClient() {
                     Copy
                   </>
                 )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Leaderboard */}
+          <div className="rounded-lg border border-border/40 bg-card/50 p-6 space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-primary" />
+              Public Leaderboard
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Share your quiz leaderboard to see how users rank against each
+              other
+            </p>
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={getLeaderboardUrl()}
+                  readOnly
+                  className="w-full px-4 py-3 rounded-md border border-border/50 bg-muted/30 text-sm font-mono focus:outline-none"
+                />
+              </div>
+              <Button
+                className="gap-2 px-6 h-[46px]"
+                variant={copied === "leaderboard" ? "outline" : "default"}
+                onClick={() =>
+                  copyToClipboard(getLeaderboardUrl(), "leaderboard")
+                }
+              >
+                {copied === "leaderboard" ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.open(getLeaderboardUrl(), "_blank")}
+              >
+                <Eye className="w-4 h-4" />
+                Preview
               </Button>
             </div>
           </div>

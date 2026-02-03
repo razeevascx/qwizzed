@@ -5,11 +5,31 @@ import { createClient } from "@/lib/supabase/server";
 // PUT /api/quiz/[id]/submissions/[submissionId] - grade submission
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; submissionId: string }> },
+  { params }: { params: Promise<{ slug: string; submissionId: string }> },
 ) {
   try {
-    const { id, submissionId } = await params;
+    const { slug, submissionId } = await params;
     const client = await createClient();
+
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
+      .from("quizzes")
+      .select("id")
+      .eq("slug", slug)
+      .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
     const {
       data: { user },
       error: userError,
@@ -49,7 +69,7 @@ export async function POST(
         .from("questions")
         .select("*, question_options(*)")
         .eq("id", question_id)
-        .eq("quiz_id", id)
+        .eq("quiz_id", quiz.id)
         .single();
 
       if (qError || !question) {
@@ -125,7 +145,7 @@ export async function POST(
     const { data: questions } = await client
       .from("questions")
       .select("points")
-      .eq("quiz_id", id);
+      .eq("quiz_id", quiz.id);
 
     const totalPoints = (questions || []).reduce(
       (sum: number, q: any) => sum + (q.points || 1),
@@ -179,10 +199,10 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; submissionId: string }> },
+  { params }: { params: Promise<{ slug: string; submissionId: string }> },
 ) {
   try {
-    const { id, submissionId } = await params;
+    const { slug, submissionId } = await params;
     const client = await createClient();
     const {
       data: { user },
@@ -193,11 +213,25 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: quiz } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
       .from("quizzes")
-      .select()
-      .eq("id", id)
+      .select("id, creator_id")
+      .eq("slug", slug)
       .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
 
     if (!quiz || quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -232,7 +266,7 @@ export async function PUT(
     const { data: questions } = await client
       .from("questions")
       .select("points")
-      .eq("quiz_id", id);
+      .eq("quiz_id", quiz.id);
 
     const totalPoints = (questions || []).reduce(
       (sum, q) => sum + (q.points || 1),

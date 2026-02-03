@@ -4,10 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 // POST /api/quiz/[id]/questions - add question (authenticated)
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    const { id } = await params;
+    const slug = (await params).slug;
     const client = await createClient();
     const {
       data: { user },
@@ -18,11 +18,25 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: quiz } = await client
+    // Find quiz by slug or id for backwards compatibility
+    let { data: quiz } = await client
       .from("quizzes")
-      .select()
-      .eq("id", id)
+      .select("id, creator_id")
+      .eq("slug", slug)
       .single();
+
+    if (!quiz) {
+      const result = await client
+        .from("quizzes")
+        .select("id, creator_id")
+        .eq("id", slug)
+        .single();
+      quiz = result.data;
+    }
+
+    if (!quiz) {
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
+    }
 
     if (!quiz || quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -34,7 +48,7 @@ export async function POST(
     const { count } = await client
       .from("questions")
       .select("*", { count: "exact" })
-      .eq("quiz_id", id);
+      .eq("quiz_id", quiz.id);
 
     const order = (count || 0) + 1;
 
@@ -42,7 +56,7 @@ export async function POST(
       .from("questions")
       .insert([
         {
-          quiz_id: id,
+          quiz_id: quiz.id,
           question_text,
           question_type,
           points: points || 1,
@@ -68,7 +82,7 @@ export async function POST(
     await client
       .from("quizzes")
       .update({ total_questions: order })
-      .eq("id", id);
+      .eq("id", quiz.id);
 
     const { data: fullQuestion } = await client
       .from("questions")

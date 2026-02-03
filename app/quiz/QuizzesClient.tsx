@@ -35,22 +35,40 @@ export default function QuizzesClient({
       setIsLoading(true);
       try {
         const invitationsResponse = await fetch("/api/invitations");
-        if (!invitationsResponse.ok) return;
+        if (!invitationsResponse.ok) {
+          console.log("No invitations or error:", invitationsResponse.status);
+          return;
+        }
 
         const invitations = await invitationsResponse.json();
+
+        if (!Array.isArray(invitations) || invitations.length === 0) {
+          console.log("No invitations found");
+          return;
+        }
+
         const quizPromises = invitations.map(
           async (inv: { quiz_id: string }) => {
-            const quizResponse = await fetch(`/api/quiz/${inv.quiz_id}`);
-            if (quizResponse.ok) {
-              const quiz = await quizResponse.json();
-              return { ...quiz, isInvited: true } as QuizWithInvite;
+            try {
+              const quizResponse = await fetch(`/api/quiz/${inv.quiz_id}`);
+              if (quizResponse.ok) {
+                const quiz = await quizResponse.json();
+                if (!quiz || !quiz.id || !quiz.slug) {
+                  console.error("Invalid quiz data from API:", quiz);
+                  return null;
+                }
+                return { ...quiz, isInvited: true } as QuizWithInvite;
+              }
+            } catch (err) {
+              console.error("Failed to fetch quiz:", inv.quiz_id, err);
             }
             return null;
           },
         );
 
         const invitedQuizzes = (await Promise.all(quizPromises)).filter(
-          (quiz): quiz is QuizWithInvite => quiz !== null,
+          (quiz): quiz is QuizWithInvite =>
+            quiz !== null && quiz.id !== undefined,
         );
 
         if (!isMounted) return;
