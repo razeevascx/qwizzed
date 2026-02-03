@@ -7,9 +7,7 @@ import {
   Eye,
   BookOpen,
   Clock,
-  Zap,
   ArrowRight,
-  AlertCircle,
   Mail,
   Lock,
   Globe,
@@ -35,227 +33,215 @@ export function QuizCard({
   accessType,
   invitationStatus,
 }: QuizCardProps) {
+  const releaseAt = quiz.release_at ? new Date(quiz.release_at) : null;
+  const releaseMs = releaseAt ? releaseAt.getTime() : null;
+  const isScheduled = releaseMs !== null && releaseMs > Date.now();
+
+  const formatTimeRemaining = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
+
+  const releaseCountdown =
+    isScheduled && releaseMs !== null
+      ? formatTimeRemaining(releaseMs - Date.now())
+      : null;
+
   const difficultyConfig = {
     easy: {
-      bg: "bg-emerald-50 dark:bg-emerald-950/30",
-      text: "text-emerald-700 dark:text-emerald-300",
-      border: "border-emerald-200 dark:border-emerald-800",
+      bg: "bg-emerald-500/10",
+      text: "text-emerald-600 dark:text-emerald-400",
       label: "Easy",
     },
     medium: {
-      bg: "bg-amber-50 dark:bg-amber-950/30",
-      text: "text-amber-700 dark:text-amber-300",
-      border: "border-amber-200 dark:border-amber-800",
+      bg: "bg-amber-500/10",
+      text: "text-amber-600 dark:text-amber-400",
       label: "Medium",
     },
     hard: {
-      bg: "bg-rose-50 dark:bg-rose-950/30",
-      text: "text-rose-700 dark:text-rose-300",
-      border: "border-rose-200 dark:border-rose-800",
+      bg: "bg-rose-500/10",
+      text: "text-rose-600 dark:text-rose-400",
       label: "Hard",
     },
   };
 
   const difficulty = difficultyConfig[quiz.difficulty_level];
-
   const isInvited = accessType === "invited";
   const canDelete = !isInvited && Boolean(onDelete);
-  const canInvite = !isInvited && Boolean(onInvite);
-  const canShare = !isInvited && (Boolean(onShare) || showActions);
 
   const cardContent = (
-    <div className="group relative h-full rounded-2xl border border-border/50 bg-card hover:bg-card/80 hover:border-primary/40 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer flex flex-col">
-      {/* Gradient accent bar at top */}
-      <div className="h-1 bg-gradient-to-r from-primary/50 via-primary/30 to-transparent group-hover:from-primary/60 transition-all" />
-
-      <div className="relative p-6 flex flex-col h-full">
-        {/* Header with Title and Difficulty */}
-        <div className="space-y-3 mb-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                {quiz.title}
-              </h3>
-              {isInvited && (
-                <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary ring-1 ring-primary/20">
-                  <Mail className="w-3.5 h-3.5" />
-                  Invited{invitationStatus ? ` • ${invitationStatus}` : ""}
-                </div>
-              )}
-            </div>
-            <span
-              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap flex-shrink-0 ${difficulty.bg} ${difficulty.text}`}
-            >
-              {difficulty.label}
-            </span>
+    <div
+      className={`group relative h-full rounded-lg bg-card border-2 border-border transition-all duration-200 overflow-hidden flex flex-col ${
+        isScheduled && !showActions
+          ? "cursor-default opacity-60"
+          : "cursor-pointer hover:border-primary hover:shadow-xl hover:-translate-y-1"
+      }`}
+    >
+      {/* Header with gradient background */}
+      <div className="relative pt-6 px-6 pb-5 bg-gradient-to-br from-primary/5 to-transparent">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+              {quiz.title}
+            </h3>
           </div>
-          {quiz.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {quiz.description}
-            </p>
-          )}
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 ${difficulty.bg} ${difficulty.text}`}
+          >
+            {difficulty.label}
+          </span>
         </div>
+        {quiz.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {quiz.description}
+          </p>
+        )}
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-border/30">
+      {/* Invited badge */}
+      {isInvited && (
+        <div className="px-6 pt-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+            <Mail className="w-3 h-3" />
+            Invited{invitationStatus ? ` • ${invitationStatus}` : ""}
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div
+        className={`flex flex-col flex-1 px-6 ${isInvited ? "pt-3" : "pt-4"} pb-4`}
+      >
+        {/* Meta info grid */}
+        <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-border/30">
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Questions
-              </span>
-            </div>
-            <p className="text-sm font-bold text-foreground">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+              Category
+            </p>
+            <p className="text-sm font-semibold text-foreground line-clamp-1">
+              {quiz.category}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+              Questions
+            </p>
+            <p className="text-sm font-semibold text-foreground">
               {quiz.total_questions}
             </p>
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-primary" />
-              <span className="text-xs font-medium text-muted-foreground">
-                Category
-              </span>
-            </div>
-            <p className="text-sm font-bold text-foreground line-clamp-1">
-              {quiz.category}
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+              Time
+            </p>
+            <p className="text-sm font-semibold text-foreground">
+              {quiz.time_limit_minutes ? `${quiz.time_limit_minutes}m` : "∞"}
             </p>
           </div>
-          {quiz.time_limit_minutes && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  Time
-                </span>
-              </div>
-              <p className="text-sm font-bold text-foreground">
-                {quiz.time_limit_minutes}m
-              </p>
-            </div>
-          )}
         </div>
 
-        {/* Published Status and Visibility - Only show when showActions is true */}
+        {/* Status badges - Only show when showActions */}
         {showActions && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            {quiz.is_published && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
-                <div className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {quiz.is_published ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 Published
-              </div>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 text-xs font-medium border border-amber-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                Draft
+              </span>
             )}
             {quiz.visibility && (
-              <div
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  quiz.visibility === "public"
-                    ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                    : "bg-slate-50 dark:bg-slate-950/30 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
-                }`}
-              >
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium">
                 {quiz.visibility === "public" ? (
                   <Globe className="w-3 h-3" />
                 ) : (
                   <Lock className="w-3 h-3" />
                 )}
-                {quiz.visibility.charAt(0).toUpperCase() +
-                  quiz.visibility.slice(1)}
-              </div>
+                {quiz.visibility === "public" ? "Public" : "Private"}
+              </span>
             )}
           </div>
         )}
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Actions */}
+        {/* Footer Actions */}
         {showActions ? (
-          <div className="space-y-2 pt-4 border-t border-border/30">
-            <div className="grid grid-cols-4 gap-2">
+          <div className="pt-4 border-t border-border/50">
+            <div className="grid grid-cols-2 gap-2 mb-2">
               <Button
                 variant="outline"
                 size="sm"
                 asChild
-                className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
-                title="Edit quiz"
+                className="h-8 text-xs font-medium"
               >
-                <Link href={`/quizzes/edit/${quiz.id}`}>
-                  <Edit className="w-3.5 h-3.5" />
-                  <span>Edit</span>
+                <Link href={`/dashboard/quizzes/edit/${quiz.id}`}>
+                  <Edit className="w-3.5 h-3.5 mr-1" />
+                  Edit
                 </Link>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 asChild
-                className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
-                title="Preview quiz"
+                className="h-8 text-xs font-medium"
               >
                 <Link href={`/quiz/${quiz.id}`}>
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>View</span>
+                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  View
                 </Link>
               </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 asChild
-                className="w-full gap-1.5 text-xs h-9 hover:border-primary/40"
-                title="Share quiz"
+                className="h-8 text-xs font-medium"
               >
-                <Link href={`/quizzes/share/${quiz.id}`}>
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
+                <Link href={`/dashboard/quizzes/share/${quiz.id}`}>
+                  <Share2 className="w-3.5 h-3.5 mr-1" />
+                  Share
                 </Link>
               </Button>
-              {canDelete ? (
+              {canDelete && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={(e) => {
                     e.preventDefault();
                     onDelete?.(quiz.id);
                   }}
-                  className="w-full gap-1.5 text-xs h-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  title="Delete quiz"
+                  className="h-8 text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/5 border-destructive/20"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete</span>
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full gap-1.5 text-xs h-9 text-muted-foreground cursor-default"
-                  disabled
-                  title="Invited quizzes cannot be deleted"
-                >
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>Invited</span>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Delete
                 </Button>
               )}
             </div>
-            {quiz.visibility === "private" && canInvite && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onInvite?.(quiz.id);
-                }}
-                className="w-full gap-2 text-xs h-9 hover:border-primary/40"
-                title="Invite users"
-              >
-                <Mail className="w-3.5 h-3.5" />
-                <span>Invite Users</span>
-              </Button>
-            )}
           </div>
         ) : (
-          <div className="flex items-center justify-between pt-4 border-t border-border/30 group-hover:border-primary/40 transition-colors">
-            <span className="text-sm font-semibold text-foreground">
-              Take Quiz
-            </span>
-            <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-all duration-300" />
+          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            {releaseCountdown ? (
+              <span className="text-xs text-muted-foreground font-medium">
+                Releases in {releaseCountdown}
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                Start Quiz
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -264,6 +250,10 @@ export function QuizCard({
 
   if (showActions) {
     return cardContent;
+  }
+
+  if (isScheduled) {
+    return <div className="block h-full">{cardContent}</div>;
   }
 
   return (

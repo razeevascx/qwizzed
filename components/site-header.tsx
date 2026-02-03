@@ -11,12 +11,14 @@ import {
 
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import Logo from "@/components/Logo";
 
 const navItems = [
   { href: "/", label: "Home", icon: BookOpen },
   { href: "/quiz", label: "Explore", icon: List },
+  { href: "/about", label: "About", icon: BarChart3 },
   { href: "/privacy", label: "Privacy", icon: LayoutGrid },
-  { href: "/term", label: "Term", icon: Plus },
+  { href: "/terms", label: "Terms", icon: Plus },
 ];
 
 function NavLink({
@@ -62,8 +64,8 @@ export function SiteHeader() {
         >
           <div className="relative">
             <div className="absolute inset-0 bg-primary/30 blur-lg rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary/20 border border-primary/20 group-hover:border-primary/30 transition-all duration-300">
-              <BookOpen className="h-5 w-5 text-primary relative z-10" />
+            <div className="relative group-hover:scale-110 transition-transform duration-300">
+              <Logo />
             </div>
           </div>
           <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent group-hover:from-primary group-hover:to-primary/80 transition-all duration-300">

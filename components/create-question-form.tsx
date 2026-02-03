@@ -122,7 +122,7 @@ export function CreateQuestionForm({
         >
           Question Text <span className="text-destructive">*</span>
         </Label>
-        <textarea
+        <Input
           id="question-text"
           placeholder="Write your question here. Be clear and concise..."
           value={questionText}
@@ -130,8 +130,7 @@ export function CreateQuestionForm({
           onBlur={() => setTouched({ ...touched, questionText: true })}
           required
           disabled={isLoading}
-          rows={3}
-          className="w-full px-4 py-3 border border-border/50 rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none transition-all"
+          className="w-full"
         />
         {touched.questionText && !questionText && (
           <div className="mt-2 flex items-center gap-2 text-sm text-destructive">

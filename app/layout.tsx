@@ -12,6 +12,48 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Qwizzed - Quiz Platform",
   description: "Create, share, and take interactive quizzes with Qwizzed",
+  applicationName: "Qwizzed",
+  keywords: [
+    "quiz platform",
+    "online quizzes",
+    "create quizzes",
+    "interactive learning",
+    "knowledge tests",
+    "education",
+    "Qwizzed",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Qwizzed",
+    title: "Qwizzed - Quiz Platform",
+    description: "Create, share, and take interactive quizzes with Qwizzed",
+  },
+  authors: [
+    {
+      name: "Rajeev Puri",
+    },
+  ],
+  twitter: {
+    card: "summary_large_image",
+    title: "Qwizzed - Quiz Platform",
+    description: "Create, share, and take interactive quizzes with Qwizzed",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 const geistSans = Geist({

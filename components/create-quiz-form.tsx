@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreateQuizInput } from "@/lib/types/quiz";
-import { Clock, BookOpen, Zap, AlertCircle, Globe, Lock } from "lucide-react";
+import { AlertCircle, Globe, Lock } from "lucide-react";
+import { ReleaseDateTimePicker } from "@/components/release-datetime-picker";
 
 interface CreateQuizFormProps {
   onSubmit: (data: CreateQuizInput) => Promise<void>;
@@ -20,6 +21,7 @@ export function CreateQuizForm({
     difficulty_level: "medium",
     category: "",
     time_limit_minutes: null,
+    release_at: null,
     visibility: "public",
     organizer_name: "",
   });
@@ -54,7 +56,11 @@ export function CreateQuizForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    const payload: CreateQuizInput = {
+      ...formData,
+      release_at: formData.release_at || null,
+    };
+    await onSubmit(payload);
   };
 
   const difficultyOptions = [
@@ -79,157 +85,158 @@ export function CreateQuizForm({
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Quiz Title & Description */}
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="title" className="text-sm font-semibold mb-2 block">
-            Quiz Title <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="title"
-            name="title"
-            type="text"
-            placeholder="e.g., Advanced JavaScript Concepts"
-            value={formData.title}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            disabled={isLoading}
-            className="bg-card/50 border-border/40 h-10 focus:ring-primary/50 focus:border-primary/60"
-          />
-          {touched.title && !formData.title && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs text-destructive">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Quiz title is required
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Label
-            htmlFor="description"
-            className="text-sm font-semibold mb-2 block"
-          >
-            Description <span className="text-destructive">*</span>
-          </Label>
-          <textarea
-            id="description"
-            name="description"
-            placeholder="Describe what this quiz is about and what students will learn..."
-            value={formData.description}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            disabled={isLoading}
-            rows={3}
-            className="w-full px-3 py-2 border border-border/40 rounded-md bg-card/50 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 resize-none text-sm"
-          />
-          {touched.description && !formData.description && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs text-destructive">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Description is required
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Label htmlFor="organizer_name" className="text-sm font-semibold mb-2 block">
-            Organized By <span className="text-muted-foreground font-normal text-xs">(Optional)</span>
-          </Label>
-          <Input
-            id="organizer_name"
-            name="organizer_name"
-            type="text"
-            placeholder="e.g., Prof. Smith, Tech Community, etc."
-            value={formData.organizer_name || ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            disabled={isLoading}
-            className="bg-card/50 border-border/40 h-10 focus:ring-primary/50 focus:border-primary/60"
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Quiz Title */}
+      <div>
+        <Label htmlFor="title" className="text-sm font-semibold mb-3 block">
+          Quiz Title <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="title"
+          name="title"
+          type="text"
+          placeholder="e.g., Advanced JavaScript Concepts"
+          value={formData.title}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          required
+          disabled={isLoading}
+          className="bg-card border-border h-11 focus:ring-primary/50 focus:border-primary/60"
+        />
+        {touched.title && !formData.title && (
+          <div className="mt-2 flex items-start gap-2 text-xs text-destructive">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>Quiz title is required</span>
+          </div>
+        )}
       </div>
 
-      {/* Grid: Category & Difficulty */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label
-            htmlFor="category"
-            className="text-sm font-semibold mb-2 flex items-center gap-1.5"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-primary/70" />
-            Category <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="category"
-            name="category"
-            type="text"
-            placeholder="e.g., Technology, History, Math"
-            value={formData.category}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            disabled={isLoading}
-            className="bg-card/50 border-border/40 h-10 focus:ring-primary/50 focus:border-primary/60"
-          />
-          {touched.category && !formData.category && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs text-destructive">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Category is required
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Label className="text-sm font-semibold mb-2 block">
-            Difficulty Level <span className="text-destructive">*</span>
-          </Label>
-          <div className="flex gap-2">
-            {difficultyOptions.map((option) => (
-              <label
-                key={option.value}
-                className={`flex-1 flex items-center justify-center p-2.5 rounded-md border cursor-pointer transition-all font-medium text-xs ${
-                  formData.difficulty_level === option.value
-                    ? option.color === "emerald"
-                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                      : option.color === "amber"
-                        ? "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                        : "border-rose-500/50 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                    : "border-border/40 hover:border-border/60 text-muted-foreground hover:text-foreground hover:bg-card/50"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="difficulty_level"
-                  value={option.value}
-                  checked={formData.difficulty_level === option.value}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className="sr-only"
-                />
-                {option.label}
-              </label>
-            ))}
+      {/* Description */}
+      <div>
+        <Label
+          htmlFor="description"
+          className="text-sm font-semibold mb-3 block"
+        >
+          Description <span className="text-destructive">*</span>
+        </Label>
+        <textarea
+          id="description"
+          name="description"
+          placeholder="Describe what this quiz is about and what students will learn..."
+          value={formData.description}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          required
+          disabled={isLoading}
+          rows={4}
+          className="w-full px-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 resize-none text-sm"
+        />
+        {touched.description && !formData.description && (
+          <div className="mt-2 flex items-start gap-2 text-xs text-destructive">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>Description is required</span>
           </div>
+        )}
+      </div>
+
+      {/* Organizer */}
+      <div>
+        <Label
+          htmlFor="organizer_name"
+          className="text-sm font-semibold mb-3 block"
+        >
+          Organized By{" "}
+          <span className="text-muted-foreground font-normal text-xs">
+            (Optional)
+          </span>
+        </Label>
+        <Input
+          id="organizer_name"
+          name="organizer_name"
+          type="text"
+          placeholder="e.g., Prof. Smith, Tech Community, etc."
+          value={formData.organizer_name || ""}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          disabled={isLoading}
+          className="bg-card border-border h-11 focus:ring-primary/50 focus:border-primary/60"
+        />
+      </div>
+
+      {/* Category */}
+      <div>
+        <Label htmlFor="category" className="text-sm font-semibold mb-3 block">
+          Category <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="category"
+          name="category"
+          type="text"
+          placeholder="e.g., Technology, History, Math"
+          value={formData.category}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          required
+          disabled={isLoading}
+          className="bg-card border-border h-11 focus:ring-primary/50 focus:border-primary/60"
+        />
+        {touched.category && !formData.category && (
+          <div className="mt-2 flex items-start gap-2 text-xs text-destructive">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>Category is required</span>
+          </div>
+        )}
+      </div>
+
+      {/* Difficulty Level */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block">
+          Difficulty Level <span className="text-destructive">*</span>
+        </Label>
+        <div className="flex gap-3">
+          {difficultyOptions.map((option) => (
+            <label
+              key={option.value}
+              className={`flex-1 flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all font-medium text-sm ${
+                formData.difficulty_level === option.value
+                  ? option.color === "emerald"
+                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                    : option.color === "amber"
+                      ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                      : "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300"
+                  : "border-border hover:border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <input
+                type="radio"
+                name="difficulty_level"
+                value={option.value}
+                checked={formData.difficulty_level === option.value}
+                onChange={handleChange}
+                disabled={isLoading}
+                className="sr-only"
+              />
+              {option.label}
+            </label>
+          ))}
         </div>
       </div>
 
       {/* Visibility */}
       <div>
-        <Label className="text-sm font-semibold mb-2 block">
+        <Label className="text-sm font-semibold mb-3 block">
           Quiz Visibility <span className="text-destructive">*</span>
         </Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {visibilityOptions.map((option) => {
             const Icon = option.icon;
             return (
               <label
                 key={option.value}
-                className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
+                className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   formData.visibility === option.value
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-border/40 hover:border-border/60 hover:bg-card/50"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-border/80 hover:bg-muted/30"
                 }`}
               >
                 <input
@@ -242,15 +249,15 @@ export function CreateQuizForm({
                   className="sr-only"
                 />
                 <Icon
-                  className={`w-4 h-4 flex-shrink-0 ${
+                  className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
                     formData.visibility === option.value
                       ? "text-primary"
                       : "text-muted-foreground"
                   }`}
                 />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1">
                   <div
-                    className={`font-medium text-sm ${
+                    className={`font-semibold text-sm ${
                       formData.visibility === option.value
                         ? "text-foreground"
                         : "text-muted-foreground"
@@ -258,7 +265,7 @@ export function CreateQuizForm({
                   >
                     {option.label}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {option.description}
                   </div>
                 </div>
@@ -272,9 +279,8 @@ export function CreateQuizForm({
       <div>
         <Label
           htmlFor="time_limit_minutes"
-          className="text-sm font-semibold mb-2 flex items-center gap-1.5"
+          className="text-sm font-semibold mb-3 block"
         >
-          <Clock className="w-3.5 h-3.5 text-primary/70" />
           Time Limit{" "}
           <span className="text-muted-foreground font-normal text-xs">
             (Optional)
@@ -290,17 +296,25 @@ export function CreateQuizForm({
             onChange={handleChange}
             min="1"
             disabled={isLoading}
-            className="bg-card/50 border-border/40 pr-16 h-10 focus:ring-primary/50 focus:border-primary/60"
+            className="bg-card border-border h-11 pr-20 focus:ring-primary/50 focus:border-primary/60"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
             minutes
           </span>
         </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Set a time limit for quiz takers to complete the quiz, or leave empty
-          for unlimited time
+        <p className="mt-2 text-xs text-muted-foreground">
+          Set a time limit for quiz takers, or leave empty for unlimited time
         </p>
       </div>
+
+      {/* Release Date */}
+      <ReleaseDateTimePicker
+        value={formData.release_at || null}
+        onChange={(value) =>
+          setFormData((prev) => ({ ...prev, release_at: value }))
+        }
+        disabled={isLoading}
+      />
 
       {/* Submit Button */}
       <Button
@@ -312,19 +326,9 @@ export function CreateQuizForm({
           !formData.category
         }
         size="lg"
-        className="w-full gap-2 h-10 text-sm font-semibold mt-8"
+        className="w-full h-12 text-base font-semibold mt-10"
       >
-        {isLoading ? (
-          <>
-            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-            Creating Quiz...
-          </>
-        ) : (
-          <>
-            <Zap className="w-4 h-4" />
-            Create Quiz
-          </>
-        )}
+        {isLoading ? "Creating Quiz..." : "Create Quiz"}
       </Button>
     </form>
   );

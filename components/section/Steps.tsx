@@ -2,7 +2,7 @@ import Layout from "../layout/Layout";
 
 export default function Steps() {
   return (
-    <section className="border-t border-border/30 py-20 px-6 bg-muted/30">
+    <section className="border-t border-border/30 py-20 bg-muted/30">
       <Layout>
         <div className="space-y-3 mb-16">
           <h3 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">

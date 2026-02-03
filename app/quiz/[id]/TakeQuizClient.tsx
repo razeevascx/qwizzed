@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Quiz, Question, QuestionOption } from "@/lib/types/quiz";
+import { quizApi } from "@/lib/api-client";
 import {
   ArrowLeft,
   Clock,
@@ -14,9 +15,8 @@ import {
   Maximize2,
   Minimize2,
   CheckCircle2,
-  AlertCircle,
+  LogOut,
 } from "lucide-react";
-import Link from "next/link";
 import Layout from "@/components/layout/Layout";
 import { toggleFullscreen } from "@/lib/fullscreen";
 
@@ -24,7 +24,15 @@ interface QuestionWithOptions extends Question {
   question_options?: QuestionOption[];
 }
 
-export default function TakeQuizClient({ quizId }: { quizId: string }) {
+type QuizWithQuestions = Quiz & { questions?: QuestionWithOptions[] };
+
+export default function TakeQuizClient({
+  quizId,
+  initialQuiz,
+}: {
+  quizId: string;
+  initialQuiz?: QuizWithQuestions | null;
+}) {
   const router = useRouter();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -37,74 +45,184 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [releaseTimeLeft, setReleaseTimeLeft] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const pendingSubmissionKey = `pending-quiz-submission:${quizId}`;
 
   useEffect(() => {
     if (!quizId) return;
+    if (initialQuiz) {
+      initializeQuiz(initialQuiz);
+      return;
+    }
     loadQuiz();
-  }, [quizId]);
+  }, [quizId, initialQuiz]);
 
   useEffect(() => {
-    if (!timeLeft || timeLeft <= 0 || !submissionId) return;
+    if (timeLeft === null || timeLeft <= 0 || showResults) return;
 
-    const timer = setTimeout(() => {
-      setTimeLeft(timeLeft - 1);
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev && prev > 0 ? prev - 1 : 0));
     }, 1000);
 
-    return () => clearTimeout(timer);
-  }, [timeLeft, submissionId]);
+    return () => clearInterval(timer);
+  }, [timeLeft, showResults]);
 
   // Handle time out
   useEffect(() => {
     if (timeLeft === 0 && !showResults && !isSubmitting) {
       handleSubmitQuiz();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, showResults, isSubmitting]);
+
+  useEffect(() => {
+    if (releaseTimeLeft === null || releaseTimeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setReleaseTimeLeft((prev) => (prev && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [releaseTimeLeft]);
 
   useEffect(() => {
     const handleFsChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFsChange);
-    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
+
+  const createSubmission = async () => {
+    const result = await quizApi.createSubmission(quizId);
+
+    if (!result.ok) {
+      if (result.error?.includes("401")) {
+        return { kind: "auth_required" as const };
+      }
+      throw new Error(result.error || "Failed to create submission");
+    }
+
+    return { kind: "ok" as const, submission: result.data };
+  };
+
+  const submitAnswers = async (
+    targetSubmissionId: string,
+    batchAnswers: Array<{ question_id: string; user_answer: string }>,
+  ) => {
+    const result = await quizApi.submitAnswers(quizId, targetSubmissionId, {
+      answers: batchAnswers,
+    });
+
+    if (!result.ok) {
+      if (result.error?.includes("401")) {
+        return { kind: "auth_required" as const };
+      }
+      throw new Error(result.error || "Failed to submit quiz");
+    }
+
+    return { kind: "ok" as const, result: result.data };
+  };
+
+  const savePendingAnswers = (pendingAnswers: Record<string, string>) => {
+    localStorage.setItem(
+      pendingSubmissionKey,
+      JSON.stringify({
+        answers: pendingAnswers,
+        savedAt: new Date().toISOString(),
+      }),
+    );
+  };
+
+  const redirectToLogin = () => {
+    setShowLoginPrompt(true);
+    // Redirect to login with return path to show results after submission
+    router.push(`/get-started?next=${encodeURIComponent(`/quiz/${quizId}`)}`);
+  };
+
+  const resumePendingSubmission = async (
+    pendingAnswers: Record<string, string>,
+  ) => {
+    try {
+      // Create submission first
+      const createResult = await createSubmission();
+      if (createResult.kind === "auth_required") {
+        redirectToLogin();
+        return;
+      }
+
+      setSubmissionId((createResult as any).submission.id);
+      setAnswers(pendingAnswers);
+
+      // Auto-submit pending answers since user is authenticated
+      // and backend will extract name/email from session
+      setCurrentQuestionIndex(questions.length - 1);
+    } catch (err) {
+      console.error("Failed to resume submission:", err);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit quiz. Please try again.",
+        "Submission Failed",
+      );
+    }
+  };
+
+  const initializeQuiz = async (quizData: QuizWithQuestions) => {
+    try {
+      setQuiz(quizData);
+
+      const releaseAt = quizData.release_at
+        ? new Date(quizData.release_at).getTime()
+        : null;
+      const now = Date.now();
+      if (releaseAt && releaseAt > now) {
+        setReleaseTimeLeft(Math.ceil((releaseAt - now) / 1000));
+        return;
+      }
+
+      setReleaseTimeLeft(null);
+      setQuestions(quizData.questions || []);
+
+      const pendingRaw = localStorage.getItem(pendingSubmissionKey);
+      if (pendingRaw) {
+        const pending = JSON.parse(pendingRaw);
+        if (pending?.answers) {
+          setAnswers(pending.answers);
+          await resumePendingSubmission(pending.answers);
+          return;
+        }
+      }
+
+      const createResult = await createSubmission();
+      if (createResult.kind === "ok") {
+        setSubmissionId((createResult as any).submission.id);
+      }
+
+      const timeLimitMinutes = Number(quizData.time_limit_minutes);
+      if (Number.isFinite(timeLimitMinutes) && timeLimitMinutes > 0) {
+        setTimeLeft(timeLimitMinutes * 60);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadQuiz = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/quizzes/${quizId}`);
-      if (!response.ok) throw new Error("Failed to load quiz");
-      const quizData = await response.json();
-      setQuiz(quizData);
-
-      const questionsResponse = await fetch(`/api/quizzes/${quizId}/questions`);
-      if (!questionsResponse.ok) {
-        const errorData = await questionsResponse.json();
-        console.error("Questions fetch failed:", errorData);
-        throw new Error(errorData.error || "Failed to load questions");
+      const result = await quizApi.getQuiz(quizId);
+      if (!result.ok || !result.data) {
+        throw new Error(result.error || "Failed to load quiz");
       }
-      const questionsData = await questionsResponse.json();
-      setQuestions(questionsData);
-
-      // Create submission
-      const submissionResponse = await fetch(
-        `/api/quizzes/${quizId}/submissions`,
-        {
-          method: "POST",
-        },
-      );
-      if (!submissionResponse.ok) {
-        const errorData = await submissionResponse.json();
-        console.error("Submission creation failed:", errorData);
-        throw new Error(errorData.error || "Failed to create submission");
-      }
-      const submission = await submissionResponse.json();
-      setSubmissionId(submission.id);
-
-      // Set timer if quiz has time limit
-      if (quizData.time_limit_minutes) {
-        setTimeLeft(quizData.time_limit_minutes * 60);
-      }
+      await initializeQuiz(result.data as QuizWithQuestions);
     } catch (err) {
       console.error(err);
     } finally {
@@ -127,14 +245,21 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
     }
   };
 
-
-
   const handleSubmitQuiz = async () => {
+    // Check if user is authenticated
     if (!submissionId) {
-      toast.error("Submission session lost. Please reload the quiz.", "Error");
+      // Not authenticated - show error and redirect to login
+      toast.error("You need to login to submit your quiz", "Login Required");
+      setTimeout(() => {
+        redirectToLogin();
+      }, 500);
       return;
     }
+    // If logged in, submit directly
+    await submitQuizAnswers();
+  };
 
+  const submitQuizAnswers = async () => {
     setIsSubmitting(true);
     try {
       // Format answers for batch submission
@@ -143,35 +268,28 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
         user_answer: val,
       }));
 
-      console.log("Submitting quiz:", { quizId, submissionId, answerCount: batchAnswers.length });
-      const response = await fetch(
-        `/api/quizzes/${quizId}/submissions/${submissionId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers: batchAnswers }),
-        },
-      );
+      // Get user info from authenticated session
+      // The backend will use the authenticated user's name/email
+      const finalSubmissionId = submissionId;
 
-      console.log("Submit response status:", response.status);
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Submit error response:", text);
-        let errorData;
-        try {
-          errorData = JSON.parse(text);
-        } catch {
-          errorData = { error: text || "Unknown error" };
-        }
-        throw new Error(
-          errorData.error ||
-            `Failed to submit quiz (Status: ${response.status})`,
-        );
+      if (!finalSubmissionId) {
+        throw new Error("Submission ID is required");
       }
 
-      const result = await response.json();
-      setSubmissionResult(result);
+      // Submit answers - backend will use authenticated user's name/email
+      const submitResult = await submitAnswers(finalSubmissionId, batchAnswers);
+
+      if (submitResult.kind === "auth_required") {
+        savePendingAnswers(answers);
+        redirectToLogin();
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Clear pending data
+      localStorage.removeItem(pendingSubmissionKey);
+
+      setSubmissionResult(submitResult.result);
       setShowResults(true);
       toast.success("Quiz submitted successfully! Great work.", "Success");
     } catch (err) {
@@ -180,7 +298,7 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
         err instanceof Error
           ? err.message
           : "Failed to submit quiz. Please try again.",
-        "Submission Failed"
+        "Submission Failed",
       );
     } finally {
       setIsSubmitting(false);
@@ -202,6 +320,29 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (releaseTimeLeft !== null && releaseTimeLeft > 0) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <div className="max-w-lg w-full rounded-2xl border border-border bg-card p-8 text-center space-y-4">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-primary/10">
+              <Clock className="w-7 h-7 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold">Quiz releases soon</h2>
+              <p className="text-muted-foreground">
+                This quiz will be available in
+              </p>
+            </div>
+            <div className="text-3xl font-bold text-primary">
+              {formatReleaseCountdown(releaseTimeLeft)}
+            </div>
+          </div>
+        </div>
+      </Layout>
     );
   }
 
@@ -247,14 +388,89 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  function formatReleaseCountdown(seconds: number) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m ${secs}s`;
+  }
+
   const handleFullscreenToggle = () => {
     toggleFullscreen(document.documentElement);
   };
 
+  const handleExitQuiz = () => {
+    if (Object.keys(answers).length > 0) {
+      setShowExitConfirm(true);
+    } else {
+      router.push("/quiz");
+    }
+  };
+
+  const confirmExit = () => {
+    setShowExitConfirm(false);
+    router.push("/quiz");
+  };
+
   return (
     <Layout>
-      <div className="w-full max-w-4xl mx-auto pt-10 px-6">
+      <div className="w-full max-w-8xl mx-auto pt-10 px-6">
         <div className="flex flex-col gap-8">
+          {showLoginPrompt && (
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">
+                    Sign in to submit your answers
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    We saved your answers. Sign in to submit and see results.
+                  </p>
+                </div>
+                <Button onClick={redirectToLogin} className="w-full sm:w-auto">
+                  Sign in to submit
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {showExitConfirm && (
+            <div className="rounded-xl border border-amber-200/40 bg-amber-50 dark:bg-amber-950/20 p-4 sm:p-5">
+              <div className="flex flex-col gap-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                    Exit quiz?
+                  </p>
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                    You have unsaved answers. They will be lost if you exit
+                    without submitting.
+                  </p>
+                </div>
+                <div className="flex gap-3 sm:flex-row-reverse">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowExitConfirm(false)}
+                    className="flex-1 sm:flex-none"
+                  >
+                    Continue Quiz
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={confirmExit}
+                    className="flex-1 sm:flex-none"
+                  >
+                    Exit Without Saving
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Header Info */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -291,6 +507,13 @@ export default function TakeQuizClient({ quizId }: { quizId: string }) {
                 ) : (
                   <Maximize2 className="w-4 h-4" />
                 )}
+              </button>
+              <button
+                onClick={handleExitQuiz}
+                className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                title="Exit quiz"
+              >
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           </div>

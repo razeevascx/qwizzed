@@ -26,9 +26,8 @@ export default function PrivacySecurity() {
   ];
 
   return (
-    <Layout className="py-20">
-      {" "}
-      <div className=" mb-12">
+    <Layout>
+      <div className="mb-12">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
           Privacy & Security You Can Trust
         </h2>

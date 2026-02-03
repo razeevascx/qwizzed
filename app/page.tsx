@@ -3,10 +3,9 @@ import { SiteHeader } from "@/components/site-header";
 import FAQSection from "@/components/faq-section";
 import Landing from "@/components/section/Landing";
 import PrivacySecurity from "@/components/section/PrivacySecurity";
-import GetStarted from "@/components/Get-started";
+
 import Steps from "@/components/section/Steps";
 import Features from "@/components/section/Features";
-// import Supabase from "@/components/section/Supabase";
 
 export default function Home() {
   return (
@@ -25,8 +24,6 @@ export default function Home() {
       </main>
 
       <SiteFooter />
-      <GetStarted />
-      {/* <Supabase /> */}
     </div>
   );
 }

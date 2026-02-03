@@ -4,9 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CreateQuizForm } from "@/components/create-quiz-form";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { CreateQuizInput, Quiz } from "@/lib/types/quiz";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
 
 export default function CreateQuizPage() {
   const router = useRouter();
@@ -32,7 +39,7 @@ export default function CreateQuizPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/quizzes", {
+      const response = await fetch("/api/quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -43,7 +50,7 @@ export default function CreateQuizPage() {
       }
 
       const quiz = await response.json();
-      router.push(`/quizzes/edit/${quiz.id}`);
+      router.push(`/dashboard/quizzes/edit/${quiz.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -53,8 +60,21 @@ export default function CreateQuizPage() {
 
   return (
     <div className="bg-background text-foreground">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Create Quiz</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
-      <div className="space-y-6 mb-8">
+      <div className="space-y-6 mb-8 mt-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-4xl font-bold tracking-tight mb-2">

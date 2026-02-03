@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   Loader2,
@@ -18,6 +19,8 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const searchParams = useSearchParams();
+  const nextParam = searchParams?.get("next") || "/quiz";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -37,7 +40,7 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/get-started/callback?next=/quiz`,
+          emailRedirectTo: `${window.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
         },
       });
 
@@ -60,7 +63,7 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/get-started/callback?next=/quiz`,
+          redirectTo: `${window.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
         },
       });
 
