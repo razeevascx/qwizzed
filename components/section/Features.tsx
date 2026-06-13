@@ -83,8 +83,6 @@ export default function Features() {
             );
           })}
         </div>
-
-        <div className="border-t border-border/30 " />
       </Layout>
     </section>
   );

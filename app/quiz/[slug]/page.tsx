@@ -80,42 +80,64 @@ async function PageContent({ params }: { params: Promise<{ slug: string }> }) {
   }
 
   return (
-    <div className="min-h-dvh py-10 space-y-10">
-      <div className="space-y-3">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-          {quiz?.title || "Quiz"}
-        </h1>
-        {quiz?.description && (
-          <p className="text-muted-foreground text-lg">{quiz.description}</p>
-        )}
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          {quiz?.category && <span>{quiz.category}</span>}
+    <section className="min-h-dvh py-24 space-y-12">
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+            {quiz?.title || "Quiz"}
+          </h1>
+          {quiz?.description && (
+            <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl">
+              {quiz.description}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-muted-foreground">
+          {quiz?.category && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-muted/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              {quiz.category}
+            </div>
+          )}
           {quiz?.difficulty_level && (
-            <span className="capitalize">{quiz.difficulty_level}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-muted/50 capitalize">
+              {quiz.difficulty_level}
+            </div>
           )}
           {typeof quiz?.total_questions === "number" && (
-            <span>{quiz.total_questions} questions</span>
+            <div className="px-3 py-1.5 rounded-full border border-border/50 bg-muted/50">
+              {quiz.total_questions} questions
+            </div>
           )}
           {quiz?.time_limit_minutes ? (
-            <span>{quiz.time_limit_minutes}m limit</span>
+            <div className="px-3 py-1.5 rounded-full border border-border/50 bg-muted/50">
+              {quiz.time_limit_minutes}m limit
+            </div>
           ) : null}
-          {quiz?.organizer_name ? <span>By {quiz.organizer_name}</span> : null}
+          {quiz?.organizer_name ? (
+            <div className="px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary">
+              By {quiz.organizer_name}
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Button asChild size="lg">
-          <Link href={`/quiz/${slug}/take`}>Start Quiz</Link>
+      <div className="flex flex-wrap gap-4 pt-4">
+        <Button asChild size="lg" className="h-12 px-8 text-base">
+          <Link href={`/quiz/${slug}/take`}>Start Quiz Now</Link>
         </Button>
       </div>
 
-      <QuizTabs
-        slug={slug}
-        quizId={quiz?.id || ""}
-        quizTitle={quiz?.title || "Quiz"}
-        organizerName={quiz?.organizer_name}
-      />
-    </div>
+      <div className="border-t border-border/30 pt-12">
+        <QuizTabs
+          slug={slug}
+          quizId={quiz?.id || ""}
+          quizTitle={quiz?.title || "Quiz"}
+          organizerName={quiz?.organizer_name}
+        />
+      </div>
+    </section>
   );
 }
 

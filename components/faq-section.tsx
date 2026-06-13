@@ -57,36 +57,38 @@ const FAQS: FAQItem[] = [
 
 export default function FAQSection({ faqs = FAQS }: { faqs?: FAQItem[] }) {
   return (
-    <Layout className="mb-16">
-      <div className=" mb-16">
-        <p className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Frequently Asked Questions
-        </p>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          Everything you need to know about Qwizzed. Can&apos;t find the answer
-          you&apos;re looking for? Feel free to reach out to our support team.
-        </p>
-      </div>
+    <section className="border-t border-border/30 py-24 bg-muted/30">
+      <Layout>
+        <div className=" mb-16">
+          <p className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+            Frequently Asked Questions
+          </p>
+          <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            Everything you need to know about Qwizzed. Can&apos;t find the answer
+            you&apos;re looking for? Feel free to reach out to our support team.
+          </p>
+        </div>
 
-      <div className=" divide-y divide-border/50 ">
-        {faqs.map((faq, idx) => (
-          <details key={idx} className="group py-6 first:pt-0 last:pb-0">
-            <summary className="flex w-full items-start justify-between text-left cursor-pointer list-none select-none">
-              <span className="text-lg font-semibold leading-7 text-foreground group-hover:text-primary transition-colors duration-200">
-                {faq.question}
-              </span>
-              <span className="ml-6 flex h-7 items-center">
-                <ChevronDown className="h-5 w-5 text-muted-foreground group-open:-rotate-180 transition-transform duration-300 ease-in-out" />
-              </span>
-            </summary>
-            <div className="mt-4 pr-12 overflow-hidden transition-all duration-300">
-              <p className="text-base leading-7 text-muted-foreground">
-                {faq.answer}
-              </p>
-            </div>
-          </details>
-        ))}
-      </div>
-    </Layout>
+        <div className=" divide-y divide-border/50 ">
+          {faqs.map((faq, idx) => (
+            <details key={idx} className="group py-6 first:pt-0 last:pb-0">
+              <summary className="flex w-full items-start justify-between text-left cursor-pointer list-none select-none">
+                <span className="text-lg font-semibold leading-7 text-foreground group-hover:text-primary transition-colors duration-200">
+                  {faq.question}
+                </span>
+                <span className="ml-6 flex h-7 items-center">
+                  <ChevronDown className="h-5 w-5 text-muted-foreground group-open:-rotate-180 transition-transform duration-300 ease-in-out" />
+                </span>
+              </summary>
+              <div className="mt-4 pr-12 overflow-hidden transition-all duration-300">
+                <p className="text-base leading-7 text-muted-foreground">
+                  {faq.answer}
+                </p>
+              </div>
+            </details>
+          ))}
+        </div>
+      </Layout>
+    </section>
   );
 }

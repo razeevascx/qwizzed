@@ -64,37 +64,40 @@ export async function LeaderboardPageContent({
 
   return (
     <Layout>
-      <div className="min-h-screen space-y-8 pb-16">
+      <section className="min-h-screen py-24 space-y-12">
         <div className="max-w-4xl mx-auto w-full">
           <Link
             href={`/quiz/${quizSlug}`}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-8 group"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Quiz
           </Link>
 
-          <div className="space-y-4 mb-8">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2 flex-1">
-                <h1 className="text-4xl font-bold text-foreground">
+          <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
+              <div className="space-y-4 flex-1">
+                <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
                   {quiz.title}
                 </h1>
-                <p className="text-muted-foreground">{quiz.description}</p>
+                <p className="text-xl text-muted-foreground leading-relaxed">
+                  {quiz.description}
+                </p>
               </div>
-              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10">
-                <Trophy className="w-8 h-8 text-primary" />
+              <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
+                <Trophy className="w-10 h-10 text-primary" />
               </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
               {quiz.category && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-muted/50 text-sm font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                   {quiz.category}
                 </span>
               )}
               {quiz.difficulty_level && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-sm font-medium capitalize">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-muted/50 text-sm font-medium capitalize">
                   {quiz.difficulty_level}
                 </span>
               )}
@@ -102,17 +105,17 @@ export async function LeaderboardPageContent({
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto w-full">
-          <div className="space-y-6">
+        <div className="max-w-4xl mx-auto w-full border-t border-border/30 pt-12">
+          <div className="space-y-8">
             <div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">
+              <h2 className="text-3xl font-bold text-foreground mb-8">
                 Top Performers
               </h2>
               <QuizLeaderboard quizSlug={quizSlug} limit={100} />
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 }

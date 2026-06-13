@@ -109,15 +109,14 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* Bottom Section */}
           <div className="mt-12 pt-8 border-t border-border">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
                 {year
                   ? `${year} Qwizzed. All rights reserved.`
                   : "Qwizzed. All rights reserved."}
               </p>
-              <div className="flex gap-6">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center sm:justify-end">
                 {[...companyLinks, ...productLinks].map((link) => (
                   <Link
                     key={link.name}

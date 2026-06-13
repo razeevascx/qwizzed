@@ -26,43 +26,45 @@ export default function PrivacySecurity() {
   ];
 
   return (
-    <Layout>
-      <div className="mb-12">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">
-          Privacy & Security You Can Trust
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
-        {features.map((feature, index) => (
-          <Card
-            key={index}
-            className="border-dashed border border-border/50 backdrop-blur-sm hover:bg-card/80 transition-colors"
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="shrink-0">
-                  <feature.icon className="w-8 h-8 text-primary" />
+    <section className="border-t border-border/30 py-24 bg-background">
+      <Layout>
+        <div className="mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Privacy & Security You Can Trust
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
+          {features.map((feature, index) => (
+            <Card
+              key={index}
+              className="border-dashed border border-border/50 backdrop-blur-sm hover:bg-card/80 transition-colors"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="shrink-0">
+                    <feature.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <div className=" mt-12">
-        <p className="text-sm text-muted-foreground">
-          Read our full{" "}
-          <a href="/privacy" className="text-primary hover:underline">
-            Privacy Policy
-          </a>{" "}
-          for complete details.
-        </p>
-      </div>
-    </Layout>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className=" mt-12">
+          <p className="text-sm text-muted-foreground">
+            Read our full{" "}
+            <a href="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </a>{" "}
+            for complete details.
+          </p>
+        </div>
+      </Layout>
+    </section>
   );
 }

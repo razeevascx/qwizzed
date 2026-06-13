@@ -443,7 +443,7 @@ export default function TakeQuizClient({
 
   return (
     <Layout>
-      <div className="w-full max-w-8xl mx-auto pt-10 px-6">
+      <section className="w-full max-w-8xl mx-auto pt-24 px-6 pb-24">
         <div className="flex flex-col gap-8">
           {showLoginPrompt && (
             <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -694,7 +694,7 @@ export default function TakeQuizClient({
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 }

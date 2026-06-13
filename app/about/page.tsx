@@ -117,7 +117,7 @@ export default function AboutPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative border-b border-border/30 py-24 md:py-32 px-6 overflow-hidden">
+        <section className="relative py-24 md:py-32 px-6 overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
           <div
@@ -177,7 +177,7 @@ export default function AboutPage() {
         </section>
 
         {/* Mission & Vision - Side by Side */}
-        <section className="border-b border-border/30 py-20 px-6">
+        <section className="border-t border-border/30 py-24 px-6 bg-muted/30">
           <Layout>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
               {/* Mission */}
@@ -270,7 +270,7 @@ export default function AboutPage() {
         </section>
 
         {/* Core Values */}
-        <section className="border-b border-border/30 py-20 px-6 bg-gradient-to-b from-background to-muted/20">
+        <section className="border-t border-border/30 py-24 px-6 bg-background">
           <Layout>
             <div className="space-y-12">
               {/* Section Header */}
@@ -331,7 +331,7 @@ export default function AboutPage() {
         </section>
 
         {/* Features Highlight */}
-        <section className="border-b border-border/30 py-20 px-6">
+        <section className="border-t border-border/30 py-24 px-6 bg-muted/30">
           <Layout>
             <div className="space-y-12">
               {/* Section Header */}
@@ -394,7 +394,7 @@ export default function AboutPage() {
         </section>
 
         {/* Tech Stack */}
-        <section className="border-b border-border/30 py-20 px-6">
+        <section className="border-t border-border/30 py-24 px-6 bg-background">
           <Layout>
             <div className="space-y-12">
               {/* Section Header */}
@@ -478,7 +478,7 @@ export default function AboutPage() {
         </section>
 
         {/* Community Section */}
-        <section className="border-b border-border/30 py-20 px-6 bg-gradient-to-b from-background to-primary/5">
+        <section className="border-t border-border/30 py-24 px-6 bg-muted/30">
           <Layout>
             <div className="space-y-12">
               {/* Section Header */}
@@ -535,55 +535,8 @@ export default function AboutPage() {
           </Layout>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 px-6">
-          <Layout>
-            <div className="relative rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-background p-12 md:p-16 overflow-hidden">
-              {/* Background Pattern */}
-              <div
-                className="absolute inset-0 opacity-[0.02]"
-                style={{
-                  backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                  backgroundSize: "40px 40px",
-                }}
-              />
-
-              <div className="relative max-w-3xl space-y-8">
-                <div className="space-y-4">
-                  <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-                    Ready to Get Started?
-                  </h2>
-                  <p className="text-xl text-muted-foreground max-w-2xl">
-                    Join thousands of educators and creators who trust Qwizzed
-                    for their assessment needs. Create your first quiz in
-                    minutes.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/dashboard/create">
-                    <Button size="lg" className="gap-2 h-12 px-6">
-                      Create Your First Quiz
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                  <Link href="/quiz">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="h-12 px-6 border-2"
-                    >
-                      Explore Public Quizzes
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </Layout>
-        </section>
-
         {/* Contact Section */}
-        <section className="border-t border-border/30 py-20 px-6">
+        <section className="border-t border-border/30 py-24 px-6 bg-background">
           <Layout>
             <div className="max-w-3xl space-y-8">
               <div className="space-y-4">
