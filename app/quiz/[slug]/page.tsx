@@ -2,11 +2,12 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import type { Quiz } from "@/lib/types/quiz";
 import Layout from "@/components/layout/Layout";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { QuizTabs } from "./QuizTabs";
+import { getCachedQuizBySlug } from "../_components/data-service";
+import { QuizActions } from "./QuizActions";
+import { QuizLeaderboard } from "@/components/quiz-leaderboard";
 
 export async function generateMetadata({
   params,
@@ -15,21 +16,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/quiz/${slug}`,
-      {
-        cache: "no-store",
-      },
-    );
+    const quiz = await getCachedQuizBySlug(slug);
 
-    if (!res.ok) {
+    if (!quiz) {
       return {
         title: "Quiz | Qwizzed",
         description: "Take an interactive quiz on Qwizzed.",
       };
     }
-
-    const quiz = await res.json();
 
     return {
       title: `${quiz.title} | Qwizzed`,
@@ -62,22 +56,9 @@ export async function generateMetadata({
   }
 }
 
-async function PageContent({ params }: { params: Promise<{ slug: string }> }) {
+async function PageContent({ params }: Readonly<{ params: Promise<{ slug: string }> }>) {
   const { slug } = await params;
-  let quiz: Quiz | null = null;
-
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/quiz/${slug}`,
-      { cache: "no-store" },
-    );
-
-    if (res.ok) {
-      quiz = (await res.json()) as Quiz;
-    }
-  } catch {
-    quiz = null;
-  }
+  const quiz = await getCachedQuizBySlug(slug);
 
   return (
     <section className="min-h-dvh py-24 space-y-12">
@@ -123,19 +104,20 @@ async function PageContent({ params }: { params: Promise<{ slug: string }> }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 pt-4">
+      <div className="flex flex-wrap items-center gap-4 pt-4">
         <Button asChild size="lg" className="h-12 px-8 text-base">
           <Link href={`/quiz/${slug}/take`}>Start Quiz Now</Link>
         </Button>
-      </div>
-
-      <div className="border-t border-border/30 pt-12">
-        <QuizTabs
+        <QuizActions
           slug={slug}
-          quizId={quiz?.id || ""}
           quizTitle={quiz?.title || "Quiz"}
           organizerName={quiz?.organizer_name}
         />
+      </div>
+
+      <div className="border-t border-border/30 pt-12">
+        <h2 className="text-2xl font-bold">Top Performers</h2>
+        <QuizLeaderboard quizSlug={slug} limit={100} />
       </div>
     </section>
   );
@@ -143,9 +125,9 @@ async function PageContent({ params }: { params: Promise<{ slug: string }> }) {
 
 export default function Page({
   params,
-}: {
+}: Readonly<{
   params: Promise<{ slug: string }>;
-}) {
+}>) {
   return (
     <>
       <SiteHeader />

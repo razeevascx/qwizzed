@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import TakeQuizClient from "./TakeQuizClient";
-import type { Quiz, Question, QuestionOption } from "@/lib/types/quiz";
+import { getCachedQuizBySlug } from "../../_components/data-service";
+
 
 export async function generateMetadata({
   params,
@@ -10,21 +11,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/quiz/${slug}`,
-      {
-        cache: "no-store",
-      },
-    );
+    const quiz = await getCachedQuizBySlug(slug);
 
-    if (!res.ok) {
+    if (!quiz) {
       return {
         title: "Quiz | Qwizzed",
         description: "Take an interactive quiz on Qwizzed.",
       };
     }
-
-    const quiz = await res.json();
 
     return {
       title: `${quiz.title} | Qwizzed`,
@@ -49,7 +43,7 @@ export async function generateMetadata({
         images: [`/quiz/${slug}/opengraph-image`],
       },
     };
-  } catch (error) {
+  } catch {
     return {
       title: "Quiz | Qwizzed",
       description: "Take an interactive quiz on Qwizzed.",
@@ -57,28 +51,11 @@ export async function generateMetadata({
   }
 }
 
-type QuizWithQuestions = Quiz & {
-  questions?: Array<Question & { question_options?: QuestionOption[] }>;
-};
-
 async function PageContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let initialQuiz: QuizWithQuestions | null = null;
+  const quiz = await getCachedQuizBySlug(slug, true);
 
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/quiz/${slug}`,
-      { cache: "no-store" },
-    );
-
-    if (res.ok) {
-      initialQuiz = (await res.json()) as QuizWithQuestions;
-    }
-  } catch (error) {
-    initialQuiz = null;
-  }
-
-  return <TakeQuizClient quizId={slug} initialQuiz={initialQuiz} />;
+  return <TakeQuizClient quizId={slug} initialQuiz={quiz} />;
 }
 
 export default function Page({
@@ -87,10 +64,9 @@ export default function Page({
   params: Promise<{ slug: string }>;
 }) {
   return (
-    <div>
       <Suspense fallback={<div>Loading...</div>}>
         <PageContent params={params} />
       </Suspense>
-    </div>
+
   );
 }

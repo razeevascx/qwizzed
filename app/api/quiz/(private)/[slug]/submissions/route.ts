@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { QuizService } from "@/lib/supabase/quiz-service";
 
 // GET /api/quiz/[id]/submissions - get quiz submissions (creator only)
 // POST /api/quiz/[id]/submissions - create submission (taking quiz)
@@ -19,21 +20,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id, creator_id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, creator_id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
@@ -81,27 +68,14 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id, visibility, creator_id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, visibility, creator_id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
     const email = user.email;
+    
     if (email) {
       await client
         .from("quiz_invitations")

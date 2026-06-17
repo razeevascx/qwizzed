@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   AlertCircle,
   Loader2,
@@ -14,11 +14,13 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { Google } from "./Icons/Google";
 
 export function LoginForm({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: Readonly<React.ComponentPropsWithoutRef<"div">>) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams?.get("next") || "/quiz";
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
+          emailRedirectTo: `${globalThis.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
         },
       });
 
@@ -63,14 +65,17 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
+          redirectTo: `${globalThis.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
         },
       });
 
       if (error) throw error;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
+      router.push("/error?message=" + encodeURIComponent(err instanceof Error ? err.message : "An error occurred"));
+    } finally {
       setIsGoogleLoading(false);
+
     }
   };
 
@@ -80,7 +85,7 @@ export function LoginForm({
         {/* Success Alert */}
         {emailSent && (
           <div className="flex items-start gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl animate-in fade-in">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold">
                 Magic link sent!
@@ -95,47 +100,10 @@ export function LoginForm({
         {/* Error Alert */}
         {error && (
           <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl animate-in fade-in">
-            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
             <p className="text-sm text-destructive font-medium">{error}</p>
           </div>
         )}
-
-        {/* Google OAuth */}
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full h-11 border border-border/60 hover:border-border/80 hover:bg-muted/40 font-semibold rounded-lg transition-all"
-          onClick={handleGoogleLogin}
-          disabled={isLoading || isGoogleLoading}
-        >
-          {isGoogleLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Redirecting...
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] text-[10px] font-black text-white">
-                G
-              </span>
-              <span>Sign in with Google</span>
-            </div>
-          )}
-        </Button>
-
-        {/* OAuth Divider */}
-        <div className="relative py-3">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border/30" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-background px-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-              Or continue with email
-            </span>
-          </div>
-        </div>
-
         {/* Email Field */}
         <div className="space-y-2.5">
           <Label htmlFor="email" className="text-sm font-semibold">
@@ -154,15 +122,36 @@ export function LoginForm({
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            We'll send you a magic link to sign in without a password
+            We&apos;ll send you a magic link to sign in without a password
           </p>
         </div>
 
+        {/* Google OAuth */}
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full h-11 border border-border font-semibold rounded-lg transition-all hover:text-primary "
+          onClick={handleGoogleLogin}
+          disabled={isLoading || isGoogleLoading}
+        >
+          {isGoogleLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Redirecting...
+            </>
+          ) : (
+            <div className="flex items-center gap-2 ">
+              <Google className="w-4 h-4" />
+              <span>Sign in with Google</span>
+            </div>
+          )}
+        </Button>
         {/* Sign In Button */}
         <Button
           type="submit"
           size="lg"
-          className="w-full h-11 mt-8 bg-gradient-to-br from-primary via-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 text-primary-foreground font-semibold rounded-lg transition-all duration-200 group"
+          className="w-full h-11 mt-8 bg-linear-to-br from-primary via-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 text-primary-foreground font-semibold rounded-lg transition-all duration-200 group"
           disabled={isLoading || emailSent}
         >
           {isLoading ? (

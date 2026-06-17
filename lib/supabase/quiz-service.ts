@@ -1,4 +1,5 @@
 import { createClient, createAdminClient } from "./server";
+import { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Quiz,
   Question,
@@ -10,6 +11,12 @@ import type {
   UpdateQuizInput,
   InviteUserInput,
 } from "@/lib/types/quiz";
+
+export interface QuestionWithOptions extends Question {
+  question_options?: QuestionOption[];
+}
+
+export type QuizWithQuestions = Quiz & { questions?: QuestionWithOptions[] };
 
 export class QuizService {
   static async createQuiz(
@@ -41,17 +48,48 @@ export class QuizService {
     return quiz;
   }
 
-  static async getQuiz(quizId: string): Promise<Quiz | null> {
-    const client = await createClient();
+  static async getQuiz(
+    slugOrId: string,
+    providedClient?: SupabaseClient,
+    includeQuestions: boolean = false,
+  ): Promise<QuizWithQuestions | null> {
+    const client = providedClient || (await createClient());
 
-    const { data, error } = await client
+    // Try to find by slug first
+    let { data: quiz, error } = await client
       .from("quizzes")
-      .select()
-      .eq("id", quizId)
-      .single();
+      .select("*")
+      .eq("slug", slugOrId)
+      .maybeSingle();
 
-    if (error) return null;
-    return data;
+    // If not found by slug, try by id
+    if (error || !quiz) {
+      const { data: resultData } = await client
+        .from("quizzes")
+        .select("*")
+        .eq("id", slugOrId)
+        .maybeSingle();
+      quiz = resultData;
+    }
+
+    if (!quiz) return null;
+
+    if (includeQuestions) {
+      const { data: questions, error: questionsError } = await client
+        .from("questions")
+        .select("*, question_options(*)")
+        .eq("quiz_id", quiz.id)
+        .order("order", { ascending: true });
+
+      if (!questionsError) {
+        return {
+          ...quiz,
+          questions: (questions || []) as QuestionWithOptions[],
+        };
+      }
+    }
+
+    return quiz as QuizWithQuestions;
   }
 
   static async getUserQuizzes(userId: string): Promise<Quiz[]> {
@@ -67,13 +105,106 @@ export class QuizService {
     return data || [];
   }
 
-  static async getPublishedQuizzes(): Promise<Quiz[]> {
-    const client = await createClient();
+  static async getCombinedUserQuizzes(
+    userId: string,
+    email?: string | null,
+    providedClient?: SupabaseClient,
+  ): Promise<Quiz[]> {
+    const client = providedClient || (await createClient());
+
+    // Fetch owned quizzes
+    const { data: ownedQuizzes, error: ownedError } = await client
+      .from("quizzes")
+      .select("*")
+      .eq("creator_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (ownedError) throw ownedError;
+
+    // Fetch invited quizzes
+    let query = client
+      .from("quiz_invitations")
+      .select("status, invited_at, quiz_id, quizzes(*)")
+      .in("status", ["pending", "accepted"]);
+
+    if (email) {
+      query = query.or(`invitee_email.eq.${email},invitee_id.eq.${userId}`);
+    } else {
+      query = query.eq("invitee_id", userId);
+    }
+
+    const { data: invitedRows, error: invitedError } = await query
+      .order("invited_at", { ascending: false });
+
+    if (invitedError) throw invitedError;
+
+    const invitedQuizzes = (invitedRows || [])
+      .filter((row) => row.quizzes)
+      .map((row) => {
+        const quiz = Array.isArray(row.quizzes) ? row.quizzes[0] : row.quizzes;
+        return {
+          ...(quiz as Quiz),
+          accessType: "invited" as const,
+          invitationStatus: row.status,
+          invited_at: row.invited_at,
+        };
+      });
+
+    // Fetch all public published quizzes
+    const { data: publicQuizzes, error: publicError } = await client
+      .from("quizzes")
+      .select("*")
+      .eq("visibility", "public")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false });
+
+    if (publicError) throw publicError;
+
+    const owned = (ownedQuizzes || []).map((quiz) => ({
+      ...(quiz as Quiz),
+      accessType: "owner" as const,
+    }));
+
+    const otherPublic = (publicQuizzes || [])
+      .filter(
+        (pq) =>
+          !owned.some((oq) => oq.id === pq.id) &&
+          !invitedQuizzes.some((iq) => iq.id === pq.id),
+      )
+      .map((quiz) => ({
+        ...(quiz as Quiz),
+        accessType: "public" as const,
+      }));
+
+    const combined = [...owned, ...invitedQuizzes, ...otherPublic].sort(
+      (a, b) => {
+        const aDate = new Date(
+          (a as any).updated_at ||
+            (a as any).invited_at ||
+            (a as any).created_at,
+        ).getTime();
+        const bDate = new Date(
+          (b as any).updated_at ||
+            (b as any).invited_at ||
+            (b as any).created_at,
+        ).getTime();
+        return bDate - aDate;
+      },
+    );
+
+    return combined as Quiz[];
+  }
+
+  static async getPublishedQuizzes(
+    providedClient?: SupabaseClient,
+  ): Promise<Quiz[]> {
+    const client = providedClient || (await createClient());
 
     const { data, error } = await client
       .from("quizzes")
-      .select("*, profiles(username, email)")
+      .select("*")
       .eq("visibility", "public")
+      .eq("is_published", true)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -507,18 +638,15 @@ export class QuizService {
       .single();
 
     // Get inviter details
-    const { data: inviter } = await client
-      .from("profiles")
-      .select("username, email")
-      .eq("id", invitation.inviter_id)
-      .maybeSingle();
+    // Note: Profiles table not yet implemented, using inviter_id for now
+    const inviter = { id: invitation.inviter_id };
 
     // TODO: Integrate with email service (Resend, SendGrid, etc.)
     // For now, you can use Supabase Edge Functions to send emails
     console.log("Sending invitation email:", {
       to: invitation.invitee_email,
       subject: `You've been invited to take "${quiz?.title}"`,
-      inviter: inviter?.username || inviter?.email,
+      inviterId: inviter.id,
       quizTitle: quiz?.title,
       quizDescription: quiz?.description,
     });

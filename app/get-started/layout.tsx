@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import Logo from "@/components/Logo";
-import { FloatingPaths } from "@/components/3d/Floating-path";
 
 export default function RootLayout({
   children,
@@ -10,8 +9,7 @@ export default function RootLayout({
 }>) {
   return (
     <section className="flex min-h-screen">
-      <div className="hidden lg:flex w-1/2 flex-col justify-end p-8 bg-background relative overflow-hidden">
-        <FloatingPaths position={1} />
+      <div className="hidden lg:flex w-1/2 flex-col justify-end p-8 bg-[url('/2.jpg')] bg-cover bg-center bg-no-repeat relative overflow-hidden m-2 shadow-2xl rounded-lg">
 
         <div className="flex items-center justify-between relative z-10">
           <Link href="/" className="inline-flex items-center gap-4">
@@ -23,25 +21,21 @@ export default function RootLayout({
           <nav className="flex items-center gap-4">
             <Link
               href="/quiz"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Explore
             </Link>
             <Link
               href="/about"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               About
             </Link>
             <Link
               href="/privacy"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Privacy
             </Link>
             <Link
               href="/terms"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Terms
             </Link>
@@ -49,7 +43,7 @@ export default function RootLayout({
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex flex-col bg-muted/30">
+      <div className="w-full lg:w-1/2 flex flex-col ">
         <div className="p-6">
           <Link
             href="/"

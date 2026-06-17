@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { QuizService } from "@/lib/supabase/quiz-service";
 
 // POST /api/quiz/[id]/submissions/[submissionId] - submit answer
 // PUT /api/quiz/[id]/submissions/[submissionId] - grade submission
@@ -11,21 +12,7 @@ export async function POST(
     const { slug, submissionId } = await params;
     const client = await createClient();
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
@@ -51,15 +38,8 @@ export async function POST(
 
     // Use authenticated user's info from session
     const name =
-      user.user_metadata?.name || user.email?.split("@")[0] || "User";
-    const email = user.email;
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "User email is required" },
-        { status: 400 },
-      );
-    }
+      user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
+    const email = user.email || null;
 
     // Process all answers and save them - calculate points in backend only
     for (const answer of answers) {
@@ -214,27 +194,13 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id, creator_id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, creator_id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    if (!quiz || quiz.creator_id !== user.id) {
+    if (quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

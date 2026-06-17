@@ -11,15 +11,18 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center px-4 sm:px-8">
-      <div className="w-full max-w-md space-y-8">
+    <div className="w-full h-full grid gap-8 place-content-center items-center justify-center px-4 sm:px-8">
+      <div className="w-full max-w-xl space-y-8">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-5xl sm:text-6xl font-bold bg-linear-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-            Welcome back
+
+
+          <h1 className="text-5xl font-bold ">
+            Turn your knowledge  into interactive experiences.
           </h1>
-          <p className="text-lg text-muted-foreground max-w-sm">
-            Sign in and unlock your quiz creation superpowers
+          <p className="text-zinc-400 max-w-screen">
+            Join thousands of creators using Qwizzed to engage their audience
+            and track learning progress with ease.
           </p>
         </div>
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { revalidateTag } from "next/cache";
+import { QuizService } from "@/lib/supabase/quiz-service";
 import {
   QUIZ_FIELDS,
   QUESTION_FIELDS,
@@ -20,25 +22,8 @@ export async function GET(
     const slug = (await params).slug;
     const client = await createClient();
 
-    // Try to find by slug first, then by id for backwards compatibility
-    let { data: quiz, error } = await client
-      .from("quizzes")
-      .select(QUIZ_FIELDS.DETAIL)
-      .eq("slug", slug)
-      .single();
+    const quiz = await QuizService.getQuiz(slug);
 
-    // If not found by slug, try by id
-    if (error || !quiz) {
-      const result = await client
-        .from("quizzes")
-        .select(QUIZ_FIELDS.DETAIL)
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-      error = result.error;
-    }
-
-    if (error) throw error;
     if (!quiz) {
       return successResponse({ error: "Quiz not found" }, 404);
     }
@@ -69,21 +54,7 @@ export async function PUT(
     const { slug } = await params;
     const client = await createClient();
 
-    // Find quiz by slug or id
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return errorResponse("Quiz not found", "Quiz not found");
@@ -100,41 +71,12 @@ export async function PUT(
     if (ownershipResult.error) return ownershipResult.error;
 
     const body = await request.json();
-    const {
-      title,
-      description,
-      difficulty_level,
-      category,
-      time_limit_minutes,
-      release_at,
-      is_published,
-      visibility,
-      organizer_name,
-    } = body;
+    const updatedQuiz = await QuizService.updateQuiz(quiz.id, body);
 
-    const updateData: any = {
-      title,
-      description,
-      difficulty_level,
-      category,
-      time_limit_minutes,
-      release_at,
-      organizer_name,
-      is_published,
-    };
-
-    if (visibility !== undefined) {
-      updateData.visibility = visibility;
+    revalidateTag(`user-quizzes-${authResult.user!.id}`);
+    if (quiz.visibility === "public" || body.visibility === "public") {
+      revalidateTag("public-quizzes");
     }
-
-    const { data: updatedQuiz, error } = await client
-      .from("quizzes")
-      .update(updateData)
-      .eq("id", quiz.id)
-      .select()
-      .single();
-
-    if (error) throw error;
 
     return successResponse(updatedQuiz);
   } catch (error) {
@@ -150,21 +92,7 @@ export async function DELETE(
     const slug = (await params).slug;
     const client = await createClient();
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return errorResponse("Quiz not found", "Quiz not found");
@@ -180,9 +108,12 @@ export async function DELETE(
     );
     if (ownershipResult.error) return ownershipResult.error;
 
-    const { error } = await client.from("quizzes").delete().eq("id", quiz.id);
+    await QuizService.deleteQuiz(quiz.id);
 
-    if (error) throw error;
+    revalidateTag(`user-quizzes-${authResult.user!.id}`);
+    if (quiz.visibility === "public") {
+      revalidateTag("public-quizzes");
+    }
 
     return successResponse({ success: true });
   } catch (error) {

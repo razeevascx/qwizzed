@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
+import { QuizService } from "@/lib/supabase/quiz-service";
 import {
   ArrowLeft,
   Users,
@@ -28,16 +29,10 @@ import {
 async function getQuizAnalytics(quizId: string, userId: string) {
   const supabase = await createClient();
 
-  // Get quiz details
-  const { data: quiz, error: quizError } = await supabase
-    .from("quizzes")
-    .select(
-      "id, title, description, created_at, is_published, visibility, total_questions, difficulty_level, category, creator_id",
-    )
-    .eq("id", quizId)
-    .single();
+  // Get quiz details with questions
+  const quiz = await QuizService.getQuiz(quizId, undefined, true);
 
-  if (quizError || !quiz) return { kind: "not_found" as const };
+  if (!quiz) return { kind: "not_found" as const };
   if (quiz.creator_id !== userId) return { kind: "forbidden" as const };
 
   // Get all submissions
@@ -56,28 +51,9 @@ async function getQuizAnalytics(quizId: string, userId: string) {
       submitted_by_name
     `,
     )
-    .eq("quiz_id", quizId)
-    .eq("status", "graded")
+    .eq("quiz_id", quiz.id)
+    .in("status", ["submitted", "graded"])
     .order("submitted_at", { ascending: false });
-
-  // Get questions with their options
-  const { data: questions } = await supabase
-    .from("questions")
-    .select(
-      `
-      id,
-      question_text,
-      question_type,
-      points,
-      question_options (
-        id,
-        option_text,
-        is_correct
-      )
-    `,
-    )
-    .eq("quiz_id", quizId)
-    .order("created_at");
 
   // Calculate statistics
   const totalAttempts = submissions?.length || 0;
@@ -116,6 +92,7 @@ async function getQuizAnalytics(quizId: string, userId: string) {
   // Completion rate over time (group by week)
   const submissionsByWeek = submissions?.reduce(
     (acc, sub) => {
+      if (!sub.submitted_at) return acc;
       const week = new Date(sub.submitted_at).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -129,7 +106,7 @@ async function getQuizAnalytics(quizId: string, userId: string) {
   return {
     kind: "ok" as const,
     quiz,
-    questions: questions || [],
+    questions: quiz.questions || [],
     totalAttempts,
     uniqueUsers,
     avgScore,
@@ -191,11 +168,11 @@ async function QuizAnalyticsContent({
         <div className="max-w-md space-y-4 text-center">
           <AlertCircle className="h-10 w-10 text-amber-500 mx-auto" />
           <h1 className="text-2xl font-semibold">
-            You dont have access to this quizs analytics.
+            You don't have access to this quiz's analytics.
           </h1>
           <p className="text-muted-foreground">
             Analytics are only available to the quiz owner. If you believe this
-            is an error, ensure youre signed in with the correct account.
+            is an error, ensure you're signed in with the correct account.
           </p>
           <Link
             href="/dashboard/analytics"

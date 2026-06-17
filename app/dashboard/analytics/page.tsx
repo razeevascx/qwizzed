@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { QuizService } from "@/lib/supabase/quiz-service";
 
 import {
   BarChart3,
@@ -53,104 +54,75 @@ async function getAnalyticsData(
     endDate?: string;
   },
 ) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
+    const quizzes = await QuizService.getUserQuizzes(userId);
 
-  const { data: quizzes, error: quizzesError } = await supabase
-    .from("quizzes")
-    .select(
-      "id, title, created_at, is_published, visibility, total_questions, difficulty_level, category",
-    )
-    .eq("creator_id", userId)
-    .order("created_at", { ascending: false });
+    const totalQuizzes = quizzes.length;
+    const publishedQuizzes = quizzes.filter((q) => q.is_published).length;
 
-  if (quizzesError) throw quizzesError;
+    if (totalQuizzes === 0) {
+      return {
+        totalQuizzes: 0,
+        publishedQuizzes: 0,
+        totalAttempts: 0,
+        totalUniqueUsers: 0,
+        overallAvgScore: 0,
+        quizDetails: [],
+      };
+    }
 
-  const totalQuizzes = quizzes?.length || 0;
-  const publishedQuizzes = quizzes?.filter((q) => q.is_published).length || 0;
+    const startAt = startDate ? new Date(startDate) : null;
+    if (startAt) startAt.setHours(0, 0, 0, 0);
 
-  const startAt = startDate ? new Date(startDate) : null;
-  if (startAt) startAt.setHours(0, 0, 0, 0);
+    const endAt = endDate ? new Date(endDate) : null;
+    if (endAt) endAt.setHours(23, 59, 59, 999);
 
-  const endAt = endDate ? new Date(endDate) : null;
-  if (endAt) endAt.setHours(23, 59, 59, 999);
+    // Fetch all submissions for all owned quizzes in one go
+    const quizIds = quizzes.map((q) => q.id);
+    let submissionsQuery = supabase
+      .from("quiz_submissions")
+      .select("id, quiz_id, score, total_points, submitted_at, status, user_id")
+      .in("quiz_id", quizIds)
+      .in("status", ["submitted", "graded"]);
 
-  const quizDetails = await Promise.all(
-    quizzes?.map(async (quiz) => {
-      let submissionsQuery = supabase
-        .from("quiz_submissions")
-        .select(
-          `
-          id,
-          score,
-          total_points,
-          submitted_at,
-          status,
-          user_id
-        `,
-        )
-        .eq("quiz_id", quiz.id)
-        .eq("status", "graded");
+    if (startAt) {
+      submissionsQuery = submissionsQuery.gte("submitted_at", startAt.toISOString());
+    }
+    if (endAt) {
+      submissionsQuery = submissionsQuery.lte("submitted_at", endAt.toISOString());
+    }
 
-      if (startAt) {
-        submissionsQuery = submissionsQuery.gte(
-          "submitted_at",
-          startAt.toISOString(),
-        );
-      }
+    const { data: allSubmissions, error: subError } = await submissionsQuery;
+    if (subError) {
+      console.error("Error fetching submissions for analytics:", subError);
+    }
 
-      if (endAt) {
-        submissionsQuery = submissionsQuery.lte(
-          "submitted_at",
-          endAt.toISOString(),
-        );
-      }
+    const quizDetails: QuizDetail[] = quizzes.map((quiz) => {
+      const submissions = allSubmissions?.filter((s) => s.quiz_id === quiz.id) || [];
+      const totalAttempts = submissions.length;
+      const uniqueUsers = new Set(submissions.map((s) => s.user_id)).size;
 
-      const { data: submissions } = await submissionsQuery;
+      const avgScore = totalAttempts > 0
+        ? Math.round(
+            submissions.reduce(
+              (sum, sub) => sum + (sub.total_points > 0 ? (sub.score / sub.total_points) * 100 : 0),
+              0
+            ) / totalAttempts
+          )
+        : 0;
 
-      const totalAttempts = submissions?.length || 0;
-      const uniqueUsers = new Set(submissions?.map((s) => s.user_id) || [])
-        .size;
+      const highestScore = totalAttempts > 0
+        ? Math.round(Math.max(...submissions.map((s) => (s.total_points > 0 ? (s.score / s.total_points) * 100 : 0))))
+        : 0;
 
-      const avgScore =
-        submissions && submissions.length > 0
-          ? Math.round(
-              submissions.reduce(
-                (sum, sub) =>
-                  sum +
-                  (sub.total_points > 0
-                    ? (sub.score / sub.total_points) * 100
-                    : 0),
-                0,
-              ) / submissions.length,
-            )
-          : 0;
+      const lowestScore = totalAttempts > 0
+        ? Math.round(Math.min(...submissions.map((s) => (s.total_points > 0 ? (s.score / s.total_points) * 100 : 0))))
+        : 0;
 
-      const highestScore =
-        submissions && submissions.length > 0
-          ? Math.max(
-              ...submissions.map((s) =>
-                s.total_points > 0 ? (s.score / s.total_points) * 100 : 0,
-              ),
-            )
-          : 0;
-
-      const lowestScore =
-        submissions && submissions.length > 0
-          ? Math.min(
-              ...submissions.map((s) =>
-                s.total_points > 0 ? (s.score / s.total_points) * 100 : 0,
-              ),
-            )
-          : 0;
-
-      const lastAttempt =
-        submissions && submissions.length > 0
-          ? new Date(
-              Math.max(
-                ...submissions.map((s) => new Date(s.submitted_at).getTime()),
-              ),
-            )
-          : null;
+      const lastAttempt = totalAttempts > 0
+        ? new Date(Math.max(...submissions.map((s) => new Date(s.submitted_at).getTime())))
+        : null;
 
       return {
         id: quiz.id,
@@ -163,54 +135,43 @@ async function getAnalyticsData(
         createdAt: quiz.created_at,
         totalAttempts,
         uniqueUsers,
-        avgScore: Math.round(avgScore),
-        highestScore: Math.round(highestScore),
-        lowestScore: Math.round(lowestScore),
+        avgScore,
+        highestScore,
+        lowestScore,
         lastAttempt,
         rank: 0,
-      } satisfies QuizDetail;
-    }) || [],
-  );
+      };
+    });
 
-  const rankedQuizDetails = [...quizDetails]
-    .sort((a, b) => {
-      if (b.totalAttempts !== a.totalAttempts) {
-        return b.totalAttempts - a.totalAttempts;
-      }
-      if (b.avgScore !== a.avgScore) {
-        return b.avgScore - a.avgScore;
-      }
-      return a.title.localeCompare(b.title);
-    })
-    .map((quiz, index) => ({
-      ...quiz,
-      rank: index + 1,
-    }));
+    const rankedQuizDetails = [...quizDetails]
+      .sort((a, b) => b.totalAttempts - a.totalAttempts || b.avgScore - a.avgScore || a.title.localeCompare(b.title))
+      .map((quiz, index) => ({ ...quiz, rank: index + 1 }));
 
-  const totalAttempts = quizDetails.reduce(
-    (sum, q) => sum + q.totalAttempts,
-    0,
-  );
-  const totalUniqueUsers = quizDetails.reduce(
-    (sum, q) => sum + q.uniqueUsers,
-    0,
-  );
-  const overallAvgScore =
-    quizDetails.length > 0
-      ? Math.round(
-          quizDetails.reduce((sum, q) => sum + q.avgScore, 0) /
-            quizDetails.length,
-        )
+    const totalAttempts = allSubmissions?.length || 0;
+    const totalUniqueUsers = new Set(allSubmissions?.map((s) => s.user_id)).size;
+    const overallAvgScore = quizDetails.length > 0
+      ? Math.round(quizDetails.reduce((sum, q) => sum + q.avgScore, 0) / quizDetails.length)
       : 0;
 
-  return {
-    totalQuizzes,
-    publishedQuizzes,
-    totalAttempts,
-    totalUniqueUsers,
-    overallAvgScore,
-    quizDetails: rankedQuizDetails,
-  };
+    return {
+      totalQuizzes,
+      publishedQuizzes,
+      totalAttempts,
+      totalUniqueUsers,
+      overallAvgScore,
+      quizDetails: rankedQuizDetails,
+    };
+  } catch (error) {
+    console.error("Critical error in getAnalyticsData:", error);
+    return {
+      totalQuizzes: 0,
+      publishedQuizzes: 0,
+      totalAttempts: 0,
+      totalUniqueUsers: 0,
+      overallAvgScore: 0,
+      quizDetails: [],
+    };
+  }
 }
 
 export default function AnalyticsPage({

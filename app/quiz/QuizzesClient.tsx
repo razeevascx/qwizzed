@@ -5,7 +5,7 @@ import { Quiz } from "@/lib/types/quiz";
 import { QuizCard } from "@/components/quiz-card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Sparkles, BookOpen, Search, Filter } from "lucide-react";
+import { Sparkles, BookOpen, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 type QuizWithInvite = Quiz & { isInvited?: boolean };
@@ -18,7 +18,7 @@ interface QuizzesClientProps {
 export default function QuizzesClient({
   initialPublicQuizzes,
   user,
-}: QuizzesClientProps) {
+}: Readonly<QuizzesClientProps>) {
   const router = useRouter();
   const [quizzes, setQuizzes] =
     useState<QuizWithInvite[]>(initialPublicQuizzes);
@@ -54,7 +54,7 @@ export default function QuizzesClient({
               const quizResponse = await fetch(`/api/quiz/${inv.quiz_id}`);
               if (quizResponse.ok) {
                 const quiz = await quizResponse.json();
-                if (!quiz || !quiz.id || !quiz.slug) {
+                if (!quiz?.id || !quiz.slug) {
                   console.error("Invalid quiz data from API:", quiz);
                   return null;
                 }
@@ -69,7 +69,7 @@ export default function QuizzesClient({
 
         const invitedQuizzes = (await Promise.all(quizPromises)).filter(
           (quiz): quiz is QuizWithInvite =>
-            quiz !== null && quiz.id !== undefined,
+            quiz?.id !== undefined,
         );
 
         if (!isMounted) return;

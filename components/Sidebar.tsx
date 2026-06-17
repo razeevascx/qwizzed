@@ -11,14 +11,12 @@ import {
   Menu,
   LogOut,
   Mail,
-  ShieldCheck,
-  ScrollText,
   ChevronLeft,
   ChevronRight,
-  Code,
   ChevronDown,
   Home,
   X,
+  Trophy,
 } from "lucide-react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { CurrentUserAvatar } from "./current-user-avatar";
@@ -35,7 +33,7 @@ interface SidebarItem {
 const navItems: SidebarItem[] = [
   {
     label: "Home",
-    href: "/",
+    href: "/dashboard",
     icon: <Home className="w-4 h-4" />,
     section: "Main",
   },
@@ -45,24 +43,18 @@ const navItems: SidebarItem[] = [
     icon: <Mail className="w-4 h-4" />,
     section: "Main",
   },
-  {
-    label: "Quizzes",
-    href: "/dashboard/quizzes",
-    icon: <UserCircle className="w-4 h-4" />,
-    section: "Workspace",
-    subItems: [
-      {
+        {
         label: "My Quizzes",
         href: "/dashboard/quizzes",
         icon: <UserCircle className="w-4 h-4" />,
+        section: "Quizzes",
       },
       {
         label: "Create New",
         href: "/dashboard/create",
         icon: <PlusCircle className="w-4 h-4" />,
+        section: "Quizzes",
       },
-    ],
-  },
   {
     label: "Analytics",
     href: "/dashboard/analytics",
@@ -70,28 +62,10 @@ const navItems: SidebarItem[] = [
     section: "Insights",
   },
   {
-    label: "Developer",
-    href: "/dashboard/developer",
-    icon: <Code className="w-4 h-4" />,
-    section: "Platform",
-  },
-  {
-    label: "Legal",
-    href: "/legal",
-    icon: <ShieldCheck className="w-4 h-4" />,
-    section: "Management",
-    subItems: [
-      {
-        label: "Privacy Policy",
-        href: "/privacy",
-        icon: <ShieldCheck className="w-4 h-4" />,
-      },
-      {
-        label: "Terms of Service",
-        href: "/terms",
-        icon: <ScrollText className="w-4 h-4" />,
-      },
-    ],
+    label: "Leaderboard",
+    href: "/dashboard/leaderboard",
+    icon: <Trophy className="w-4 h-4" />,
+    section: "Insights",
   },
 ];
 
@@ -100,6 +74,14 @@ export function Sidebar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+
+  // Close sidebar on navigation (during render to avoid cascading effects)
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setIsOpen(false);
+  }
+
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     Quizzes: true,
     Developer: true,
@@ -112,13 +94,9 @@ export function Sidebar() {
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsOpen(false);
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    globalThis.addEventListener("keydown", handleKey);
+    return () => globalThis.removeEventListener("keydown", handleKey);
   }, []);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   const toggleSection = (label: string) => {
     setExpandedItems((prev) => ({
@@ -163,13 +141,13 @@ export function Sidebar() {
               "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
               isActive && !hasSubItems
                 ? "bg-primary/10 text-primary"
-                : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                : "text-foreground/70 hover:bg-muted/5 hover:text-foreground",
               isCollapsed && "justify-center px-2",
             )}
           >
             <span
               className={cn(
-                "transition-all duration-200 flex-shrink-0",
+                "transition-all duration-200 shrink-0",
                 isActive ? "text-primary" : "group-hover:text-foreground",
               )}
             >
@@ -180,7 +158,7 @@ export function Sidebar() {
                 <span className="flex-1 text-left truncate">{item.label}</span>
                 <ChevronDown
                   className={cn(
-                    "h-4 w-4 transition-transform duration-200 flex-shrink-0 text-muted-foreground",
+                    "h-4 w-4 transition-transform duration-200 shrink-0 text-muted-foreground",
                     isExpanded ? "rotate-180" : "",
                     isActive && "text-primary",
                   )}
@@ -196,7 +174,7 @@ export function Sidebar() {
               "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
               isActive
                 ? "bg-primary/10 text-primary font-medium"
-                : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                : "text-foreground/70 hover:bg-muted/5 hover:text-foreground",
               isCollapsed && "justify-center px-2",
               isSubItem &&
                 !isCollapsed &&
@@ -205,7 +183,7 @@ export function Sidebar() {
           >
             <span
               className={cn(
-                "transition-all duration-200 flex-shrink-0",
+                "transition-all duration-200 shrink-0",
                 isActive ? "text-primary" : "group-hover:text-foreground",
               )}
             >
@@ -215,7 +193,7 @@ export function Sidebar() {
               <span className="flex-1 truncate">{item.label}</span>
             )}
             {isActive && !isCollapsed && !isSubItem && (
-              <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
             )}
           </Link>
         )}
@@ -232,7 +210,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <div className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b border-border">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <button
             type="button"
@@ -345,7 +323,20 @@ export function Sidebar() {
 
         {/* User Section */}
         <div className="border-t border-border/50 p-3 bg-muted/20">
-          {!isCollapsed ? (
+          {isCollapsed ? (
+            <div className="flex flex-col items-center gap-3 py-1">
+              <CurrentUserAvatar size="sm" />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Logout"
+                aria-label="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3 min-w-0">
                 <CurrentUserAvatar size="sm" className="shrink-0" />
@@ -362,19 +353,6 @@ export function Sidebar() {
                 type="button"
                 onClick={handleLogout}
                 className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
-                title="Logout"
-                aria-label="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3 py-1">
-              <CurrentUserAvatar size="sm" />
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 title="Logout"
                 aria-label="Logout"
               >

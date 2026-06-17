@@ -123,11 +123,17 @@ export function QuizCard({
         {/* Meta Stats Row */}
         <div className="flex items-center gap-6 mb-8 pt-6 border-t border-border/30">
           <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Questions</p>
-            <p className="text-sm font-bold text-foreground">{quiz.total_questions}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+              Questions
+            </p>
+            <p className="text-sm font-bold text-foreground">
+              {quiz.total_questions}
+            </p>
           </div>
           <div className="space-y-1 border-l border-border/30 pl-6">
-            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">Time</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+              Time
+            </p>
             <p className="text-sm font-bold text-foreground">
               {quiz.time_limit_minutes ? `${quiz.time_limit_minutes}m` : "∞"}
             </p>
@@ -137,16 +143,22 @@ export function QuizCard({
         {isScheduled && (
           <div className="mt-auto pt-4 flex items-center gap-2 text-primary">
             <Calendar className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Releases in {releaseCountdown}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              Releases in {releaseCountdown}
+            </span>
           </div>
         )}
 
         {/* Owner Admin Badges */}
         {showActions && (
           <div className="flex flex-wrap items-center gap-3 mt-auto pt-6 border-t border-border/30">
-            <div className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
-              quiz.is_published ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-            }`}>
+            <div
+              className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
+                quiz.is_published
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+              }`}
+            >
               {quiz.is_published ? "Published" : "Draft"}
             </div>
             <div className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-muted text-muted-foreground border border-border/50">
@@ -160,27 +172,47 @@ export function QuizCard({
       {showActions && (
         <div className="px-6 pb-6 pt-2">
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" asChild className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all"
+            >
               <Link href={`/dashboard/quizzes/edit/${quiz.id}`}>
                 <Edit className="w-3.5 h-3.5 mr-2" />
                 Edit
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all"
+            >
               <Link href={quizPath}>
                 <Eye className="w-3.5 h-3.5 mr-2" />
                 View
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all"
+            >
               <Link href={`/dashboard/quizzes/share/${quiz.id}`}>
                 <Share2 className="w-3.5 h-3.5 mr-2" />
                 Share
               </Link>
             </Button>
             {quiz.visibility === "public" && quiz.is_published ? (
-              <Button variant="outline" size="sm" asChild className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all">
-                <Link href={`${quizPath}/leaderboard`}>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all"
+              >
+                <Link href={`/dashboard/analytics/${quiz.id}`}>
                   <Trophy className="w-3.5 h-3.5 mr-2" />
                   Scores
                 </Link>
@@ -190,7 +222,10 @@ export function QuizCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={(e) => { e.preventDefault(); onDelete?.(quiz.id); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDelete?.(quiz.id);
+                  }}
                   className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/20 transition-all"
                 >
                   <Trash2 className="w-3.5 h-3.5 mr-2" />

@@ -25,7 +25,7 @@ export function ReleaseDateTimePicker({
   onChange,
   disabled = false,
   minDate,
-}: ReleaseDateTimePickerProps) {
+}: Readonly<ReleaseDateTimePickerProps>) {
   const [isScheduled, setIsScheduled] = useState(Boolean(value));
   const [localValue, setLocalValue] = useState("");
   const [effectiveMinDate, setEffectiveMinDate] = useState<Date | null>(null);

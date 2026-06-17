@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { QuizService } from "@/lib/supabase/quiz-service";
+import { revalidateTag } from "next/cache";
 
 export async function PATCH(
   request: NextRequest,
@@ -21,6 +22,9 @@ export async function PATCH(
     const { status } = body;
 
     const invitation = await QuizService.respondToInvitation(id, status);
+
+    revalidateTag(`user-quizzes-${user.id}`);
+
     return NextResponse.json(invitation);
   } catch (error: any) {
     return NextResponse.json(
@@ -46,6 +50,9 @@ export async function DELETE(
     }
 
     await QuizService.deleteInvitation(id);
+
+    revalidateTag(`user-quizzes-${user.id}`);
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json(
