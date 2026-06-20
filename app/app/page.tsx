@@ -96,25 +96,25 @@ export default function DashboardPage() {
       icon: Plus,
       label: "Create Quiz",
       description: "Build a new quiz from scratch",
-      href: "/dashboard/create",
+      href: "/app/create",
     },
     {
       icon: BookOpen,
       label: "My Quizzes",
       description: "Manage your existing quizzes",
-      href: "/dashboard/quizzes",
+      href: "/app/quizzes",
     },
     {
       icon: BarChart3,
       label: "Analytics",
       description: "View quiz performance and insights",
-      href: "/dashboard/analytics",
+      href: "/app/analytics",
     },
     {
       icon: Users,
       label: "Invitations",
       description: "Manage quiz invitations",
-      href: "/dashboard/invitations",
+      href: "/app/invitations",
     },
   ];
 

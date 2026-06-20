@@ -102,7 +102,6 @@ export async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
 export const quizApi = {
   getQuiz: (id: string) => apiGet(`/api/quiz/${id}`),
   updateQuiz: (id: string, data: any) => apiPut(`/api/quiz/${id}`, data),
-  deleteQuiz: (id: string) => apiDelete(`/api/quiz/${id}`),
   createQuestion: (quizId: string, data: any) =>
     apiPost(`/api/quiz/${quizId}/questions`, data),
   updateQuestion: (quizId: string, questionId: string, data: any) =>
@@ -115,6 +114,4 @@ export const quizApi = {
     apiPost(`/api/quiz/${quizId}/submissions`, {}),
   submitAnswers: (quizId: string, submissionId: string, data: any) =>
     apiPost(`/api/quiz/${quizId}/submissions/${submissionId}`, data),
-  submitGrading: (quizId: string, submissionId: string, data: any) =>
-    apiPut(`/api/quiz/${quizId}/submissions/${submissionId}`, data),
 };

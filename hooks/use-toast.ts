@@ -35,6 +35,10 @@ export const toast = {
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const addToast = useCallback((newToast: Toast) => {
     setToasts((prev) => [...prev, newToast]);
 
@@ -43,11 +47,7 @@ export function useToast() {
         removeToast(newToast.id);
       }, newToast.duration || 5000);
     }
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [removeToast]);
 
   useEffect(() => {
     listeners.add(addToast);

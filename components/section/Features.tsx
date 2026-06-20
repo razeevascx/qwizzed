@@ -1,4 +1,3 @@
-import CurrentTime from "../CurrentTime";
 import Layout from "../layout/Layout";
 import { Zap, Share2, BarChart3, Shield } from "lucide-react";
 
@@ -37,13 +36,6 @@ const features = [
   },
 ];
 
-const stats = [
-  { component: CurrentTime, label: "Current Time" },
-  { value: "0.1s", label: "Avg Response Time" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "24/7", label: "Support" },
-];
-
 export default function Features() {
   return (
     <section className="border-t border-border/30 py-24 bg-background relative overflow-hidden">
@@ -56,8 +48,6 @@ export default function Features() {
         {/* 2x2 Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 mb-16">
           {features.map((feature, idx) => {
-            const Icon = feature.icon;
-
             return (
               <div
                 key={idx}

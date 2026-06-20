@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import GetStarted from "./Get-started";
 import Logo from "@/components/Logo";
@@ -25,11 +24,7 @@ const resourceLinks = [
 ];
 
 export function SiteFooter() {
-  const [year, setYear] = useState<number | null>(null);
-
-  useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
+  const year = new Date().getFullYear();
 
   return (
     <>

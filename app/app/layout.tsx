@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import Layout from "@/components/layout/Layout";
 
-export default function QuizLayout({ children }: { children: ReactNode }) {
+export default function QuizLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/30 text-foreground">
       <Suspense fallback={null}>

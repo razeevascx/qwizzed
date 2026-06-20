@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import QuizzesDataLoader from "./_components/QuizzesDataLoader";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeader } from "@/components/ui/Navbar";
 import { SiteFooter } from "@/components/site-footer";
 
 function QuizzesLoadingSkeleton() {

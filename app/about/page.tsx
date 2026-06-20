@@ -1,4 +1,4 @@
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeader } from "@/components/ui/Navbar";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
@@ -199,7 +199,7 @@ export default function AboutPage() {
                   <div className="w-16 h-1 bg-gradient-to-r from-primary to-primary/50 rounded-full" />
 
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    We're democratizing quiz creation. Whether you're a
+                    We&apos;re democratizing quiz creation. Whether you&apos;re a
                     classroom teacher, corporate trainer, or course creator,
                     Qwizzed gives you powerful assessment tools without the
                     bloat.
@@ -544,7 +544,7 @@ export default function AboutPage() {
                   Get in Touch
                 </h2>
                 <p className="text-lg text-muted-foreground">
-                  Have questions, feedback, or ideas? We'd love to hear from
+                  Have questions, feedback, or ideas? We&apos;d love to hear from
                   you. Our team responds to every message.
                 </p>
               </div>

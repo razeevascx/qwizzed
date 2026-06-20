@@ -1,5 +1,5 @@
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeader } from "@/components/ui/Navbar";
 import FAQSection from "@/components/faq-section";
 import Landing from "@/components/section/Landing";
 import PrivacySecurity from "@/components/section/PrivacySecurity";

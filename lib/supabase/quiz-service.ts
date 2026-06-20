@@ -55,12 +55,13 @@ export class QuizService {
   ): Promise<QuizWithQuestions | null> {
     const client = providedClient || (await createClient());
 
-    // Try to find by slug first
-    let { data: quiz, error } = await client
+    let quiz = null;
+    const { data, error } = await client
       .from("quizzes")
       .select("*")
       .eq("slug", slugOrId)
       .maybeSingle();
+    quiz = data;
 
     // If not found by slug, try by id
     if (error || !quiz) {
@@ -383,17 +384,6 @@ export class QuizService {
     return data || [];
   }
 
-  static async deleteQuestionOption(optionId: string): Promise<void> {
-    const client = await createClient();
-
-    const { error } = await client
-      .from("question_options")
-      .delete()
-      .eq("id", optionId);
-
-    if (error) throw error;
-  }
-
   // Submission operations
   static async createSubmission(
     quizId: string,
@@ -431,19 +421,6 @@ export class QuizService {
 
     if (error) throw error;
     return data;
-  }
-
-  static async getUserSubmissions(userId: string): Promise<QuizSubmission[]> {
-    const client = await createClient();
-
-    const { data, error } = await client
-      .from("quiz_submissions")
-      .select("*, quizzes(title)")
-      .eq("user_id", userId)
-      .order("submitted_at", { ascending: false });
-
-    if (error) throw error;
-    return data || [];
   }
 
   static async getSubmission(

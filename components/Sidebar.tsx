@@ -18,9 +18,10 @@ import {
   X,
   Trophy,
 } from "lucide-react";
-import { useCurrentUserName } from "@/hooks/use-current-user-name";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { CurrentUserAvatar } from "./current-user-avatar";
 import { createClient } from "@/lib/supabase/client";
+import { Sidebarlink } from "@/data/Sidebarlink";
 
 interface SidebarItem {
   label: string;
@@ -30,44 +31,7 @@ interface SidebarItem {
   subItems?: SidebarItem[];
 }
 
-const navItems: SidebarItem[] = [
-  {
-    label: "Home",
-    href: "/dashboard",
-    icon: <Home className="w-4 h-4" />,
-    section: "Main",
-  },
-  {
-    label: "Invitations",
-    href: "/dashboard/invitations",
-    icon: <Mail className="w-4 h-4" />,
-    section: "Main",
-  },
-        {
-        label: "My Quizzes",
-        href: "/dashboard/quizzes",
-        icon: <UserCircle className="w-4 h-4" />,
-        section: "Quizzes",
-      },
-      {
-        label: "Create New",
-        href: "/dashboard/create",
-        icon: <PlusCircle className="w-4 h-4" />,
-        section: "Quizzes",
-      },
-  {
-    label: "Analytics",
-    href: "/dashboard/analytics",
-    icon: <BarChart3 className="w-4 h-4" />,
-    section: "Insights",
-  },
-  {
-    label: "Leaderboard",
-    href: "/dashboard/leaderboard",
-    icon: <Trophy className="w-4 h-4" />,
-    section: "Insights",
-  },
-];
+
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -88,7 +52,7 @@ export function Sidebar() {
     Settings: true,
     Legal: false,
   });
-  const name = useCurrentUserName();
+  const { name } = useCurrentUser();
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -105,7 +69,7 @@ export function Sidebar() {
     }));
   };
 
-  const grouped = navItems.reduce<Record<string, SidebarItem[]>>(
+  const grouped = Sidebarlink.reduce<Record<string, SidebarItem[]>>(
     (acc, item) => {
       const key = item.section || "";
       acc[key] = acc[key] ? [...acc[key], item] : [item];
@@ -114,7 +78,6 @@ export function Sidebar() {
     {},
   );
 
-  const toggle = () => setIsOpen((open) => !open);
   const close = () => setIsOpen(false);
   const toggleCollapse = () => setIsCollapsed((prev) => !prev);
 
@@ -209,36 +172,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b border-border">
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
-            aria-expanded={isOpen}
-            aria-controls="quiz-sidebar"
-            onClick={toggle}
-          >
-            <Menu className="h-5 w-5" />
-            <span className="hidden sm:inline">Menu</span>
-          </button>
-
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow-sm">
-              Q
-            </div>
-            <span className="font-bold text-base tracking-tight">Qwizzed</span>
-          </div>
-
-          <Link
-            href="/dashboard/create"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">New</span>
-          </Link>
-        </div>
-      </div>
 
       {/* Overlay */}
       {isOpen && (
@@ -293,7 +226,7 @@ export function Sidebar() {
           {/* Collapse button for desktop */}
           <button
             type="button"
-            className="hidden lg:inline-flex shrink-0 h-8 w-8 items-center justify-center rounded-lg hover:bg-muted/60 transition-colors"
+            className="inline-flex shrink-0 h-8 w-8 items-center justify-center rounded-lg hover:bg-muted/60 transition-colors"
             onClick={toggleCollapse}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >

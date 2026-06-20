@@ -129,7 +129,7 @@ export function LoginForm({
         {/* Google OAuth */}
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="lg"
           className="w-full h-11 border border-border font-semibold rounded-lg transition-all hover:text-primary "
           onClick={handleGoogleLogin}
