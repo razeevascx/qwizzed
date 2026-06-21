@@ -161,7 +161,7 @@ export default function AboutPage() {
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </Link>
-                  <Link href="/quiz">
+                  <Link href="/explore">
                     <Button
                       size="lg"
                       variant="outline"

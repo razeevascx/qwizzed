@@ -18,7 +18,7 @@ export function QuizActions({ slug, quizTitle, organizerName }: Readonly<QuizAct
   const quizUrl =
     globalThis.window === undefined
       ? ""
-      : `${globalThis.location.origin}/quiz/${slug}`;
+      : `${globalThis.location.origin}/explore/${slug}`;
 
   const handleNativeShare = async () => {
     if (navigator.share) {

@@ -29,7 +29,7 @@ export async function generateMetadata({
         type: "website",
         images: [
           {
-            url: `/quiz/${slug}/opengraph-image`,
+            url: `/explore/${slug}/opengraph-image`,
             width: 1200,
             height: 630,
             alt: quiz.title,
@@ -40,7 +40,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title: quiz.title,
         description: quiz.description || "Take a quiz on Qwizzed",
-        images: [`/quiz/${slug}/opengraph-image`],
+        images: [`/explore/${slug}/opengraph-image`],
       },
     };
   } catch {

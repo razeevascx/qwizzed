@@ -3,7 +3,6 @@ import { SiteHeader } from "@/components/ui/Navbar";
 import FAQSection from "@/components/faq-section";
 import Landing from "@/components/section/Landing";
 import PrivacySecurity from "@/components/section/PrivacySecurity";
-
 import Steps from "@/components/section/Steps";
 import Features from "@/components/section/Features";
 

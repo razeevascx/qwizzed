@@ -268,7 +268,7 @@ async function QuizAnalyticsContent({
             </div>
           </div>
           <Link
-            href={`/quizzes/edit/${quiz.id}`}
+            href={`/explorezes/edit/${quiz.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Edit Quiz
@@ -569,7 +569,7 @@ async function QuizAnalyticsContent({
             Share your quiz to start receiving submissions and analytics
           </p>
           <Link
-            href={`/quizzes/edit/${quiz.id}`}
+            href={`/explorezes/edit/${quiz.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Manage Quiz

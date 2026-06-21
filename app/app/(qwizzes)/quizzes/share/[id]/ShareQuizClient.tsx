@@ -21,7 +21,7 @@ import {
   PlusCircle,
   Trophy,
 } from "lucide-react";
-import { QuizQrDisplay } from "@/components/quiz-qr-display";
+import { QuizQrDisplay } from "@/components/explore-qr-display";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -48,7 +48,7 @@ export default function ShareQuizClient() {
   const loadQuiz = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/quiz/${quizId}`);
+      const response = await fetch(`/api/explore/${quizId}`);
       if (!response.ok) throw new Error("Failed to load quiz");
       const quizData = await response.json();
       setQuiz(quizData);
@@ -62,21 +62,21 @@ export default function ShareQuizClient() {
   const getLeaderboardUrl = () => {
     const quizPath = quiz?.slug || quizId;
     if (typeof window !== "undefined") {
-      return `${window.location.origin}/quiz/${quizPath}/leaderboard`;
+      return `${window.location.origin}/explore/${quizPath}/leaderboard`;
     }
     return "";
   };
   const getShareUrl = () => {
     const quizPath = quiz?.slug || quizId;
     if (typeof window !== "undefined") {
-      return `${window.location.origin}/quiz/${quizPath}`;
+      return `${window.location.origin}/explore/${quizPath}`;
     }
-    return `/quiz/${quizPath}`;
+    return `/explore/${quizPath}`;
   };
 
   const getEmbedCode = () => {
     const quizPath = quiz?.slug || quizId;
-    return `<iframe src="${window.location.origin}/quiz/${quizPath}" width="100%" height="600" frameborder="0"></iframe>`;
+    return `<iframe src="${window.location.origin}/explore/${quizPath}" width="100%" height="600" frameborder="0"></iframe>`;
   };
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -142,7 +142,7 @@ export default function ShareQuizClient() {
         <p className="text-muted-foreground mt-2 mb-6">
           The quiz you're looking for doesn't exist.
         </p>
-        <Button onClick={() => router.push("/dashboard/quizzes")}>
+        <Button onClick={() => router.push("/dashboard/explorezes")}>
           Back to Quizzes
         </Button>
       </div>
@@ -159,7 +159,7 @@ export default function ShareQuizClient() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/quizzes">
+            <BreadcrumbLink href="/dashboard/explorezes">
               My Quizzes
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -208,7 +208,7 @@ export default function ShareQuizClient() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push(`/dashboard/quizzes/edit/${quizId}`)}
+            onClick={() => router.push(`/dashboard/explorezes/edit/${quizId}`)}
           >
             Edit
           </Button>

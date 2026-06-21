@@ -19,7 +19,7 @@ export function QuizNotFound() {
             The quiz you're looking for doesn't exist or has been removed.
           </p>
         </div>
-        <Button onClick={() => router.push("/quiz")} className="min-w-40">
+        <Button onClick={() => router.push("/explore")} className="min-w-40">
           Browse Quizzes
         </Button>
       </div>

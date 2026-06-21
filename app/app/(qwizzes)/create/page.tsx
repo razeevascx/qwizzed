@@ -39,7 +39,7 @@ export default function CreateQuizPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/quiz", {
+      const response = await fetch("/api/explore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -50,7 +50,7 @@ export default function CreateQuizPage() {
       }
 
       const quiz = await response.json();
-      router.push(`/dashboard/quizzes/edit/${quiz.id}`);
+      router.push(`/dashboard/explorezes/edit/${quiz.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

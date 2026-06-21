@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AuthButton } from "@/components/auth-button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import ThemeToggle from "@/components/theme-switcher";
 import Logo from "@/components/Logo";
 import { Navlinks } from "@/data/Navlink";
 
@@ -71,7 +71,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           {/* Theme Switcher */}
           <div className="relative hidden sm:block">
-            <ThemeSwitcher />
+            <ThemeToggle />
 
           </div>
 

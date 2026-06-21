@@ -16,10 +16,4 @@ export const toggleFullscreen = async (element: HTMLElement | null) => {
   }
 };
 
-/**
- * Checks if a specific element or its descendants are currently in fullscreen
- */
-export const isElementFullscreen = (element: HTMLElement | null) => {
-  if (!element || !document.fullscreenElement) return false;
-  return document.fullscreenElement === element || element.contains(document.fullscreenElement);
-};
+

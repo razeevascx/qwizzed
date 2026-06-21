@@ -5,31 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  PlusCircle,
-  UserCircle,
-  BarChart3,
-  Menu,
   LogOut,
-  Mail,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Home,
   X,
-  Trophy,
 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CurrentUserAvatar } from "./current-user-avatar";
 import { createClient } from "@/lib/supabase/client";
-import { Sidebarlink } from "@/data/Sidebarlink";
-
-interface SidebarItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  section?: string;
-  subItems?: SidebarItem[];
-}
+import { Sidebarlink, SidebarItem } from "@/data/Sidebarlink";
 
 
 

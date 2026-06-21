@@ -33,7 +33,7 @@ export default function DashboardPage() {
       try {
         setIsLoading(true);
         // Fetch actual quiz statistics
-        const response = await fetch("/api/quiz");
+        const response = await fetch("/api/explore");
         if (!response.ok) throw new Error("Failed to fetch quizzes");
 
         const quizzes = await response.json();
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         for (const quiz of quizzes) {
           try {
             const submissionsRes = await fetch(
-              `/api/quiz/${quiz.id}/submissions`,
+              `/api/explore/${quiz.id}/submissions`,
             );
             if (submissionsRes.ok) {
               const submissions = await submissionsRes.json();
@@ -102,7 +102,7 @@ export default function DashboardPage() {
       icon: BookOpen,
       label: "My Quizzes",
       description: "Manage your existing quizzes",
-      href: "/app/quizzes",
+      href: "/app/explorezes",
     },
     {
       icon: BarChart3,

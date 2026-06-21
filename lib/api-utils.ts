@@ -76,17 +76,4 @@ export async function verifyQuizOwnership(
   return { quiz, error: null };
 }
 
-/**
- * Generic error response handler
- */
-export function errorResponse(error: unknown, defaultMessage: string) {
-  const message = error instanceof Error ? error.message : defaultMessage;
-  return NextResponse.json({ error: message }, { status: 500 });
-}
 
-/**
- * Success response wrapper
- */
-export function successResponse<T>(data: T, status: number = 200) {
-  return NextResponse.json(data, { status });
-}

@@ -27,7 +27,7 @@ export default function GetStarted() {
                   Get Started Free
                 </Button>
               </Link>
-              <Link href="/quiz">
+              <Link href="/explore">
                 <Button
                   size="lg"
                   variant="secondary"

@@ -22,7 +22,7 @@ export function LoginForm({
 }: Readonly<React.ComponentPropsWithoutRef<"div">>) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextParam = searchParams?.get("next") || "/quiz";
+  const nextParam = searchParams?.get("next") || "/explore";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);

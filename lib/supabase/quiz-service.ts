@@ -602,46 +602,220 @@ export class QuizService {
     if (error) throw error;
   }
 
-  private static async sendInvitationEmail(
-    invitation: QuizInvitation,
-  ): Promise<void> {
+  // ponytail: move quiz submission creation to QuizService
+  static async createQuizSubmission(
+    quizId: string,
+    userId: string,
+    email: string | null | undefined,
+    name: string
+  ): Promise<QuizSubmission> {
     const client = await createClient();
 
-    // Get quiz details
-    const { data: quiz } = await client
-      .from("quizzes")
-      .select("title, description")
-      .eq("id", invitation.quiz_id)
+    if (email) {
+      await client
+        .from("quiz_invitations")
+        .update({
+          status: "accepted",
+          invitee_id: userId,
+          responded_at: new Date().toISOString(),
+        })
+        .eq("quiz_id", quizId)
+        .eq("invitee_email", email)
+        .eq("status", "pending");
+    }
+
+    const { data, error } = await client
+      .from("quiz_submissions")
+      .insert([
+        {
+          quiz_id: quizId,
+          user_id: userId,
+          status: "in_progress",
+          score: 0,
+          total_points: 0,
+          submitted_by_email: email || null,
+          submitted_by_name: name,
+        },
+      ])
+      .select()
       .single();
 
-    // Get inviter details
-    // Note: Profiles table not yet implemented, using inviter_id for now
-    const inviter = { id: invitation.inviter_id };
+    if (error) throw error;
+    return data;
+  }
 
-    // TODO: Integrate with email service (Resend, SendGrid, etc.)
-    // For now, you can use Supabase Edge Functions to send emails
-    console.log("Sending invitation email:", {
-      to: invitation.invitee_email,
-      subject: `You've been invited to take "${quiz?.title}"`,
-      inviterId: inviter.id,
-      quizTitle: quiz?.title,
-      quizDescription: quiz?.description,
-    });
+  // ponytail: move answer grading and quiz submission to QuizService
+  static async submitQuizAnswers(
+    quizId: string,
+    submissionId: string,
+    answers: { question_id: string; user_answer: any }[],
+    name: string,
+    email: string | null
+  ): Promise<QuizSubmission> {
+    const client = await createClient();
 
-    // Example using Supabase Edge Functions:
-    // await fetch('https://your-project.supabase.co/functions/v1/send-invitation-email', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
-    //   },
-    //   body: JSON.stringify({
-    //     to: invitation.invitee_email,
-    //     inviter: inviter?.username || inviter?.email,
-    //     quizTitle: quiz?.title,
-    //     quizDescription: quiz?.description,
-    //     invitationLink: `${process.env.NEXT_PUBLIC_APP_URL}/quiz/${invitation.quiz_id}`
-    //   })
-    // });
+    for (const answer of answers) {
+      const { question_id, user_answer } = answer;
+
+      const { data: question, error: qError } = await client
+        .from("questions")
+        .select("*, question_options(*)")
+        .eq("id", question_id)
+        .eq("quiz_id", quizId)
+        .single();
+
+      if (qError || !question) {
+        throw new Error("Question not found");
+      }
+
+      let pointsEarned = 0;
+      const correctOptions = question.question_options.filter(
+        (opt: any) => opt.is_correct,
+      );
+
+      if (question.question_type === "multiple_choice") {
+        const selectedIds = Array.isArray(user_answer)
+          ? user_answer
+          : [user_answer];
+        const correctIds = correctOptions.map((opt: any) => opt.id);
+
+        if (
+          selectedIds.length === correctIds.length &&
+          selectedIds.every((id: string) => correctIds.includes(id))
+        ) {
+          pointsEarned = question.points || 0;
+        }
+      } else if (question.question_type === "true_false") {
+        const isCorrect = user_answer === correctOptions[0]?.id;
+        if (isCorrect) {
+          pointsEarned = question.points || 0;
+        }
+      } else if (
+        question.question_type === "short_answer" ||
+        question.question_type === "fill_in_blank"
+      ) {
+        const normalizedUserAnswer = (user_answer || "").toLowerCase().trim();
+        const isCorrect = correctOptions.some(
+          (opt: any) =>
+            opt.option_text.toLowerCase().trim() === normalizedUserAnswer,
+        );
+        if (isCorrect) {
+          pointsEarned = question.points || 0;
+        }
+      }
+
+      const { error: saveError } = await client.from("quiz_answers").upsert({
+        submission_id: submissionId,
+        question_id: question_id,
+        user_answer: Array.isArray(user_answer)
+          ? JSON.stringify(user_answer)
+          : user_answer,
+        points_earned: pointsEarned,
+      });
+
+      if (saveError) throw saveError;
+    }
+
+    const { data: allAnswers, error: answersError } = await client
+      .from("quiz_answers")
+      .select("points_earned")
+      .eq("submission_id", submissionId);
+
+    if (answersError) throw answersError;
+
+    const totalScore = allAnswers.reduce(
+      (sum: number, ans: any) => sum + (ans.points_earned || 0),
+      0,
+    );
+
+    const { data: questions } = await client
+      .from("questions")
+      .select("points")
+      .eq("quiz_id", quizId);
+
+    const totalPoints = (questions || []).reduce(
+      (sum: number, q: any) => sum + (q.points || 1),
+      0,
+    );
+
+    const currentTime = new Date();
+    const { data: submission } = await client
+      .from("quiz_submissions")
+      .select("created_at")
+      .eq("id", submissionId)
+      .single();
+
+    let timeTaken = 0;
+    if (submission?.created_at) {
+      const createdTime = new Date(submission.created_at).getTime();
+      timeTaken = Math.floor((currentTime.getTime() - createdTime) / 1000);
+    }
+
+    const { data: updatedSubmission, error: updateError } = await client
+      .from("quiz_submissions")
+      .update({
+        score: totalScore,
+        total_points: totalPoints,
+        time_taken: timeTaken,
+        submitted_by_name: name,
+        submitted_by_email: email,
+        submitted_at: currentTime.toISOString(),
+        status: "submitted",
+      })
+      .eq("id", submissionId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+    return updatedSubmission;
+  }
+
+  // ponytail: move quiz grading to QuizService
+  static async gradeQuizSubmission(
+    quizId: string,
+    submissionId: string,
+    status: string | undefined,
+    manualScore: number | undefined
+  ): Promise<QuizSubmission> {
+    const client = await createClient();
+
+    const { data: answers, error: answersError } = await client
+      .from("quiz_answers")
+      .select("*")
+      .eq("submission_id", submissionId);
+
+    if (answersError) throw answersError;
+
+    const totalScore = (answers || []).reduce(
+      (sum, answer) => sum + (answer.points_earned || 0),
+      0,
+    );
+
+    const { data: questions, error: qError } = await client
+      .from("questions")
+      .select("points")
+      .eq("quiz_id", quizId);
+
+    if (qError) throw qError;
+
+    const totalPoints = (questions || []).reduce(
+      (sum, q) => sum + (q.points || 1),
+      0,
+    );
+
+    const { data: updatedSubmission, error: updateError } = await client
+      .from("quiz_submissions")
+      .update({
+        status: status || "completed",
+        score: manualScore !== undefined ? manualScore : totalScore,
+        total_points: totalPoints,
+        submitted_at: new Date().toISOString(),
+      })
+      .eq("id", submissionId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+    return updatedSubmission;
   }
 }

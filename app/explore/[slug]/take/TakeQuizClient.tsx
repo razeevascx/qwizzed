@@ -140,7 +140,7 @@ export default function TakeQuizClient({
   const redirectToLogin = () => {
     setShowLoginPrompt(true);
     // Redirect to login with return path to resume quiz after login
-    router.push(`/get-started?redirect=${encodeURIComponent(`/quiz/${quizId}/take`)}`);
+    router.push(`/get-started?redirect=${encodeURIComponent(`/explore/${quizId}/take`)}`);
   };
 
   const resumePendingSubmission = async (
@@ -336,7 +336,7 @@ export default function TakeQuizClient({
     if (Object.keys(answers).length > 0) {
       setShowExitConfirm(true);
     } else {
-      router.push("/quiz");
+      router.push("/explore");
     }
   };
 
@@ -389,7 +389,7 @@ export default function TakeQuizClient({
             showExitConfirm={showExitConfirm}
             onRedirectToLogin={redirectToLogin}
             onCancelExit={() => setShowExitConfirm(false)}
-            onConfirmExit={() => router.push("/quiz")}
+            onConfirmExit={() => router.push("/explore")}
           />
 
           {/* Progress Bar */}

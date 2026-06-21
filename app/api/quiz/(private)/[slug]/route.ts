@@ -7,13 +7,11 @@ import {
   QUESTION_FIELDS,
   requireAuth,
   verifyQuizOwnership,
-  errorResponse,
-  successResponse,
 } from "@/lib/api-utils";
 
-// GET /api/quiz/[slug] - get quiz details with questions (public)
-// PUT /api/quiz/[slug] - update quiz (authenticated, creator only)
-// DELETE /api/quiz/[slug] - delete quiz (authenticated, creator only)
+// GET /api/explore/[slug] - get quiz details with questions (public)
+// PUT /api/explore/[slug] - update quiz (authenticated, creator only)
+// DELETE /api/explore/[slug] - delete quiz (authenticated, creator only)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -25,7 +23,7 @@ export async function GET(
     const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
-      return successResponse({ error: "Quiz not found" }, 404);
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
     // Fetch questions for this quiz (exclude answer key from response)
@@ -37,12 +35,13 @@ export async function GET(
 
     if (questionsError) throw questionsError;
 
-    return successResponse({
+    return NextResponse.json({
       ...quiz,
       questions: questions || [],
     });
   } catch (error) {
-    return errorResponse(error, "Failed to fetch quiz");
+    const message = error instanceof Error ? error.message : "Failed to fetch quiz";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -57,7 +56,7 @@ export async function PUT(
     const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
-      return errorResponse("Quiz not found", "Quiz not found");
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
     const authResult = await requireAuth(client);
@@ -78,9 +77,10 @@ export async function PUT(
       revalidateTag("public-quizzes");
     }
 
-    return successResponse(updatedQuiz);
+    return NextResponse.json(updatedQuiz);
   } catch (error) {
-    return errorResponse(error, "Failed to update quiz");
+    const message = error instanceof Error ? error.message : "Failed to update quiz";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -95,7 +95,7 @@ export async function DELETE(
     const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
-      return errorResponse("Quiz not found", "Quiz not found");
+      return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
     const authResult = await requireAuth(client);
@@ -115,8 +115,9 @@ export async function DELETE(
       revalidateTag("public-quizzes");
     }
 
-    return successResponse({ success: true });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return errorResponse(error, "Failed to delete quiz");
+    const message = error instanceof Error ? error.message : "Failed to delete quiz";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

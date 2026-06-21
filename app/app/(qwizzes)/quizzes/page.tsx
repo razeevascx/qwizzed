@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QuizCard } from "@/components/quiz-card";
+import { QuizCard } from "@/components/explore-card";
 import { Button } from "@/components/ui/button";
 import { Quiz } from "@/lib/types/quiz";
 import { Plus } from "lucide-react";
@@ -33,7 +33,7 @@ export default function MyQuizzesPage() {
   const loadQuizzes = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/quiz");
+      const response = await fetch("/api/explore");
       if (!response.ok) throw new Error("Failed to load quizzes");
       const data = await response.json();
       setQuizzes(data);
@@ -48,7 +48,7 @@ export default function MyQuizzesPage() {
     if (!confirm("Are you sure you want to delete this quiz?")) return;
 
     try {
-      const response = await fetch(`/api/quiz/${quizId}`, {
+      const response = await fetch(`/api/explore/${quizId}`, {
         method: "DELETE",
       });
 

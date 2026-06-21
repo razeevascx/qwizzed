@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { QuizService } from "@/lib/supabase/quiz-service";
 
-// GET /api/quiz/[slug]/questions/[questionId] - get question (public)
-// PUT /api/quiz/[slug]/questions/[questionId] - update question (authenticated, creator only)
-// DELETE /api/quiz/[slug]/questions/[questionId] - delete question (authenticated, creator only)
+// GET /api/explore/[slug]/questions/[questionId] - get question (public)
+// PUT /api/explore/[slug]/questions/[questionId] - update question (authenticated, creator only)
+// DELETE /api/explore/[slug]/questions/[questionId] - delete question (authenticated, creator only)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; questionId: string }> },
@@ -12,22 +13,8 @@ export async function GET(
     const { slug, questionId } = await params;
     const client = await createClient();
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
-
+    // ponytail: get quiz by slug or id using QuizService helper
+    const quiz = await QuizService.getQuiz(slug, client);
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
@@ -84,22 +71,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id, creator_id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, creator_id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
-
+    // ponytail: get quiz by slug or id using QuizService helper
+    const quiz = await QuizService.getQuiz(slug, client);
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
@@ -170,22 +143,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id, creator_id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, creator_id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
-
+    // ponytail: get quiz by slug or id using QuizService helper
+    const quiz = await QuizService.getQuiz(slug, client);
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }

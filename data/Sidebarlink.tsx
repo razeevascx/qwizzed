@@ -5,11 +5,7 @@ import {
   PlusCircle,
   BarChart3,
   Trophy,
-  Settings,
-  Plug,
   Folder,
-  Image as ImageIcon,
-  LayoutTemplate,
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -36,20 +32,8 @@ export const Sidebarlink: SidebarItem[] = [
 
   {
     label: "All Quizzes",
-    href: "/app/quizzes",
+    href: "/app/explorezes",
     icon: <Folder className="w-4 h-4" />,
-    section: "Quizzes",
-  },
-  {
-    label: "Media Library",
-    href: "/app/media",
-    icon: <ImageIcon className="w-4 h-4" />,
-    section: "Quizzes",
-  },
-  {
-    label: "Templates",
-    href: "/app/templates",
-    icon: <LayoutTemplate className="w-4 h-4" />,
     section: "Quizzes",
   },
   {
@@ -69,18 +53,5 @@ export const Sidebarlink: SidebarItem[] = [
     href: "/app/leaderboard",
     icon: <Trophy className="w-4 h-4" />,
     section: "Insights",
-  },
-
-  {
-    label: "Integrations",
-    href: "/app/integrations",
-    icon: <Plug className="w-4 h-4" />,
-    section: "Settings",
-  },
-  {
-    label: "Account & Team",
-    href: "/app/settings",
-    icon: <Settings className="w-4 h-4" />,
-    section: "Settings",
   },
 ];

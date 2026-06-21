@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { QuizService } from "@/lib/supabase/quiz-service";
 
 /**
- * GET /api/quiz/[slug]/leaderboard
+ * GET /api/explore/[slug]/leaderboard
  * Public endpoint to get leaderboard rankings for a quiz
  * Accessible by anyone (public leaderboards)
  */
@@ -14,24 +15,10 @@ export async function GET(
     const slug = (await params).slug;
     const client = await createClient();
 
-    // Get quiz first to check if it's public (try slug first, then id)
-    let { data: quiz, error: quizError } = await client
-      .from("quizzes")
-      .select("id, visibility, is_published")
-      .eq("slug", slug)
-      .single();
+    // ponytail: get quiz by slug or id using QuizService helper
+    const quiz = await QuizService.getQuiz(slug, client);
 
-    if (quizError || !quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, visibility, is_published")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-      quizError = result.error;
-    }
-
-    if (quizError || !quiz) {
+    if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 

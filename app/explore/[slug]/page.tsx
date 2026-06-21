@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
-import { SiteHeader } from "@/components/site-header";
+import { redirect } from "next/navigation";
+import { SiteHeader } from "@/components/ui/Navbar";
 import { SiteFooter } from "@/components/site-footer";
 import { getCachedQuizBySlug } from "../_components/data-service";
 import { QuizActions } from "./QuizActions";
@@ -16,7 +17,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const quiz = await getCachedQuizBySlug(slug);
+    let realSlug = slug;
+    if (slug.includes("&action=take")) {
+      realSlug = slug.replace("&action=take", "");
+    } else if (slug.includes("?action=take")) {
+      realSlug = slug.split("?")[0];
+    }
+    const quiz = await getCachedQuizBySlug(realSlug);
 
     if (!quiz) {
       return {
@@ -34,7 +41,7 @@ export async function generateMetadata({
         type: "website",
         images: [
           {
-            url: `/quiz/${slug}/opengraph-image`,
+            url: `/explore/${realSlug}/opengraph-image`,
             width: 1200,
             height: 630,
             alt: quiz.title,
@@ -45,7 +52,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title: quiz.title,
         description: quiz.description || "Take a quiz on Qwizzed",
-        images: [`/quiz/${slug}/opengraph-image`],
+        images: [`/explore/${realSlug}/opengraph-image`],
       },
     };
   } catch {
@@ -106,7 +113,7 @@ async function PageContent({ params }: Readonly<{ params: Promise<{ slug: string
 
       <div className="flex flex-wrap items-center gap-4 pt-4">
         <Button asChild size="lg" className="h-12 px-8 text-base">
-          <Link href={`/quiz/${slug}/take`}>Start Quiz Now</Link>
+          <Link href={`/explore/${slug}/take`}>Start Quiz Now</Link>
         </Button>
         <QuizActions
           slug={slug}
@@ -123,17 +130,38 @@ async function PageContent({ params }: Readonly<{ params: Promise<{ slug: string
   );
 }
 
-export default function Page({
+export default async function Page({
   params,
+  searchParams,
 }: Readonly<{
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }>) {
+  const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const action = resolvedSearchParams?.action;
+
+  let realSlug = slug;
+  let isTakeAction = action === "take";
+
+  if (slug.includes("&action=take")) {
+    realSlug = slug.replace("&action=take", "");
+    isTakeAction = true;
+  } else if (slug.includes("?action=take")) {
+    realSlug = slug.split("?")[0];
+    isTakeAction = true;
+  }
+
+  if (isTakeAction) {
+    redirect(`/explore/${realSlug}/take`);
+  }
+
   return (
     <>
       <SiteHeader />
       <Layout>
         <Suspense fallback={<div>Loading...</div>}>
-          <PageContent params={params} />
+          <PageContent params={Promise.resolve({ slug: realSlug })} />
         </Suspense>
       </Layout>
       <SiteFooter />

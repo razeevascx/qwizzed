@@ -1,112 +1,52 @@
 "use client";
-
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Laptop, Moon, Sun, Check } from "lucide-react";
+import * as React from "react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const ThemeSwitcher = () => {
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+export default function ThemeToggle() {
+  const [mounted, setMounted] = React.useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Ensure hydration match
+  React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-9 w-9 animate-pulse bg-muted"
-      />
-    );
-  }
+  if (!mounted)
+    return <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />;
 
-  const ICON_SIZE = 18;
-
-  const getCurrentIcon = () => {
-    if (theme === "light") {
-      return <Sun size={ICON_SIZE} className="text-amber-500" />;
-    }
-    if (theme === "dark") {
-      return <Moon size={ICON_SIZE} className="text-indigo-400" />;
-    }
-    return <Laptop size={ICON_SIZE} className="text-muted-foreground" />;
-  };
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 w-9 rounded-lg hover:bg-secondary/50 hover:text-foreground transition-all duration-200 group"
-        >
-          <span className="relative">{getCurrentIcon()}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-40 p-1.5 bg-background/95 backdrop-blur-xl border border-border/50 shadow-lg"
-        align="end"
-        sideOffset={8}
-      >
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(e) => setTheme(e)}
-        >
-          <DropdownMenuRadioItem
-            value="light"
-            className="flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors duration-150 focus:bg-secondary/50"
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="relative p-2 rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+      aria-label="Toggle theme"
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {isDark ? (
+          <motion.div
+            key="sun"
+            initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <Sun
-              size={ICON_SIZE}
-              className="text-amber-500 group-hover:text-amber-400 transition-colors"
-            />
-            <span className="text-sm">Light</span>
-            {theme === "light" && (
-              <Check size={14} className="ml-auto text-primary" />
-            )}
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="dark"
-            className="flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors duration-150 focus:bg-secondary/50"
+            <Sun className="w-6 h-6 text-yellow-500" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="moon"
+            initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <Moon
-              size={ICON_SIZE}
-              className="text-indigo-400 group-hover:text-indigo-300 transition-colors"
-            />
-            <span className="text-sm">Dark</span>
-            {theme === "dark" && (
-              <Check size={14} className="ml-auto text-primary" />
-            )}
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            value="system"
-            className="flex items-center gap-2.5 px-3 py-2 rounded-md cursor-pointer transition-colors duration-150 focus:bg-secondary/50"
-          >
-            <Laptop
-              size={ICON_SIZE}
-              className="text-muted-foreground group-hover:text-foreground transition-colors"
-            />
-            <span className="text-sm">System</span>
-            {theme === "system" && (
-              <Check size={14} className="ml-auto text-primary" />
-            )}
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <Moon className="w-6 h-6 text-indigo-600" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </button>
   );
-};
-
-export { ThemeSwitcher };
+}

@@ -75,7 +75,7 @@ export function QuizCard({
   const difficulty = difficultyConfig[quiz.difficulty_level || "medium"];
   const isInvited = accessType === "invited";
   const canDelete = !isInvited && Boolean(onDelete);
-  const quizPath = `/quiz/${quiz.slug || quiz.id}`;
+  const quizPath = `/explore/${quiz.slug || quiz.id}`;
 
   const cardContent = (
     <div
@@ -178,7 +178,7 @@ export function QuizCard({
               asChild
               className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all"
             >
-              <Link href={`/dashboard/quizzes/edit/${quiz.id}`}>
+              <Link href={`/dashboard/explorezes/edit/${quiz.id}`}>
                 <Edit className="w-3.5 h-3.5 mr-2" />
                 Edit
               </Link>
@@ -200,7 +200,7 @@ export function QuizCard({
               asChild
               className="h-9 text-[10px] font-black uppercase tracking-widest rounded-none border-border/50 hover:bg-foreground hover:text-background transition-all"
             >
-              <Link href={`/dashboard/quizzes/share/${quiz.id}`}>
+              <Link href={`/dashboard/explorezes/share/${quiz.id}`}>
                 <Share2 className="w-3.5 h-3.5 mr-2" />
                 Share
               </Link>
