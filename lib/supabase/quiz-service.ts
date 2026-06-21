@@ -193,7 +193,7 @@ export class QuizService {
       },
     );
 
-    return combined as Quiz[];
+    return combined;
   }
 
   static async getPublishedQuizzes(
@@ -807,7 +807,7 @@ export class QuizService {
       .from("quiz_submissions")
       .update({
         status: status || "completed",
-        score: manualScore !== undefined ? manualScore : totalScore,
+        score: manualScore ?? totalScore,
         total_points: totalPoints,
         submitted_at: new Date().toISOString(),
       })

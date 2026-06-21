@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QuizCard } from "@/components/explore-card";
+import { QuizCard } from "@/components/quiz-card";
 import { Button } from "@/components/ui/button";
 import { Quiz } from "@/lib/types/quiz";
 import { Plus } from "lucide-react";

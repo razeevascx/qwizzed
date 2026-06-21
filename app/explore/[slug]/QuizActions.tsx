@@ -37,11 +37,10 @@ export function QuizActions({ slug, quizTitle, organizerName }: Readonly<QuizAct
       // Fallback to copy link
       try {
         await navigator.clipboard.writeText(quizUrl);
-        toast({
-          variant: "success",
-          title: "Link copied",
-          description: "Native share not supported. Quiz link copied to clipboard.",
-        });
+        toast.success(
+          "Native share not supported. Quiz link copied to clipboard.",
+          "Link copied",
+        );
       } catch (err) {
         console.error("Failed to copy:", err);
       }

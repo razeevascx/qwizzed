@@ -36,10 +36,15 @@ export async function POST(
       );
     }
 
-    // Use authenticated user's info from session
+    // Get existing submission to preserve custom name/email set when the quiz started
+    const existingSubmission = await QuizService.getSubmission(submissionId);
     const name =
-      user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "User";
-    const email = user.email || null;
+      existingSubmission?.submitted_by_name ||
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "User";
+    const email = existingSubmission?.submitted_by_email || user.email || null;
 
     // ponytail: use QuizService to grade and submit answers
     const updatedSubmission = await QuizService.submitQuizAnswers(

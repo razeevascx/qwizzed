@@ -11,9 +11,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const client = await createClient();
   try {
     const slug = (await params).slug;
-    const client = await createClient();
 
     // ponytail: get quiz by slug or id using QuizService helper
     const quiz = await QuizService.getQuiz(slug, client);

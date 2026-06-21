@@ -1,7 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import GetStarted from "./Get-started";
 import Logo from "@/components/Logo";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 const productLinks = [
   { name: "Browse Quizzes", href: "/explore" },
@@ -23,7 +25,11 @@ const resourceLinks = [
 ];
 
 export function SiteFooter() {
-  const year = new Date().getFullYear();
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   return (
     <>

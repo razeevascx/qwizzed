@@ -110,8 +110,8 @@ export const quizApi = {
     apiDelete(`/api/quiz/${quizId}/questions/${questionId}`),
   reorderQuestions: (quizId: string, questions: any[]) =>
     apiPut(`/api/quiz/${quizId}/questions/reorder`, { questions }),
-  createSubmission: (quizId: string) =>
-    apiPost(`/api/quiz/${quizId}/submissions`, {}),
+  createSubmission: (quizId: string, data?: { name?: string; email?: string }) =>
+    apiPost(`/api/quiz/${quizId}/submissions`, data || {}),
   submitAnswers: (quizId: string, submissionId: string, data: any) =>
     apiPost(`/api/quiz/${quizId}/submissions/${submissionId}`, data),
 };

@@ -21,7 +21,7 @@ import {
   PlusCircle,
   Trophy,
 } from "lucide-react";
-import { QuizQrDisplay } from "@/components/explore-qr-display";
+import { QuizQrDisplay } from "@/components/quiz-qr-display";
 import {
   Breadcrumb,
   BreadcrumbItem,

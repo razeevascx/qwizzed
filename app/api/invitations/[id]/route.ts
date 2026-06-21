@@ -23,7 +23,7 @@ export async function PATCH(
 
     const invitation = await QuizService.respondToInvitation(id, status);
 
-    revalidateTag(`user-quizzes-${user.id}`);
+    revalidateTag(`user-quizzes-${user.id}`, "max");
 
     return NextResponse.json(invitation);
   } catch (error: any) {
@@ -51,7 +51,7 @@ export async function DELETE(
 
     await QuizService.deleteInvitation(id);
 
-    revalidateTag(`user-quizzes-${user.id}`);
+    revalidateTag(`user-quizzes-${user.id}`, "max");
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

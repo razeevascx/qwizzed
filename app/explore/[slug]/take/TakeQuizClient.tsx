@@ -8,6 +8,7 @@ import { Quiz, Question, QuestionOption } from "@/lib/types/quiz";
 import { quizApi } from "@/lib/api-client";
 import Layout from "@/components/layout/Layout";
 import { toggleFullscreen } from "@/lib/fullscreen";
+import { createClient } from "@/lib/supabase/client";
 
 // Sub-components
 import { QuizLoading } from "./_components/QuizLoading";
@@ -48,7 +49,30 @@ export default function TakeQuizClient({
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
+  const [hasStarted, setHasStarted] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [isStartingSubmission, setIsStartingSubmission] = useState(false);
+
   const pendingSubmissionKey = `pending-quiz-submission:${quizId}`;
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        if (user) {
+          setName(user.user_metadata?.full_name || user.user_metadata?.name || "");
+          setEmail(user.email || "");
+        }
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      }
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     if (!quizId) return;
@@ -96,18 +120,7 @@ export default function TakeQuizClient({
       document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
-  const createSubmission = async () => {
-    const result = await quizApi.createSubmission(quizId);
 
-    if (!result.ok) {
-      if (result.error?.includes("401") || result.error?.includes("403")) {
-        return { kind: "auth_required" as const };
-      }
-      throw new Error(result.error || "Failed to create submission");
-    }
-
-    return { kind: "ok" as const, submission: result.data };
-  };
 
   const submitAnswers = async (
     targetSubmissionId: string,
@@ -127,11 +140,29 @@ export default function TakeQuizClient({
     return { kind: "ok" as const, result: result.data };
   };
 
+  const createSubmission = async (customName?: string, customEmail?: string) => {
+    const result = await quizApi.createSubmission(quizId, {
+      name: customName || name,
+      email: customEmail || email,
+    });
+
+    if (!result.ok) {
+      if (result.error?.includes("401") || result.error?.includes("403")) {
+        return { kind: "auth_required" as const };
+      }
+      throw new Error(result.error || "Failed to create submission");
+    }
+
+    return { kind: "ok" as const, submission: result.data };
+  };
+
   const savePendingAnswers = (pendingAnswers: Record<string, string>) => {
     localStorage.setItem(
       pendingSubmissionKey,
       JSON.stringify({
         answers: pendingAnswers,
+        name: name,
+        email: email,
         savedAt: new Date().toISOString(),
       }),
     );
@@ -145,10 +176,12 @@ export default function TakeQuizClient({
 
   const resumePendingSubmission = async (
     pendingAnswers: Record<string, string>,
+    savedName?: string,
+    savedEmail?: string,
   ) => {
     try {
       // Create submission first
-      const createResult = await createSubmission();
+      const createResult = await createSubmission(savedName || name, savedEmail || email);
       if (createResult.kind === "auth_required") {
         redirectToLogin();
         return;
@@ -195,6 +228,31 @@ export default function TakeQuizClient({
     }
   };
 
+  const startQuizAttempt = async (startName: string, startEmail: string) => {
+    if (!startName.trim()) {
+      toast.error("Please enter your name.", "Name Required");
+      return;
+    }
+    if (!startEmail.trim()) {
+      toast.error("Please enter your email.", "Email Required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(startEmail)) {
+      toast.error("Please enter a valid email address.", "Invalid Email");
+      return;
+    }
+
+    setName(startName);
+    setEmail(startEmail);
+    setHasStarted(true);
+
+    const timeLimitMinutes = Number(quiz?.time_limit_minutes);
+    if (Number.isFinite(timeLimitMinutes) && timeLimitMinutes > 0) {
+      setTimeLeft(timeLimitMinutes * 60);
+    }
+  };
+
   const initializeQuiz = async (quizData: QuizWithQuestions) => {
     try {
       setQuiz(quizData);
@@ -216,19 +274,34 @@ export default function TakeQuizClient({
         const pending = JSON.parse(pendingRaw);
         if (pending?.answers) {
           setAnswers(pending.answers);
-          await resumePendingSubmission(pending.answers);
+          if (pending.name) setName(pending.name);
+          if (pending.email) setEmail(pending.email);
+          setHasStarted(true);
+          await resumePendingSubmission(pending.answers, pending.name, pending.email);
           return;
         }
       }
 
-      const createResult = await createSubmission();
-      if (createResult.kind === "ok") {
-        setSubmissionId((createResult as any).submission.id);
-      }
+      // Check auth status to skip prompt for logged in users
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-      const timeLimitMinutes = Number(quizData.time_limit_minutes);
-      if (Number.isFinite(timeLimitMinutes) && timeLimitMinutes > 0) {
-        setTimeLeft(timeLimitMinutes * 60);
+      if (currentUser) {
+        const defaultName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || "";
+        const defaultEmail = currentUser.email || "";
+        setName(defaultName);
+        setEmail(defaultEmail);
+
+        const createResult = await createSubmission(defaultName, defaultEmail);
+        if (createResult.kind === "ok") {
+          setSubmissionId((createResult as any).submission.id);
+          setHasStarted(true);
+
+          const timeLimitMinutes = Number(quizData.time_limit_minutes);
+          if (Number.isFinite(timeLimitMinutes) && timeLimitMinutes > 0) {
+            setTimeLeft(timeLimitMinutes * 60);
+          }
+        }
       }
     } catch (err) {
       console.error(err);
@@ -356,6 +429,94 @@ export default function TakeQuizClient({
         quiz={quiz}
         onRetake={() => globalThis.location.reload()}
       />
+    );
+  }
+
+  if (!hasStarted) {
+    return (
+      <Layout>
+        <section className="w-full max-w-2xl mx-auto pt-24 px-6 pb-24 flex flex-col justify-center items-center min-h-[80vh]">
+          <div className="w-full bg-card/50 backdrop-blur-md rounded-3xl border border-border/85 shadow-2xl p-8 space-y-8 animate-in fade-in zoom-in duration-500">
+            {/* Header */}
+            <div className="space-y-3 text-center">
+              <span className="px-3 py-1 text-xs font-semibold tracking-wider text-primary uppercase bg-primary/10 rounded-full border border-primary/20">
+                Ready to Start
+              </span>
+              <h1 className="text-4xl font-extrabold tracking-tight text-foreground bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text">
+                {quiz?.title || "Quiz"}
+              </h1>
+              {quiz?.description && (
+                <p className="text-muted-foreground leading-relaxed">
+                  {quiz.description}
+                </p>
+              )}
+            </div>
+
+            {/* Quiz Info Badges */}
+            <div className="flex flex-wrap justify-center gap-3 py-2 border-y border-border/50">
+              {quiz?.category && (
+                <span className="px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted/30 border border-border/40 rounded-full">
+                  Category: {quiz.category}
+                </span>
+              )}
+              {quiz?.difficulty_level && (
+                <span className="px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted/30 border border-border/40 rounded-full capitalize">
+                  Level: {quiz.difficulty_level}
+                </span>
+              )}
+              {questions.length > 0 && (
+                <span className="px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted/30 border border-border/40 rounded-full">
+                  {questions.length} Questions
+                </span>
+              )}
+              {quiz?.time_limit_minutes ? (
+                <span className="px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted/30 border border-border/40 rounded-full">
+                  Time: {quiz.time_limit_minutes}m
+                </span>
+              ) : null}
+            </div>
+
+            {/* Form */}
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="name-input" className="text-sm font-semibold text-muted-foreground">
+                    Display Name
+                  </label>
+                  <input
+                    id="name-input"
+                    type="text"
+                    placeholder="Enter your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full h-12 px-4 rounded-2xl border border-border/80 bg-background hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all duration-300"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="email-input" className="text-sm font-semibold text-muted-foreground">
+                    Email Address
+                  </label>
+                  <input
+                    id="email-input"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-12 px-4 rounded-2xl border border-border/80 bg-background hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={() => startQuizAttempt(name, email)}
+                className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl hover:opacity-90 active:scale-95 transition-all duration-300 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
+              >
+                Start Quiz
+              </button>
+            </div>
+          </div>
+        </section>
+      </Layout>
     );
   }
 

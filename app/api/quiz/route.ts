@@ -4,8 +4,8 @@ import { revalidateTag } from "next/cache";
 import { QuizService } from "@/lib/supabase/quiz-service";
 
 export async function GET(request: NextRequest) {
+  const client = await createClient();
   try {
-    const client = await createClient();
     const {
       data: { user },
       error: userError,
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const quiz = await QuizService.createQuiz(user.id, body);
 
-    revalidateTag(`user-quizzes-${user.id}`);
+    revalidateTag(`user-quizzes-${user.id}`, "max");
 
     return NextResponse.json(quiz);
   } catch (error) {

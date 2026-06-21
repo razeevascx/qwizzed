@@ -16,9 +16,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  const client = await createClient();
   try {
     const slug = (await params).slug;
-    const client = await createClient();
 
     const quiz = await QuizService.getQuiz(slug);
 
@@ -72,9 +72,9 @@ export async function PUT(
     const body = await request.json();
     const updatedQuiz = await QuizService.updateQuiz(quiz.id, body);
 
-    revalidateTag(`user-quizzes-${authResult.user!.id}`);
+    revalidateTag(`user-quizzes-${authResult.user!.id}`, "max");
     if (quiz.visibility === "public" || body.visibility === "public") {
-      revalidateTag("public-quizzes");
+      revalidateTag("public-quizzes", "max");
     }
 
     return NextResponse.json(updatedQuiz);
@@ -110,9 +110,9 @@ export async function DELETE(
 
     await QuizService.deleteQuiz(quiz.id);
 
-    revalidateTag(`user-quizzes-${authResult.user!.id}`);
+    revalidateTag(`user-quizzes-${authResult.user!.id}`, "max");
     if (quiz.visibility === "public") {
-      revalidateTag("public-quizzes");
+      revalidateTag("public-quizzes", "max");
     }
 
     return NextResponse.json({ success: true });

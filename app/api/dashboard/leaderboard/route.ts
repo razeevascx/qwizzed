@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/server";
  * Global leaderboard showing top users across all public quizzes
  */
 export async function GET(request: NextRequest) {
+  const client = await createClient();
   try {
-    const client = await createClient();
 
     // Fetch all submissions for public and published quizzes
     // We group by user_id to get total points across all quizzes

@@ -130,13 +130,13 @@ async function PageContent({ params }: Readonly<{ params: Promise<{ slug: string
   );
 }
 
-export default async function Page({
+async function ExplorePageContent({
   params,
   searchParams,
-}: Readonly<{
+}: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}>) {
+}) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
   const action = resolvedSearchParams?.action;
@@ -157,13 +157,25 @@ export default async function Page({
   }
 
   return (
+    <Layout>
+      <PageContent params={Promise.resolve({ slug: realSlug })} />
+    </Layout>
+  );
+}
+
+export default function Page({
+  params,
+  searchParams,
+}: Readonly<{
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}>) {
+  return (
     <>
       <SiteHeader />
-      <Layout>
-        <Suspense fallback={<div>Loading...</div>}>
-          <PageContent params={Promise.resolve({ slug: realSlug })} />
-        </Suspense>
-      </Layout>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ExplorePageContent params={params} searchParams={searchParams} />
+      </Suspense>
       <SiteFooter />
     </>
   );
