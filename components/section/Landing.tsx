@@ -3,14 +3,37 @@ import Layout from "../layout/Layout";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import Image from "next/image";
+import PixelBlast from "../3d/PixelBlast";
 
 export default function Landing() {
   return (
     <>
+      <div className="absolute inset-0">
+        <PixelBlast
+          variant="square"
+          pixelSize={10}
+          color="#B19EEF"
+          patternScale={6}
+          patternDensity={1}
+          pixelSizeJitter={0}
+          enableRipples
+          rippleSpeed={0.4}
+          rippleThickness={0.12}
+          rippleIntensityScale={1.5}
+          liquid={false}
+          liquidStrength={0.12}
+          liquidRadius={1.2}
+          liquidWobbleSpeed={5}
+          speed={0.5}
+          edgeFade={0}
+          transparent
+        />
+      </div>
+      {/* Linear Gradient Overlay: From Top to Bottom */}
       <div className="absolute inset-0 bg-linear-to-t from-background via-background/20 to-background " />
 
       <section className="h-dvh relative">
-        <Layout className="relative w-full z-10 py-16 md:py-32 overflow-hidden h-full  ">
+        <Layout className="relative w-full z-10 py-16 md:py-32 overflow-hidden h-full flex flex-col justify-end  ">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-10 items-center ">
             {/* Left Content */}
             <div className="space-y-6">

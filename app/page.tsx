@@ -13,7 +13,7 @@ export default function Home() {
       <main className="flex flex-col bg-background text-foreground">
         <Landing />
         <Features />
-        <Steps />
+        {/* <Steps /> */}
         <PrivacySecurity />
         <FAQSection />
       </main>

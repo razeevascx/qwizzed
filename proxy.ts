@@ -33,6 +33,8 @@ export async function proxy(request: NextRequest) {
   const pathname = url.pathname;
 
   const isSubdomain = hostname.startsWith("app.");
+  const isLocalhost =
+    hostname.includes("localhost") || hostname.includes("127.0.0.1");
 
   // Handle CORS preflight requests
   if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {
@@ -42,8 +44,14 @@ export async function proxy(request: NextRequest) {
       response.headers.set("Access-Control-Allow-Origin", origin);
       response.headers.set("Access-Control-Allow-Credentials", "true");
     }
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-client-info, apikey");
+    response.headers.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS",
+    );
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, x-client-info, apikey",
+    );
     response.headers.set("Vary", "Origin");
     return response;
   }
@@ -74,8 +82,14 @@ export async function proxy(request: NextRequest) {
       response.headers.set("Access-Control-Allow-Origin", origin);
       response.headers.set("Access-Control-Allow-Credentials", "true");
     }
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-client-info, apikey");
+    response.headers.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS",
+    );
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, x-client-info, apikey",
+    );
     response.headers.set("Vary", "Origin");
 
     return response;
@@ -83,17 +97,25 @@ export async function proxy(request: NextRequest) {
 
   const isAuthRoute = pathname.startsWith("/get-started");
 
-  // Redirect any auth routes on the subdomain to the main domain
+  // Redirect any auth routes on the subdomain to the main domain (production only)
   if (isSubdomain && isAuthRoute) {
-    const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
     if (!isLocalhost) {
       const mainHost = hostname.replace(/^app\./, "");
-      const redirectUrl = new URL(pathname, request.url);
+      const redirectUrl = new URL(pathname + url.search, request.url);
       redirectUrl.host = mainHost;
       return NextResponse.redirect(redirectUrl);
     }
     // On localhost, fall through and let the auth route be served
     // directly on the subdomain (handled in the rewrite block below).
+  }
+
+  // NEW: on localhost, send auth routes hit on the plain host over to the
+  // app subdomain, so /get-started always canonically lives on app.localhost
+  // locally (mirroring the fall-through behavior above).
+  if (!isSubdomain && isAuthRoute && isLocalhost) {
+    const redirectUrl = new URL(pathname + url.search, request.url);
+    redirectUrl.host = `app.${hostname}`;
+    return NextResponse.redirect(redirectUrl);
   }
 
   // 1. Redirect /explore/[id]/take to /explore/[id]&action=take
@@ -110,15 +132,18 @@ export async function proxy(request: NextRequest) {
   // Get Supabase user and updated response (with any refreshed cookies)
   const authResult = await getSessionUser(request);
   const user = authResult?.user;
-  const supabaseResponse = authResult?.response ?? NextResponse.next({ request });
+  const supabaseResponse =
+    authResult?.response ?? NextResponse.next({ request });
 
   if (isAppArea && !isAuthRoute) {
     if (!user) {
-      const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
       if (isLocalhost) {
-        // Redirect unauthenticated user to /get-started on the subdomain itself
+        // FIXED: always redirect to /get-started on the app subdomain,
+        // not on whatever host the request came in on (which could be
+        // plain localhost if entry was via /app).
+        const appHost = isSubdomain ? hostname : `app.${hostname}`;
         const redirectUrl = new URL("/get-started", request.url);
-        redirectUrl.host = hostname;
+        redirectUrl.host = appHost;
         return NextResponse.redirect(redirectUrl);
       } else {
         // Redirect unauthenticated user to /get-started on the main domain
@@ -131,7 +156,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // 2. Rewrite /explore/[id]&action=take or /explore/[id]?action=take to /explore/[id]/take
-  const hasTakeAction = pathname.endsWith("&action=take") || url.searchParams.get("action") === "take";
+  const hasTakeAction =
+    pathname.endsWith("&action=take") ||
+    url.searchParams.get("action") === "take";
   if (hasTakeAction && pathname.startsWith("/explore/")) {
     let id = pathname.replace(/^\/explore\//, "");
     if (id.endsWith("&action=take")) {
