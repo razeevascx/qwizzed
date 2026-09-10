@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import GetStarted from "./Get-started";
 import Logo from "@/components/Logo";
+import { Suspense, useEffect, useState } from "react";
 
 const productLinks = [
-  { name: "Browse Quizzes", href: "/quiz" },
+  { name: "Browse Quizzes", href: "/explore" },
   { name: "Create Quiz", href: "/dashboard/create" },
-  { name: "My Quizzes", href: "/dashboard/quizzes" },
+  { name: "My Quizzes", href: "/dashboard/explorezes" },
   { name: "Analytics", href: "/dashboard/analytics" },
 ];
 
@@ -111,11 +111,13 @@ export function SiteFooter() {
 
           <div className="mt-12 pt-8 border-t border-border">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <Suspense fallback={<p className="text-sm text-muted-foreground text-center sm:text-left">Qwizzed. All rights reserved.</p>}>
               <p className="text-sm text-muted-foreground text-center sm:text-left">
                 {year
                   ? `${year} Qwizzed. All rights reserved.`
                   : "Qwizzed. All rights reserved."}
               </p>
+              </Suspense>
               <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center sm:justify-end">
                 {[...companyLinks, ...productLinks].map((link) => (
                   <Link

@@ -20,7 +20,7 @@ export default function RootLayout({
           </Link>
           <nav className="flex items-center gap-4">
             <Link
-              href="/quiz"
+              href="/explore"
             >
               Explore
             </Link>

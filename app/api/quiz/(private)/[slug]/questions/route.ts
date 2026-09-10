@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { QuizService } from "@/lib/supabase/quiz-service";
 
-// POST /api/quiz/[id]/questions - add question (authenticated)
+// POST /api/explore/[id]/questions - add question (authenticated)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
@@ -18,71 +19,21 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Find quiz by slug or id for backwards compatibility
-    let { data: quiz } = await client
-      .from("quizzes")
-      .select("id, creator_id")
-      .eq("slug", slug)
-      .single();
-
-    if (!quiz) {
-      const result = await client
-        .from("quizzes")
-        .select("id, creator_id")
-        .eq("id", slug)
-        .single();
-      quiz = result.data;
-    }
+    // ponytail: get quiz by slug or id using QuizService helper
+    const quiz = await QuizService.getQuiz(slug, client);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    if (!quiz || quiz.creator_id !== user.id) {
+    if (quiz.creator_id !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const body = await request.json();
-    const { question_text, question_type, points, options } = body;
 
-    const { count } = await client
-      .from("questions")
-      .select("*", { count: "exact" })
-      .eq("quiz_id", quiz.id);
-
-    const order = (count || 0) + 1;
-
-    const { data: question, error } = await client
-      .from("questions")
-      .insert([
-        {
-          quiz_id: quiz.id,
-          question_text,
-          question_type,
-          points: points || 1,
-          order,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    if (options && options.length > 0) {
-      const optionsData = options.map((opt: any, index: number) => ({
-        question_id: question.id,
-        option_text: opt.option_text,
-        is_correct: opt.is_correct,
-        order: index + 1,
-      }));
-
-      await client.from("question_options").insert(optionsData);
-    }
-
-    await client
-      .from("quizzes")
-      .update({ total_questions: order })
-      .eq("id", quiz.id);
+    // ponytail: use QuizService to add question instead of duplicate queries
+    const question = await QuizService.addQuestion(quiz.id, body);
 
     const { data: fullQuestion } = await client
       .from("questions")

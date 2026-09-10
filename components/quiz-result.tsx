@@ -135,7 +135,7 @@ export function QuizResult({
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Button
-            onClick={() => router.push("/quiz")}
+            onClick={() => router.push("/explore")}
             size="lg"
             className="w-full h-12 rounded-lg font-medium"
           >
@@ -143,7 +143,7 @@ export function QuizResult({
           </Button>
           {quiz?.visibility === "public" && quizPath && (
             <Button
-              onClick={() => router.push(`/quiz/${quizPath}/leaderboard`)}
+              onClick={() => router.push(`/explore/${quizPath}/leaderboard`)}
               variant="outline"
               size="lg"
               className="w-full h-12 rounded-lg font-medium gap-2"

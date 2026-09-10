@@ -32,7 +32,7 @@ export function QuizLeaderboard({
       return;
     }
     loadLeaderboard();
-    
+
     // Set up polling for real-time updates
     const interval = setInterval(() => {
       loadLeaderboard(true); // Silent refresh
@@ -46,7 +46,7 @@ export function QuizLeaderboard({
     if (!actualQuizId) return;
 
     const supabase = createClient();
-    
+
     const channel = supabase
       .channel(`leaderboard:${actualQuizId}`)
       .on(
@@ -74,8 +74,8 @@ export function QuizLeaderboard({
       if (!silent) setIsLoading(true);
       setError(null);
       if (!quizIdentifier) return;
-      
-      const response = await fetch(`/api/quiz/${quizIdentifier}/leaderboard`);
+
+      const response = await fetch(`/api/explore/${quizIdentifier}/leaderboard`);
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -87,7 +87,7 @@ export function QuizLeaderboard({
 
       const data = await response.json();
       setLeaderboard(data.slice(0, limit));
-      
+
       // Get actual quiz ID for real-time subscription
       if (data.length > 0 && !actualQuizId) {
         setActualQuizId(data[0].quiz_id);
@@ -175,8 +175,8 @@ export function QuizLeaderboard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-foreground truncate">
-                {entry.submitted_by_name || 
-                 entry.submitted_by_email || 
+                {entry.submitted_by_name ||
+                 entry.submitted_by_email ||
                  (entry.user_id ? `User ${entry.user_id.slice(0, 8)}` : "Anonymous")}
               </p>
             </div>

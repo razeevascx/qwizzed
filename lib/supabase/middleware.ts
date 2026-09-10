@@ -40,31 +40,14 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  const publicPaths = [
-    "/",
-    "/get-started",
-    "/quiz",
-    "/privacy",
-    "/terms",
-    "/api",
-  ];
-
-  const isPublicPath = publicPaths.some((path) => {
-    if (path === "/") {
-      return request.nextUrl.pathname === path;
-    }
-    return request.nextUrl.pathname.startsWith(path);
-  });
-
-  const protectedPaths = ["/dashboard"];
-  const isProtectedPath = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path),
-  );
-
-  if (!user && isProtectedPath) {
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/auth")
+  ) {
+    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
-    url.pathname = "/get-started";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    url.pathname = "/auth/login";
     return NextResponse.redirect(url);
   }
 
@@ -82,4 +65,67 @@ export async function updateSession(request: NextRequest) {
   // of sync and terminate the user's session prematurely!
 
   return supabaseResponse;
+}
+
+export async function getSessionUser(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  const hostname = request.headers.get("host") || "";
+  const hostOnly = hostname.split(":")[0];
+  const isLocalhost = hostOnly.includes("localhost") || hostOnly.includes("127.0.0.1");
+
+  // Cookie domain scoping:
+  // - 127.0.0.1 has no subdomain concept, so leave cookies unscoped (host-only).
+  // - localhost (and app.localhost) DOES support subdomains in modern browsers,
+  //   so scope to ".localhost" to share the session cookie between the main
+  //   domain and the app subdomain during local dev.
+  // - In production, scope to the root domain (".example.com") so app.example.com
+  //   shares cookies with example.com.
+  const domain = hostOnly.includes("127.0.0.1")
+    ? undefined
+    : isLocalhost
+      ? ".localhost"
+      : (hostOnly.startsWith("app.") ? hostOnly.substring(4) : hostOnly);
+
+  // Create a dummy response to store any cookies that get updated during the request
+  let response = NextResponse.next();
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, {
+              ...options,
+              ...(domain ? { domain } : {}),
+            }),
+          );
+        },
+      },
+    },
+  );
+
+  try {
+    const { data } = await supabase.auth.getClaims();
+    return { user: data?.claims, response };
+  } catch (error) {
+    console.error("Error getting session user:", error);
+    return null;
+  }
 }

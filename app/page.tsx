@@ -1,9 +1,8 @@
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { SiteHeader } from "@/components/ui/Navbar";
 import FAQSection from "@/components/faq-section";
 import Landing from "@/components/section/Landing";
 import PrivacySecurity from "@/components/section/PrivacySecurity";
-
 import Steps from "@/components/section/Steps";
 import Features from "@/components/section/Features";
 
@@ -14,7 +13,7 @@ export default function Home() {
       <main className="flex flex-col bg-background text-foreground">
         <Landing />
         <Features />
-        <Steps />
+        {/* <Steps /> */}
         <PrivacySecurity />
         <FAQSection />
       </main>

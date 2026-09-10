@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <div className="w-full h-full grid gap-8 place-content-center items-center justify-center px-4 sm:px-8">
+    <div className="w-full h-full  px-4 sm:px-8">
       <div className="w-full max-w-xl space-y-8">
         {/* Header */}
         <div className="space-y-2">

@@ -22,7 +22,7 @@ export function LoginForm({
 }: Readonly<React.ComponentPropsWithoutRef<"div">>) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextParam = searchParams?.get("next") || "/quiz";
+  const nextParam = searchParams?.get("next") || "/explore";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -129,7 +129,7 @@ export function LoginForm({
         {/* Google OAuth */}
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="lg"
           className="w-full h-11 border border-border font-semibold rounded-lg transition-all hover:text-primary "
           onClick={handleGoogleLogin}

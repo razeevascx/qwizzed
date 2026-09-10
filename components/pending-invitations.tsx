@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mail, Check, X, ExternalLink, RotateCcw } from "lucide-react";
-import Link from "next/link";
+import { Mail, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Invitation {
