@@ -1,26 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  LogOut,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   X,
 } from "lucide-react";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { CurrentUserAvatar } from "./current-user-avatar";
-import { createClient } from "@/lib/supabase/client";
 import { Sidebarlink, SidebarItem } from "@/data/Sidebarlink";
 
 
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -37,7 +33,6 @@ export function Sidebar() {
     Settings: true,
     Legal: false,
   });
-  const { name } = useCurrentUser();
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -66,19 +61,13 @@ export function Sidebar() {
   const close = () => setIsOpen(false);
   const toggleCollapse = () => setIsCollapsed((prev) => !prev);
 
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/get-started");
-  };
-
   const renderNavItem = (item: SidebarItem, isSubItem = false) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedItems[item.label];
     const normalizedHref = item.href.split("#")[0];
     const isActive =
       pathname === normalizedHref ||
-      (normalizedHref !== "/" && pathname.startsWith(`${normalizedHref}/`));
+      (!["/", "/app"].includes(normalizedHref) && pathname.startsWith(`${normalizedHref}/`));
 
     return (
       <div key={item.href} className="space-y-1">
@@ -239,45 +228,9 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* User Section */}
-        <div className="border-t border-border/50 p-3 bg-muted/20">
-          {isCollapsed ? (
-            <div className="flex flex-col items-center gap-3 py-1">
-              <CurrentUserAvatar size="sm" />
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                title="Logout"
-                aria-label="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3 min-w-0">
-                <CurrentUserAvatar size="sm" className="shrink-0" />
-                <div className="leading-tight min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {name || "User"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Manage account
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
-                title="Logout"
-                aria-label="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+        {/* Clerk account menu includes profile management and sign-out. */}
+        <div className={cn("border-t border-border/50 p-3 bg-muted/20 flex", isCollapsed ? "justify-center" : "justify-start")}>
+          <UserButton showName={!isCollapsed} />
         </div>
       </aside>
     </>

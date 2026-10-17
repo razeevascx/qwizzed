@@ -1,23 +1,17 @@
+import { getCurrentUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { revalidateTag } from "next/cache";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 
 export async function GET(request: NextRequest) {
-  const client = await createClient();
-  try {
-    const {
-      data: { user },
-      error: userError,
-    } = await client.auth.getUser();
 
-    // If user is authenticated, return their own quizzes + invitations
-    if (user && !userError) {
-      const combined = await QuizService.getCombinedUserQuizzes(
-        user.id,
-        user.email,
-      );
-      return NextResponse.json(combined);
+  try {
+    const user = await getCurrentUser();
+
+    // Dashboard management lists contain only quizzes owned by this user.
+    if (user) {
+      const combined = await QuizService.getUserQuizzes();
+      return NextResponse.json(combined, { headers: { "Cache-Control": "private, no-store" } });
     }
 
     // If not authenticated, return public quizzes
@@ -36,18 +30,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const client = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await client.auth.getUser();
 
-    if (userError || !user) {
+    const user = await getCurrentUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const quiz = await QuizService.createQuiz(user.id, body);
+    const quiz = await QuizService.createQuiz(body);
 
     revalidateTag(`user-quizzes-${user.id}`, "max");
 

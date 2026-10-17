@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 
 // POST /api/explore/[id]/submissions/[submissionId] - submit answer
 // PUT /api/explore/[id]/submissions/[submissionId] - grade submission
@@ -10,19 +10,16 @@ export async function POST(
 ) {
   try {
     const { slug, submissionId } = await params;
-    const client = await createClient();
+
 
     const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
-    const {
-      data: { user },
-      error: userError,
-    } = await client.auth.getUser();
+    const user = await getCurrentUser();
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,23 +33,10 @@ export async function POST(
       );
     }
 
-    // Get existing submission to preserve custom name/email set when the quiz started
-    const existingSubmission = await QuizService.getSubmission(submissionId);
-    const name =
-      existingSubmission?.submitted_by_name ||
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      user.email?.split("@")[0] ||
-      "User";
-    const email = existingSubmission?.submitted_by_email || user.email || null;
-
-    // ponytail: use QuizService to grade and submit answers
     const updatedSubmission = await QuizService.submitQuizAnswers(
       quiz.id,
       submissionId,
       answers,
-      name,
-      email
     );
 
     return NextResponse.json(updatedSubmission);
@@ -74,13 +58,10 @@ export async function PUT(
 ) {
   try {
     const { slug, submissionId } = await params;
-    const client = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await client.auth.getUser();
 
-    if (userError || !user) {
+    const user = await getCurrentUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

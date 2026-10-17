@@ -1,8 +1,8 @@
+import { getCurrentUser } from "@/lib/auth";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 import {
   ArrowLeft,
   Users,
@@ -27,33 +27,16 @@ import {
 } from "@/components/ui/breadcrumb";
 
 async function getQuizAnalytics(quizId: string, userId: string) {
-  const supabase = await createClient();
+
 
   // Get quiz details with questions
-  const quiz = await QuizService.getQuiz(quizId, undefined, true);
+  const quiz = await QuizService.getQuiz(quizId, true);
 
   if (!quiz) return { kind: "not_found" as const };
   if (quiz.creator_id !== userId) return { kind: "forbidden" as const };
 
   // Get all submissions
-  const { data: submissions } = await supabase
-    .from("quiz_submissions")
-    .select(
-      `
-      id,
-      score,
-      total_points,
-      submitted_at,
-      status,
-      time_taken,
-      user_id,
-      submitted_by_email,
-      submitted_by_name
-    `,
-    )
-    .eq("quiz_id", quiz.id)
-    .in("status", ["submitted", "graded"])
-    .order("submitted_at", { ascending: false });
+  const submissions = (await QuizService.getSubmissions(quiz.id)).filter((submission) => submission.status !== "in_progress");
 
   // Calculate statistics
   const totalAttempts = submissions?.length || 0;
@@ -146,11 +129,9 @@ async function QuizAnalyticsContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/get-started");
@@ -175,7 +156,7 @@ async function QuizAnalyticsContent({
             is an error, ensure you're signed in with the correct account.
           </p>
           <Link
-            href="/dashboard/analytics"
+            href="/app/analytics"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
           >
             Back to Analytics
@@ -222,11 +203,11 @@ async function QuizAnalyticsContent({
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink href="/app">Dashboard</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/analytics">
+            <BreadcrumbLink href="/app/analytics">
               Analytics
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -268,7 +249,7 @@ async function QuizAnalyticsContent({
             </div>
           </div>
           <Link
-            href={`/explorezes/edit/${quiz.id}`}
+            href={`/app/quizzes/edit/${quiz.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Edit Quiz
@@ -569,7 +550,7 @@ async function QuizAnalyticsContent({
             Share your quiz to start receiving submissions and analytics
           </p>
           <Link
-            href={`/explorezes/edit/${quiz.id}`}
+            href={`/app/quizzes/edit/${quiz.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             Manage Quiz

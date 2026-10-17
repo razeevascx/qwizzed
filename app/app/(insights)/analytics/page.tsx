@@ -1,7 +1,7 @@
+import { getCurrentUser } from "@/lib/auth";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 
 import {
   BarChart3,
@@ -45,7 +45,6 @@ type QuizDetail = {
 };
 
 async function getAnalyticsData(
-  userId: string,
   {
     startDate,
     endDate,
@@ -55,8 +54,8 @@ async function getAnalyticsData(
   },
 ) {
   try {
-    const supabase = await createClient();
-    const quizzes = await QuizService.getUserQuizzes(userId);
+
+    const quizzes = await QuizService.getUserQuizzes();
 
     const totalQuizzes = quizzes.length;
     const publishedQuizzes = quizzes.filter((q) => q.is_published).length;
@@ -79,24 +78,10 @@ async function getAnalyticsData(
     if (endAt) endAt.setHours(23, 59, 59, 999);
 
     // Fetch all submissions for all owned quizzes in one go
-    const quizIds = quizzes.map((q) => q.id);
-    let submissionsQuery = supabase
-      .from("quiz_submissions")
-      .select("id, quiz_id, score, total_points, submitted_at, status, user_id")
-      .in("quiz_id", quizIds)
-      .in("status", ["submitted", "graded"]);
-
-    if (startAt) {
-      submissionsQuery = submissionsQuery.gte("submitted_at", startAt.toISOString());
-    }
-    if (endAt) {
-      submissionsQuery = submissionsQuery.lte("submitted_at", endAt.toISOString());
-    }
-
-    const { data: allSubmissions, error: subError } = await submissionsQuery;
-    if (subError) {
-      console.error("Error fetching submissions for analytics:", subError);
-    }
+    const allSubmissions = (await QuizService.getSubmissions()).filter((submission) =>
+      submission.status !== "in_progress" && submission.submitted_at &&
+      (!startAt || submission.submitted_at >= startAt.toISOString()) &&
+      (!endAt || submission.submitted_at <= endAt.toISOString()));
 
     const quizDetails: QuizDetail[] = quizzes.map((quiz) => {
       const submissions = allSubmissions?.filter((s) => s.quiz_id === quiz.id) || [];
@@ -197,11 +182,9 @@ async function AnalyticsContent({
 }: {
   searchParams: Promise<{ start?: string; end?: string }>;
 }) {
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/get-started");
@@ -218,7 +201,7 @@ async function AnalyticsContent({
     totalUniqueUsers,
     overallAvgScore,
     quizDetails,
-  } = await getAnalyticsData(user.id, { startDate, endDate });
+  } = await getAnalyticsData({ startDate, endDate });
 
   const formatDate = (date: Date | null) => {
     if (!date) return "Never";
@@ -235,7 +218,7 @@ async function AnalyticsContent({
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink href="/app">Dashboard</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -285,7 +268,7 @@ async function AnalyticsContent({
               </button>
               {(startDate || endDate) && (
                 <Link
-                  href="/dashboard/analytics"
+                  href="/app/analytics"
                   className="h-9 rounded-md border border-border/60 px-3 text-sm font-semibold text-foreground transition hover:bg-muted"
                 >
                   Clear
@@ -294,7 +277,7 @@ async function AnalyticsContent({
             </div>
           </form>
           <Link
-            href="/dashboard/create"
+            href="/app/create"
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             <BarChart3 className="h-4 w-4" />
@@ -390,7 +373,7 @@ async function AnalyticsContent({
             {quizDetails.map((quiz) => (
               <Link
                 key={quiz.id}
-                href={`/dashboard/analytics/${quiz.id}`}
+                href={`/app/analytics/${quiz.id}`}
                 className="group rounded-lg border border-border/40 bg-card/50 p-4 transition hover:border-border/60 hover:bg-card/70"
               >
                 <div className="space-y-3">
@@ -475,7 +458,7 @@ async function AnalyticsContent({
               Create your first quiz to start tracking analytics
             </p>
             <Link
-              href="/dashboard/create"
+              href="/app/create"
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               <BarChart3 className="h-4 w-4" />

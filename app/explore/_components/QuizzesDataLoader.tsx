@@ -1,15 +1,13 @@
+import { getCurrentUser } from "@/lib/auth";
 import { Quiz } from "@/lib/types/quiz";
 import QuizzesClient from "../QuizzesClient";
-import { createClient } from "@/lib/supabase/server";
 import { getCachedPublicQuizzes } from "./data-service";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 
 async function getUser() {
   try {
-    const client = await createClient();
-    const {
-      data: { user },
-    } = await client.auth.getUser();
+
+    const user = await getCurrentUser();
     return user;
   } catch {
     return null;
@@ -22,7 +20,7 @@ export default async function QuizzesDataLoader() {
   let quizzes: Quiz[] = [];
   if (user) {
     try {
-      quizzes = await QuizService.getCombinedUserQuizzes(user.id, user.email);
+      quizzes = await QuizService.getCombinedUserQuizzes();
     } catch (error) {
       console.error("Error fetching user quizzes:", error);
       // Fallback to public quizzes if combined fetch fails

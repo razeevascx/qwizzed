@@ -15,7 +15,7 @@ export default function PrivacySecurity() {
       icon: Database,
       title: "Secure Storage",
       description:
-        "All data is stored securely using Supabase with encryption at rest and in transit.",
+        "Clerk manages authentication, and Convex stores quiz data with access controls.",
     },
     {
       icon: CheckCircle,

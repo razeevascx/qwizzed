@@ -19,7 +19,7 @@ export default function GetStarted() {
             </h2>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center px-2">
-              <Link href="/dashboard/create">
+              <Link href="/app/create">
                 <Button
                   size="lg"
                   className="w-full sm:w-auto gap-2 text-base h-12 px-8  bg-background text-foreground hover:bg-background/90 hover:scale-105 transition-all shadow-xl"

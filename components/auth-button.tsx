@@ -1,28 +1,13 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@clerk/nextjs/server";
 import { ArrowRight } from "lucide-react";
-import { CurrentUserAvatar } from "./current-user-avatar";
+import { AuthenticatedAuthButton } from "@/components/authenticated-auth-button";
 
 export async function AuthButton() {
-  const supabase = await createClient();
+  const { userId } = await auth();
 
-  // You can also use getUser() which will be slower.
-  const { data } = await supabase.auth.getClaims();
-
-  const user = data?.claims;
-
-  return user ? (
-    <div className="flex items-center gap-3">
-      <Button asChild size="sm" variant="default" className="gap-1.5">
-        <Link href="/app" className="flex items-center gap-1.5">
-          Go to dashboard
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </Button>
-      <CurrentUserAvatar />
-    </div>
-  ) : (
+  return userId ? <AuthenticatedAuthButton /> : (
     <Button
       asChild
       size="sm"

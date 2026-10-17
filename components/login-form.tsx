@@ -1,7 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { authRedirect } from "@/lib/auth-redirect";
+import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,16 +23,33 @@ export function LoginForm({
   ...props
 }: Readonly<React.ComponentPropsWithoutRef<"div">>) {
   const router = useRouter();
+  const { signIn, fetchStatus: signInStatus } = useSignIn();
+  const { signUp, fetchStatus: signUpStatus } = useSignUp();
   const searchParams = useSearchParams();
-  const nextParam = searchParams?.get("next") || "/explore";
+  const destination = authRedirect(searchParams?.get("next") || searchParams?.get("redirect"));
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const busy = isLoading || isGoogleLoading || signInStatus === "fetching" || signUpStatus === "fetching";
+
+  const navigate: NonNullable<Parameters<typeof signIn.finalize>[0]>["navigate"] = ({ session, decorateUrl }) => {
+    const url = decorateUrl(session.currentTask ? "/get-started/session" : destination);
+    if (url.startsWith("http")) globalThis.location.assign(url);
+    else router.push(url);
+  };
+
+  function showError(error: unknown) {
+    if (isClerkAPIResponseError(error)) {
+      setError(error.errors[0]?.longMessage || error.errors[0]?.message || "Unable to sign in. Please try again.");
+    } else {
+      setError(error instanceof Error ? error.message : "Unable to sign in. Please try again.");
+    }
+    setEmailSent(false);
+  }
 
   const handleMagicLinkLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
     setEmailSent(false);
@@ -39,40 +58,60 @@ export function LoginForm({
     const email = formData.get("email") as string;
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${globalThis.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
-        },
+      const verificationUrl = new URL("/get-started/verify", globalThis.location.origin);
+      let flow: "sign-in" | "sign-up" = "sign-in";
+      const result = await signIn.emailLink.sendLink({
+        emailAddress: email,
+        verificationUrl: verificationUrl.href,
       });
-
-      if (error) throw error;
-
+      if (result.error) {
+        const notFound = isClerkAPIResponseError(result.error) &&
+          result.error.errors.some((error) => error.code === "form_identifier_not_found");
+        if (!notFound) throw result.error;
+        flow = "sign-up";
+        const created = await signUp.create({ emailAddress: email });
+        if (created.error) throw created.error;
+        verificationUrl.searchParams.set("flow", "sign-up");
+        const sent = await signUp.verifications.sendEmailLink({ verificationUrl: verificationUrl.href });
+        if (sent.error) throw sent.error;
+      }
       setEmailSent(true);
+      setIsLoading(false);
+      const verified = flow === "sign-in"
+        ? await signIn.emailLink.waitForVerification()
+        : await signUp.verifications.waitForEmailLinkVerification();
+      if (verified.error) throw verified.error;
+
+      if (flow === "sign-in" && signIn.status === "complete") {
+        const finalized = await signIn.finalize({ navigate });
+        if (finalized.error) throw finalized.error;
+      } else if (flow === "sign-up" && signUp.status === "complete") {
+        const finalized = await signUp.finalize({ navigate });
+        if (finalized.error) throw finalized.error;
+      } else {
+        router.push(flow === "sign-in" ? "/get-started/session" : "/get-started/sign-up");
+      }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      showError(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    const supabase = createClient();
     setError(null);
     setIsGoogleLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${globalThis.location.origin}/get-started/callback?next=${encodeURIComponent(nextParam)}`,
-        },
+      const { error } = await signIn.sso({
+        strategy: "oauth_google",
+        redirectCallbackUrl: "/get-started/sso-callback",
+        redirectUrl: destination,
       });
 
       if (error) throw error;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      router.push("/error?message=" + encodeURIComponent(err instanceof Error ? err.message : "An error occurred"));
+      showError(err);
     } finally {
       setIsGoogleLoading(false);
 
@@ -117,7 +156,7 @@ export function LoginForm({
               type="email"
               placeholder="your@email.com"
               required
-              disabled={isLoading || emailSent}
+              disabled={busy || emailSent}
               className="h-11 pl-11 pr-4 bg-background/50 border border-border/60 rounded-lg hover:border-border/80 focus:border-primary/50 focus:bg-background focus:ring-2 focus:ring-primary/10 transition-all"
             />
           </div>
@@ -133,7 +172,7 @@ export function LoginForm({
           size="lg"
           className="w-full h-11 border border-border font-semibold rounded-lg transition-all hover:text-primary "
           onClick={handleGoogleLogin}
-          disabled={isLoading || isGoogleLoading}
+          disabled={busy || emailSent}
         >
           {isGoogleLoading ? (
             <>
@@ -152,7 +191,7 @@ export function LoginForm({
           type="submit"
           size="lg"
           className="w-full h-11 mt-8 bg-linear-to-br from-primary via-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 text-primary-foreground font-semibold rounded-lg transition-all duration-200 group"
-          disabled={isLoading || emailSent}
+          disabled={busy || emailSent}
         >
           {isLoading ? (
             <>
@@ -172,6 +211,7 @@ export function LoginForm({
           )}
         </Button>
       </form>
+      <div id="clerk-captcha" />
     </div>
   );
 }

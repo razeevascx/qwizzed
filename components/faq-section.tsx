@@ -41,7 +41,7 @@ const FAQS: FAQItem[] = [
     question: "How is my data protected?",
     answer: (
       <>
-        We use Supabase for secure authentication and data storage. Please see
+        We use Clerk for authentication and Convex for data storage. Please see
         our{" "}
         <a
           href="/privacy"

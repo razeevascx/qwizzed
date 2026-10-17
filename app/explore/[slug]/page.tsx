@@ -27,14 +27,16 @@ export async function generateMetadata({
 
     if (!quiz) {
       return {
-        title: "Quiz | Qwizzed",
+        title: "Quiz not found",
         description: "Take an interactive quiz on Qwizzed.",
+        robots: { index: false, follow: false },
       };
     }
 
     return {
-      title: `${quiz.title} | Qwizzed`,
+      title: quiz.title,
       description: quiz.description || "Take an interactive quiz on Qwizzed.",
+      alternates: { canonical: `/explore/${quiz.slug || quiz.id}` },
       openGraph: {
         title: quiz.title,
         description: quiz.description || "Take a quiz on Qwizzed",
@@ -57,8 +59,9 @@ export async function generateMetadata({
     };
   } catch {
     return {
-      title: "Quiz | Qwizzed",
+      title: "Quiz",
       description: "Take an interactive quiz on Qwizzed.",
+      robots: { index: false, follow: false },
     };
   }
 }
@@ -122,7 +125,7 @@ async function PageContent({ params }: Readonly<{ params: Promise<{ slug: string
         />
       </div>
 
-      <div className="border-t border-border/30 pt-12">
+      <div id="leaderboard" className="border-t border-border/30 pt-12 scroll-mt-24">
         <h2 className="text-2xl font-bold">Top Performers</h2>
         <QuizLeaderboard quizSlug={slug} limit={100} />
       </div>

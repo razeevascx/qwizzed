@@ -48,7 +48,7 @@ export default function ShareQuizClient() {
   const loadQuiz = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/explore/${quizId}`);
+      const response = await fetch(`/api/explore/${quizId}?scope=owner`);
       if (!response.ok) throw new Error("Failed to load quiz");
       const quizData = await response.json();
       setQuiz(quizData);
@@ -62,7 +62,7 @@ export default function ShareQuizClient() {
   const getLeaderboardUrl = () => {
     const quizPath = quiz?.slug || quizId;
     if (typeof window !== "undefined") {
-      return `${window.location.origin}/explore/${quizPath}/leaderboard`;
+      return `${window.location.origin}/explore/${quizPath}#leaderboard`;
     }
     return "";
   };
@@ -142,7 +142,7 @@ export default function ShareQuizClient() {
         <p className="text-muted-foreground mt-2 mb-6">
           The quiz you're looking for doesn't exist.
         </p>
-        <Button onClick={() => router.push("/dashboard/explorezes")}>
+        <Button onClick={() => router.push("/app/quizzes")}>
           Back to Quizzes
         </Button>
       </div>
@@ -155,11 +155,11 @@ export default function ShareQuizClient() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            <BreadcrumbLink href="/app">Dashboard</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/explorezes">
+            <BreadcrumbLink href="/app/quizzes">
               My Quizzes
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -208,7 +208,7 @@ export default function ShareQuizClient() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push(`/dashboard/explorezes/edit/${quizId}`)}
+            onClick={() => router.push(`/app/quizzes/edit/${quizId}`)}
           >
             Edit
           </Button>

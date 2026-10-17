@@ -143,7 +143,7 @@ export function QuizResult({
           </Button>
           {quiz?.visibility === "public" && quizPath && (
             <Button
-              onClick={() => router.push(`/explore/${quizPath}/leaderboard`)}
+              onClick={() => router.push(`/explore/${quizPath}#leaderboard`)}
               variant="outline"
               size="lg"
               className="w-full h-12 rounded-lg font-medium gap-2"

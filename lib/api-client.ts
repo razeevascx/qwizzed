@@ -100,7 +100,7 @@ export async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
  * Quiz API helper methods
  */
 export const quizApi = {
-  getQuiz: (id: string) => apiGet(`/api/quiz/${id}`),
+  getQuiz: (id: string) => apiGet(`/api/quiz/${id}?scope=owner`),
   updateQuiz: (id: string, data: any) => apiPut(`/api/quiz/${id}`, data),
   createQuestion: (quizId: string, data: any) =>
     apiPost(`/api/quiz/${quizId}/questions`, data),

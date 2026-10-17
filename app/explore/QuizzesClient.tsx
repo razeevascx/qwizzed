@@ -190,7 +190,7 @@ export default function QuizzesClient({
             <div className="flex items-center gap-3">
               {user && (
                 <Button
-                  onClick={() => router.push("/dashboard/quizzes")}
+                  onClick={() => router.push("/app/quizzes")}
                   variant="outline"
                   size="lg"
                   className="h-12 px-8 border-2 rounded-none font-bold uppercase tracking-widest text-xs"

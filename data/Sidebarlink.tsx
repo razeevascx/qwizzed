@@ -2,7 +2,6 @@ import React from "react";
 import {
   Home,
   Mail,
-  PlusCircle,
   BarChart3,
   Trophy,
   Folder,
@@ -19,7 +18,7 @@ export interface SidebarItem {
 export const Sidebarlink: SidebarItem[] = [
   {
     label: "Home",
-    href: "/app/",
+    href: "/app",
     icon: <Home className="w-4 h-4" />,
     section: "Main",
   },
@@ -32,14 +31,8 @@ export const Sidebarlink: SidebarItem[] = [
 
   {
     label: "All Quizzes",
-    href: "/app/explorezes",
+    href: "/app/quizzes",
     icon: <Folder className="w-4 h-4" />,
-    section: "Quizzes",
-  },
-  {
-    label: "Create New",
-    href: "/app/create",
-    icon: <PlusCircle className="w-4 h-4" />,
     section: "Quizzes",
   },
   {

@@ -8,7 +8,7 @@ import { Quiz, Question, QuestionOption } from "@/lib/types/quiz";
 import { quizApi } from "@/lib/api-client";
 import Layout from "@/components/layout/Layout";
 import { toggleFullscreen } from "@/lib/fullscreen";
-import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@clerk/nextjs";
 
 // Sub-components
 import { QuizLoading } from "./_components/QuizLoading";
@@ -33,6 +33,7 @@ export default function TakeQuizClient({
   initialQuiz?: QuizWithQuestions | null;
 }) {
   const router = useRouter();
+  const { user, isLoaded: isUserLoaded } = useUser();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<QuestionWithOptions[]>([]);
@@ -52,36 +53,18 @@ export default function TakeQuizClient({
   const [hasStarted, setHasStarted] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [user, setUser] = useState<any>(null);
   const [isStartingSubmission, setIsStartingSubmission] = useState(false);
 
   const pendingSubmissionKey = `pending-quiz-submission:${quizId}`;
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-        if (user) {
-          setName(user.user_metadata?.full_name || user.user_metadata?.name || "");
-          setEmail(user.email || "");
-        }
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    if (!quizId) return;
+    if (!quizId || !isUserLoaded) return;
     if (initialQuiz) {
       initializeQuiz(initialQuiz);
       return;
     }
     loadQuiz();
-  }, [quizId, initialQuiz]);
+  }, [quizId, initialQuiz, isUserLoaded, user?.id]);
 
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0 || showResults) return;
@@ -283,12 +266,11 @@ export default function TakeQuizClient({
       }
 
       // Check auth status to skip prompt for logged in users
-      const supabase = createClient();
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const currentUser = user;
 
       if (currentUser) {
-        const defaultName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || "";
-        const defaultEmail = currentUser.email || "";
+        const defaultName = currentUser.fullName || "";
+        const defaultEmail = currentUser.primaryEmailAddress?.emailAddress || "";
         setName(defaultName);
         setEmail(defaultEmail);
 

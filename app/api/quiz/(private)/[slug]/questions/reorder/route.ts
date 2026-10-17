@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 
 // PUT /api/explore/[id]/questions/reorder - reorder questions
 export async function PUT(
@@ -9,19 +9,16 @@ export async function PUT(
 ) {
   try {
     const slug = (await params).slug;
-    const client = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await client.auth.getUser();
 
-    if (userError || !user) {
+    const user = await getCurrentUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // ponytail: get quiz by slug or id using QuizService helper
-    const quiz = await QuizService.getQuiz(slug, client);
+    const quiz = await QuizService.getQuiz(slug);
 
     if (!quiz || quiz.creator_id !== user.id) {
       return NextResponse.json(
@@ -41,19 +38,7 @@ export async function PUT(
       );
     }
 
-    const updates = await Promise.all(
-      questions.map((q) =>
-        client
-          .from("questions")
-          .update({ order: q.order })
-          .eq("id", q.id)
-          .eq("quiz_id", quiz.id),
-      ),
-    );
-
-    for (const { error } of updates) {
-      if (error) throw error;
-    }
+    await QuizService.reorderQuestions(quiz.id, questions);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,33 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionUser } from "@/lib/supabase/middleware";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-function isPublicQuizApi(pathname: string, method: string) {
-  const parts = pathname.split("/").filter(Boolean);
-  if (parts.length < 3 || parts[0] !== "api" || parts[1] !== "quiz") {
-    return false;
-  }
-
-  if (parts.length === 3) {
-    return method === "GET";
-  }
-
-  if (parts.length === 4) {
-    if (parts[3] === "leaderboard") {
-      return method === "GET";
-    }
-    if (parts[3] === "submissions") {
-      return method === "POST";
-    }
-  }
-
-  if (parts.length === 5 && parts[3] === "submissions") {
-    return method === "POST";
-  }
-
-  return false;
-}
-
-export async function proxy(request: NextRequest) {
+function routeRequest(request: NextRequest, isAuthenticated: boolean) {
   const url = request.nextUrl.clone();
   const hostname = request.headers.get("host") || "";
   const pathname = url.pathname;
@@ -61,19 +35,13 @@ export async function proxy(request: NextRequest) {
     let response: NextResponse;
 
     // Rewrite /api/explore requests to /api/quiz internally to match folder structure
-    if (pathname.startsWith("/api/explore")) {
+    if (pathname === "/api/explore" || pathname.startsWith("/api/explore/")) {
       const newPathname = pathname.replace(/^\/api\/explore/, "/api/quiz");
-      const rewriteUrl = new URL(newPathname, request.url);
+      const rewriteUrl = url.clone();
+      rewriteUrl.pathname = newPathname;
       response = NextResponse.rewrite(rewriteUrl);
     } else {
       response = NextResponse.next({ request });
-    }
-
-    const authResult = await getSessionUser(request);
-    if (authResult?.response) {
-      for (const cookie of authResult.response.cookies.getAll()) {
-        response.cookies.set(cookie.name, cookie.value);
-      }
     }
 
     // Add CORS headers to all API responses to allow cross-origin requests between main domain and subdomain
@@ -95,112 +63,61 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  const isAuthRoute = pathname.startsWith("/get-started");
-
-  // Redirect any auth routes on the subdomain to the main domain (production only)
-  if (isSubdomain && isAuthRoute) {
-    if (!isLocalhost) {
-      const mainHost = hostname.replace(/^app\./, "");
-      const redirectUrl = new URL(pathname + url.search, request.url);
-      redirectUrl.host = mainHost;
-      return NextResponse.redirect(redirectUrl);
-    }
-    // On localhost, fall through and let the auth route be served
-    // directly on the subdomain (handled in the rewrite block below).
+  // Serve the custom Clerk flow on its incoming origin.
+  if (pathname === "/get-started" || pathname.startsWith("/get-started/")) {
+    return NextResponse.next({ request });
   }
 
-  // NEW: on localhost, send auth routes hit on the plain host over to the
-  // app subdomain, so /get-started always canonically lives on app.localhost
-  // locally (mirroring the fall-through behavior above).
-  if (!isSubdomain && isAuthRoute && isLocalhost) {
-    const redirectUrl = new URL(pathname + url.search, request.url);
-    redirectUrl.host = `app.${hostname}`;
+  // Accept old quiz-taking URLs, keeping /take as the canonical route.
+  const legacyTake = new RegExp(/^\/explore\/([^/]+)&action=take$/).exec(pathname);
+  const queryTake = new RegExp(/^\/explore\/([^/]+)$/).exec(pathname);
+  if (legacyTake || (queryTake && url.searchParams.get("action") === "take")) {
+    url.pathname = `/explore/${legacyTake?.[1] || queryTake![1]}/take`;
+    url.searchParams.delete("action");
+    return NextResponse.redirect(url);
+  }
+
+  // Shared quiz links and legal pages also work on the app subdomain.
+  if (pathname === "/explore" || pathname.startsWith("/explore/") ||
+      ["/about", "/privacy", "/terms"].includes(pathname)) {
+    return NextResponse.next({ request });
+  }
+
+  const hasAppPrefix = pathname === "/app" || pathname.startsWith("/app/");
+  const isAppArea = isSubdomain || hasAppPrefix;
+
+  if (isAppArea && !isAuthenticated) {
+    const redirectUrl = new URL("/get-started", request.url);
+    if (isSubdomain) redirectUrl.host = hostname.replace(/^app\./, "");
+    const destination = hasAppPrefix ? pathname : pathname === "/" ? "/app" : `/app${pathname}`;
+    redirectUrl.searchParams.set("next", destination + url.search);
     return NextResponse.redirect(redirectUrl);
-  }
-
-  // 1. Redirect /explore/[id]/take to /explore/[id]&action=take
-  const exploreTakeMatch = pathname.match(/^\/explore\/([^/]+)\/take$/);
-  if (exploreTakeMatch) {
-    const id = exploreTakeMatch[1];
-    const redirectUrl = new URL(`/explore/${id}&action=take`, request.url);
-    redirectUrl.host = hostname;
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  const isAppArea = isSubdomain || pathname.startsWith("/app");
-
-  // Get Supabase user and updated response (with any refreshed cookies)
-  const authResult = await getSessionUser(request);
-  const user = authResult?.user;
-  const supabaseResponse =
-    authResult?.response ?? NextResponse.next({ request });
-
-  if (isAppArea && !isAuthRoute) {
-    if (!user) {
-      if (isLocalhost) {
-        // FIXED: always redirect to /get-started on the app subdomain,
-        // not on whatever host the request came in on (which could be
-        // plain localhost if entry was via /app).
-        const appHost = isSubdomain ? hostname : `app.${hostname}`;
-        const redirectUrl = new URL("/get-started", request.url);
-        redirectUrl.host = appHost;
-        return NextResponse.redirect(redirectUrl);
-      } else {
-        // Redirect unauthenticated user to /get-started on the main domain
-        const mainHost = hostname.replace(/^app\./, "");
-        const redirectUrl = new URL("/get-started", request.url);
-        redirectUrl.host = mainHost;
-        return NextResponse.redirect(redirectUrl);
-      }
-    }
-  }
-
-  // 2. Rewrite /explore/[id]&action=take or /explore/[id]?action=take to /explore/[id]/take
-  const hasTakeAction =
-    pathname.endsWith("&action=take") ||
-    url.searchParams.get("action") === "take";
-  if (hasTakeAction && pathname.startsWith("/explore/")) {
-    let id = pathname.replace(/^\/explore\//, "");
-    if (id.endsWith("&action=take")) {
-      id = id.substring(0, id.length - 12);
-    }
-    url.pathname = `/explore/${id}/take`;
-    const rewriteResponse = NextResponse.rewrite(url);
-    for (const cookie of supabaseResponse.cookies.getAll()) {
-      rewriteResponse.cookies.set(cookie.name, cookie.value);
-    }
-    return rewriteResponse;
   }
 
   // Handle mapping from url/app to app.url (subdomain)
   if (isSubdomain) {
-    // Auth routes (e.g. /get-started) stay at the root path on the subdomain
-    // instead of being rewritten to /app/get-started, otherwise Next.js has
-    // no matching page and returns a 404.
-    if (!isAuthRoute && !pathname.startsWith("/app")) {
+    if (!hasAppPrefix) {
       url.pathname = `/app${pathname}`;
     }
-    const rewriteResponse = NextResponse.rewrite(url);
-    for (const cookie of supabaseResponse.cookies.getAll()) {
-      rewriteResponse.cookies.set(cookie.name, cookie.value);
-    }
-    return rewriteResponse;
-  } else if (pathname.startsWith("/app")) {
+    return NextResponse.rewrite(url);
+  } else if (hasAppPrefix && !isLocalhost) {
     const newPathname = pathname.replace(/^\/app/, "") || "/";
     const newHost = `app.${hostname}`;
 
-    const redirectUrl = new URL(newPathname, request.url);
+    const redirectUrl = url.clone();
+    redirectUrl.pathname = newPathname;
     redirectUrl.host = newHost;
 
     const redirectResponse = NextResponse.redirect(redirectUrl);
-    for (const cookie of supabaseResponse.cookies.getAll()) {
-      redirectResponse.cookies.set(cookie.name, cookie.value);
-    }
     return redirectResponse;
   }
 
-  return supabaseResponse;
+  return NextResponse.next({ request });
 }
+
+export default clerkMiddleware(async (auth, request) => routeRequest(request, (await auth()).isAuthenticated), {
+  signInUrl: "/get-started",
+});
 
 export const config = {
   matcher: [
@@ -212,5 +129,6 @@ export const config = {
      * Feel free to modify this pattern to include more paths.
      */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/(api|trpc)(.*)",
   ],
 };
