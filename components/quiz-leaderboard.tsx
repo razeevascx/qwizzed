@@ -16,6 +16,22 @@ export function QuizLeaderboard({
   quizSlug,
   limit = 50,
 }: QuizLeaderboardProps) {
+  if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+    return (
+      <div className="rounded-lg border border-border/40 bg-card/50 p-6 text-center text-muted-foreground">
+        Leaderboard is unavailable right now
+      </div>
+    );
+  }
+
+  return <ConnectedQuizLeaderboard quizId={quizId} quizSlug={quizSlug} limit={limit} />;
+}
+
+function ConnectedQuizLeaderboard({
+  quizId,
+  quizSlug,
+  limit,
+}: QuizLeaderboardProps) {
   const quizIdentifier = quizSlug || quizId;
   const entries = useQuery(api.submissions.leaderboard, quizIdentifier ? { quizId: quizIdentifier } : "skip");
   const leaderboard = (entries?.slice(0, limit) || []) as unknown as LeaderboardEntry[];
