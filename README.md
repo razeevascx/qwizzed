@@ -79,12 +79,10 @@ Qwizzed is a Next.js, Clerk, and Convex-powered quiz platform for educators, tea
 
    ```bash
    npx -y clerk@latest auth login
-   npx -y clerk@latest link --app app_3Kpd3Rd4H47FXXymzPFj28ypece
    npx -y clerk@latest env pull
    bunx convex dev
    ```
 
-   Select the existing Convex project `qwizzed-2bfa2` on team `rajeev-puri`.
    The CLIs write the ignored local environment files. Required app variables are
    `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and
    `NEXT_PUBLIC_CONVEX_URL`. Never commit secret keys.
