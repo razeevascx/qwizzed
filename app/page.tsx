@@ -5,6 +5,11 @@ import Landing from "@/components/section/Landing";
 import PrivacySecurity from "@/components/section/PrivacySecurity";
 import Steps from "@/components/section/Steps";
 import Features from "@/components/section/Features";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function Home() {
   return (

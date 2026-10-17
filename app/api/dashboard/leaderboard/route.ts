@@ -1,31 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { connection } from "next/server";
+import { NextResponse } from "next/server";
+import { QuizService } from "@/lib/quiz-service";
 
 /**
  * GET /api/dashboard/leaderboard
  * Global leaderboard showing top users across all public quizzes
  */
-export async function GET(request: NextRequest) {
-  const client = await createClient();
+export async function GET() {
+  await connection();
+
   try {
 
     // Fetch all submissions for public and published quizzes
     // We group by user_id to get total points across all quizzes
-    const { data: submissions, error } = await client
-      .from("quiz_submissions")
-      .select(`
-        user_id,
-        score,
-        total_points,
-        submitted_by_name,
-        submitted_by_email,
-        quizzes!inner(visibility, is_published)
-      `)
-      .eq("quizzes.visibility", "public")
-      .eq("quizzes.is_published", true)
-      .in("status", ["submitted", "graded"]);
-
-    if (error) throw error;
+    const submissions = await QuizService.getLeaderboard();
 
     // Aggregate data by user
     const userStats = (submissions || []).reduce((acc: any, sub: any) => {
@@ -54,7 +42,7 @@ export async function GET(request: NextRequest) {
           ? Math.round((user.total_score / user.total_possible) * 100) 
           : 0,
         // Hide email for privacy
-        email: user.email ? user.email.split("@")[0] + "***" : "Anonymous",
+        email: user.email || "Anonymous",
       }))
       .sort((a: any, b: any) => b.total_score - a.total_score || b.score_percentage - a.score_percentage)
       .slice(0, 100)

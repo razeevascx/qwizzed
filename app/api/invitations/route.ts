@@ -1,13 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { QuizService } from "@/lib/supabase/quiz-service";
+import { QuizService } from "@/lib/quiz-service";
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +21,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const invitation = await QuizService.inviteUserToQuiz(user.id, {
+    const invitation = await QuizService.inviteUserToQuiz({
       quiz_id,
       invitee_email,
     });
@@ -38,11 +36,9 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
+
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -55,7 +51,7 @@ export async function GET(request: Request) {
       const invitations = await QuizService.getQuizInvitations(quizId);
       return NextResponse.json(invitations);
     } else {
-      const invitations = await QuizService.getUserInvitations(user.id);
+      const invitations = await QuizService.getUserInvitations();
       return NextResponse.json(invitations);
     }
   } catch (error: any) {

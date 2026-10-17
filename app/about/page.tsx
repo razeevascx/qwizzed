@@ -21,9 +21,10 @@ import {
 import Link from "next/link";
 
 export const metadata = {
-  title: "About Qwizzed | Quiz Platform",
+  title: "About",
   description:
     "Learn about Qwizzed - a modern quiz platform built for educators, teams, and creators.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
@@ -99,7 +100,8 @@ export default function AboutPage() {
     {
       category: "Backend & Infrastructure",
       technologies: [
-        { name: "Supabase", description: "Backend-as-a-service platform" },
+        { name: "Convex", description: "Database and real-time backend" },
+        { name: "Clerk", description: "Authentication platform" },
         { name: "PostgreSQL", description: "Relational database" },
         {
           name: "Authentication",
@@ -155,7 +157,7 @@ export default function AboutPage() {
                 </p>
 
                 <div className="flex flex-wrap gap-4 pt-4">
-                  <Link href="/dashboard/create">
+                  <Link href="/app/create">
                     <Button size="lg" className="gap-2 h-12 px-6">
                       Create Your First Quiz
                       <ArrowRight className="w-4 h-4" />
@@ -527,7 +529,7 @@ export default function AboutPage() {
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
                     Built on proven technologies: Next.js, React, TypeScript,
-                    Supabase, and Tailwind CSS. Transparency at every level.
+                    Clerk, Convex, and Tailwind CSS. Transparency at every level.
                   </p>
                 </div>
               </div>

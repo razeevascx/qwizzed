@@ -51,7 +51,7 @@ export default function Landing() {
               </h1>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                <Link href="/dashboard/create">
+                <Link href="/app/create">
                   <Button
                     size="lg"
                     className="w-full sm:w-auto gap-2 text-base px-8"

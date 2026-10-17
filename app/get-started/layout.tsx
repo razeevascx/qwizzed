@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import Logo from "@/components/Logo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function RootLayout({
   children,

@@ -7,9 +7,9 @@ import { Suspense, useEffect, useState } from "react";
 
 const productLinks = [
   { name: "Browse Quizzes", href: "/explore" },
-  { name: "Create Quiz", href: "/dashboard/create" },
-  { name: "My Quizzes", href: "/dashboard/explorezes" },
-  { name: "Analytics", href: "/dashboard/analytics" },
+  { name: "Create Quiz", href: "/app/create" },
+  { name: "My Quizzes", href: "/app/quizzes" },
+  { name: "Analytics", href: "/app/analytics" },
 ];
 
 const companyLinks = [
@@ -20,7 +20,7 @@ const companyLinks = [
 
 const resourceLinks = [
   { name: "Home", href: "/" },
-  { name: "Dashboard", href: "/dashboard" },
+  { name: "Dashboard", href: "/app" },
   { name: "Get Started", href: "/get-started" },
 ];
 

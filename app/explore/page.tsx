@@ -2,6 +2,13 @@ import { Suspense } from "react";
 import QuizzesDataLoader from "./_components/QuizzesDataLoader";
 import { SiteHeader } from "@/components/ui/Navbar";
 import { SiteFooter } from "@/components/site-footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Explore quizzes",
+  description: "Discover public quizzes across topics, test your knowledge, and share your results.",
+  alternates: { canonical: "/explore" },
+};
 
 function QuizzesLoadingSkeleton() {
   return (

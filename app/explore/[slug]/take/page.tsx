@@ -15,14 +15,17 @@ export async function generateMetadata({
 
     if (!quiz) {
       return {
-        title: "Quiz | Qwizzed",
+        title: "Take a quiz",
         description: "Take an interactive quiz on Qwizzed.",
+        robots: { index: false, follow: false },
       };
     }
 
     return {
-      title: `${quiz.title} | Qwizzed`,
+      title: `Take ${quiz.title}`,
       description: quiz.description || "Take an interactive quiz on Qwizzed.",
+      alternates: { canonical: `/explore/${quiz.slug || quiz.id}` },
+      robots: { index: false, follow: false },
       openGraph: {
         title: quiz.title,
         description: quiz.description || "Take a quiz on Qwizzed",
@@ -45,8 +48,9 @@ export async function generateMetadata({
     };
   } catch {
     return {
-      title: "Quiz | Qwizzed",
+      title: "Take a quiz",
       description: "Take an interactive quiz on Qwizzed.",
+      robots: { index: false, follow: false },
     };
   }
 }

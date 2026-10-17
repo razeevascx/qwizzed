@@ -1,105 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { LeaderboardEntry } from "@/lib/types/quiz";
 import { Trophy, Medal } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 
 interface QuizLeaderboardProps {
   quizId?: string;
   quizSlug?: string;
   limit?: number;
-  refreshInterval?: number; // milliseconds, optional polling fallback
 }
 
 export function QuizLeaderboard({
   quizId,
   quizSlug,
   limit = 50,
-  refreshInterval = 5000, // Default 5 seconds polling
 }: QuizLeaderboardProps) {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actualQuizId, setActualQuizId] = useState<string | null>(null);
-
   const quizIdentifier = quizSlug || quizId;
-
-  useEffect(() => {
-    if (!quizIdentifier) {
-      setError("Quiz identifier is missing");
-      setIsLoading(false);
-      return;
-    }
-    loadLeaderboard();
-
-    // Set up polling for real-time updates
-    const interval = setInterval(() => {
-      loadLeaderboard(true); // Silent refresh
-    }, refreshInterval);
-
-    return () => clearInterval(interval);
-  }, [quizIdentifier, refreshInterval]);
-
-  // Set up Supabase real-time subscription
-  useEffect(() => {
-    if (!actualQuizId) return;
-
-    const supabase = createClient();
-
-    const channel = supabase
-      .channel(`leaderboard:${actualQuizId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "quiz_submissions",
-          filter: `quiz_id=eq.${actualQuizId}`,
-        },
-        () => {
-          // Reload leaderboard when submissions change
-          loadLeaderboard(true);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [actualQuizId]);
-
-  const loadLeaderboard = async (silent = false) => {
-    try {
-      if (!silent) setIsLoading(true);
-      setError(null);
-      if (!quizIdentifier) return;
-
-      const response = await fetch(`/api/explore/${quizIdentifier}/leaderboard`);
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          setError("This leaderboard is not public");
-          return;
-        }
-        throw new Error("Failed to load leaderboard");
-      }
-
-      const data = await response.json();
-      setLeaderboard(data.slice(0, limit));
-
-      // Get actual quiz ID for real-time subscription
-      if (data.length > 0 && !actualQuizId) {
-        setActualQuizId(data[0].quiz_id);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load leaderboard",
-      );
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  };
+  const entries = useQuery(api.submissions.leaderboard, quizIdentifier ? { quizId: quizIdentifier } : "skip");
+  const leaderboard = (entries?.slice(0, limit) || []) as unknown as LeaderboardEntry[];
+  const isLoading = Boolean(quizIdentifier) && entries === undefined;
+  const error = quizIdentifier ? null : "Quiz identifier is missing";
 
   const getRankMedal = (rank: number) => {
     switch (rank) {
@@ -156,7 +77,7 @@ export function QuizLeaderboard({
 
   return (
     <div className="space-y-2">
-      {leaderboard.map((entry, idx) => (
+      {leaderboard.map((entry) => (
         <div
           key={entry.submission_id}
           className={`flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors ${

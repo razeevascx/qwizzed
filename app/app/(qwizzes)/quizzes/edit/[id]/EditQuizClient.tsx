@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { DeleteConfirmationSheet } from "@/components/delete-confirmation-sheet";
+import { BottomSheet } from "@/components/hangry-ui/components/bottom-sheet";
 import { CreateQuestionForm } from "@/components/create-question-form";
 import { UpdateQuestionForm } from "@/components/update-question-form";
 import { EditQuizDetailsForm } from "@/components/edit-quiz-details-form";
@@ -33,6 +35,7 @@ export default function EditQuizPage() {
   const params = useParams();
   const quizId = params?.id as string;
 
+  const [questionToDelete, setQuestionToDelete] = useState<string | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +46,8 @@ export default function EditQuizPage() {
   const [error, setError] = useState<string | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showAddQuestionForm, setShowAddQuestionForm] = useState(false);
+  const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+  const [addQuestionError, setAddQuestionError] = useState<string | null>(null);
   const [showEditDetails, setShowEditDetails] = useState(false);
   const [selectedVisibility, setSelectedVisibility] =
     useState<QuizVisibility>("public");
@@ -134,32 +139,27 @@ export default function EditQuizPage() {
   };
 
   const handleAddQuestion = async (data: CreateQuestionInput) => {
+    if (isAddingQuestion) return;
+    setIsAddingQuestion(true);
+    setAddQuestionError(null);
     try {
       const result = await quizApi.createQuestion(quizId, data);
-      if (!result.ok) {
-        throw new Error(result.error || "Failed to add question");
-      }
+      if (!result.ok) throw new Error(result.error || "Failed to add question");
       await unpublishQuizIfNeeded();
       await loadQuiz();
       setShowAddQuestionForm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setAddQuestionError(err instanceof Error ? err.message : "Failed to add question");
+    } finally {
+      setIsAddingQuestion(false);
     }
   };
 
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm("Are you sure you want to delete this question?")) return;
-
-    try {
-      const result = await quizApi.deleteQuestion(quizId, questionId);
-      if (!result.ok) {
-        throw new Error(result.error || "Failed to delete question");
-      }
-      await unpublishQuizIfNeeded();
-      await loadQuiz();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    }
+    const result = await quizApi.deleteQuestion(quizId, questionId);
+    if (!result.ok) throw new Error(result.error || "Failed to delete question");
+    await unpublishQuizIfNeeded();
+    await loadQuiz();
   };
 
   const handleMoveQuestion = async (
@@ -253,6 +253,10 @@ export default function EditQuizPage() {
   };
 
   const handlePublishQuiz = async () => {
+    if (questions.length === 0) {
+      setError("Add at least one question before publishing this quiz.");
+      return;
+    }
     try {
       setIsUpdating(true);
       setError(null);
@@ -417,11 +421,11 @@ export default function EditQuizPage() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+              <BreadcrumbLink href="/app">Dashboard</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard/explorezes">
+              <BreadcrumbLink href="/app/quizzes">
                 My Quizzes
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -476,7 +480,7 @@ export default function EditQuizPage() {
                 Published
               </div>
             ) : (
-              <Button size="sm" onClick={handlePublishQuiz}>
+              <Button size="sm" onClick={handlePublishQuiz} disabled={isUpdating || questions.length === 0} title={questions.length === 0 ? "Add at least one question before publishing" : undefined}>
                 Publish Draft
               </Button>
             )}
@@ -492,8 +496,9 @@ export default function EditQuizPage() {
                   Changes saved as draft
                 </p>
                 <p className="text-amber-800 dark:text-amber-300 text-xs mt-1">
-                  Your changes are saved but not yet published. Click "Publish
-                  Draft" to make them live.
+                  {questions.length === 0
+                    ? "Add at least one question before publishing this quiz."
+                    : 'Your changes are saved but not yet published. Click "Publish Draft" to make them live.'}
                 </p>
               </div>
             </div>
@@ -527,24 +532,16 @@ export default function EditQuizPage() {
                 </div>
                 <Button
                   size="sm"
-                  variant={showAddQuestionForm ? "secondary" : "outline"}
-                  onClick={() => setShowAddQuestionForm(!showAddQuestionForm)}
+                  variant="outline"
+                  onClick={() => {
+                    setAddQuestionError(null);
+                    setShowAddQuestionForm(true);
+                  }}
                 >
-                  {showAddQuestionForm ? "Cancel" : "Add Question"}
+                  Add Question
                 </Button>
               </div>
 
-              {showAddQuestionForm && (
-                <div className="rounded-lg border border-border/60 p-5 bg-muted/30">
-                  <div className="mb-4">
-                    <p className="text-sm font-semibold">New Question</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Add a new question to your quiz
-                    </p>
-                  </div>
-                  <CreateQuestionForm onSubmit={handleAddQuestion} />
-                </div>
-              )}
 
               <div className="space-y-3">
                 {questions.length === 0 ? (
@@ -671,7 +668,7 @@ export default function EditQuizPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDeleteQuestion(question.id)}
+                              onClick={() => setQuestionToDelete(question.id)}
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -852,6 +849,26 @@ export default function EditQuizPage() {
             </div>
           </div>
         </div>
+
+        {showAddQuestionForm && (
+          <BottomSheet
+            open
+            title="Add Question"
+            description="Choose a question type and add the question and answers."
+            onClose={() => setShowAddQuestionForm(false)}
+            dismissible={!isAddingQuestion}
+          >
+            {addQuestionError && <p role="alert" className="mb-4 text-sm text-destructive">{addQuestionError}</p>}
+            <CreateQuestionForm onSubmit={handleAddQuestion} isLoading={isAddingQuestion} />
+          </BottomSheet>
+        )}
+
+        {questionToDelete && <DeleteConfirmationSheet
+          title="Delete this question?"
+          description="This permanently removes the question and its saved answers."
+          onConfirm={() => handleDeleteQuestion(questionToDelete)}
+          onClose={() => setQuestionToDelete(null)}
+        />}
 
         {showInviteDialog && (
           <QuizInviteDialog

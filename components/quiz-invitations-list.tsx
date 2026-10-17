@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Mail, Trash2, Clock, CheckCircle, XCircle } from "lucide-react";
+import { DeleteConfirmationSheet } from "@/components/delete-confirmation-sheet";
 import { Button } from "@/components/ui/button";
 
 interface Invitation {
@@ -17,6 +18,7 @@ interface QuizInvitationsListProps {
 }
 
 export function QuizInvitationsList({ quizId }: QuizInvitationsListProps) {
+  const [invitationToDelete, setInvitationToDelete] = useState<Invitation | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,19 +41,9 @@ export function QuizInvitationsList({ quizId }: QuizInvitationsListProps) {
   };
 
   const handleDelete = async (invitationId: string) => {
-    if (!confirm("Are you sure you want to delete this invitation?")) return;
-
-    try {
-      const response = await fetch(`/api/invitations/${invitationId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
-      }
-    } catch (error) {
-      console.error("Failed to delete invitation:", error);
-    }
+    const response = await fetch(`/api/invitations/${invitationId}`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Failed to delete invitation");
+    setInvitations((previous) => previous.filter((invitation) => invitation.id !== invitationId));
   };
 
   const getStatusIcon = (status: string) => {
@@ -123,7 +115,8 @@ export function QuizInvitationsList({ quizId }: QuizInvitationsListProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(invitation.id)}
+                onClick={() => setInvitationToDelete(invitation)}
+                aria-label={`Delete invitation for ${invitation.invitee_email}`}
                 className="text-destructive hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
@@ -132,6 +125,12 @@ export function QuizInvitationsList({ quizId }: QuizInvitationsListProps) {
           </div>
         ))}
       </div>
+      {invitationToDelete && <DeleteConfirmationSheet
+        title="Delete invitation?"
+        description={`Remove the invitation for ${invitationToDelete.invitee_email}?`}
+        onConfirm={() => handleDelete(invitationToDelete.id)}
+        onClose={() => setInvitationToDelete(null)}
+      />}
     </div>
   );
 }

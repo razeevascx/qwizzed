@@ -1,19 +1,20 @@
+import { ClerkProvider } from "@clerk/nextjs";
+import { ConvexProvider } from "@/components/convex-provider";
+import { shadcn } from "@clerk/ui/themes";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
-const defaultUrl = process.env.NEXT_PUBLIC_APP_URL 
-  ? process.env.NEXT_PUBLIC_APP_URL
-  : process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Qwizzed - Quiz Platform",
-  description: "Create, share, and take interactive quizzes with Qwizzed",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Qwizzed | Create and share online quizzes",
+    template: "%s | Qwizzed",
+  },
+  description: "Create, share, and take interactive quizzes with Qwizzed. Build engaging quizzes for learning, teams, and events.",
   applicationName: "Qwizzed",
   keywords: [
     "quiz platform",
@@ -24,16 +25,12 @@ export const metadata: Metadata = {
     "education",
     "Qwizzed",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "/",
     siteName: "Qwizzed",
-    title: "Qwizzed - Quiz Platform",
-    description: "Create, share, and take interactive quizzes with Qwizzed",
+    title: "Qwizzed | Create and share online quizzes",
+    description: "Create, share, and take interactive quizzes with Qwizzed. Build engaging quizzes for learning, teams, and events.",
     images: [
       {
         url: "/opengraph-image",
@@ -50,8 +47,8 @@ export const metadata: Metadata = {
   ],
   twitter: {
     card: "summary_large_image",
-    title: "Qwizzed - Quiz Platform",
-    description: "Create, share, and take interactive quizzes with Qwizzed",
+    title: "Qwizzed | Create and share online quizzes",
+    description: "Create, share, and take interactive quizzes with Qwizzed. Build engaging quizzes for learning, teams, and events.",
     images: ["/opengraph-image"],
   },
   robots: {
@@ -85,16 +82,48 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased bg-background text-foreground `}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "Qwizzed",
+                  url: siteUrl,
+                  logo: `${siteUrl}/opengraph-image`,
+                },
+                {
+                  "@type": "WebSite",
+                  name: "Qwizzed",
+                  url: siteUrl,
+                  description: "Create, share, and take interactive quizzes.",
+                },
+              ],
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
+        <ClerkProvider
+          appearance={{ theme: shadcn }}
+          signInUrl="/get-started"
+          signUpUrl="/get-started/sign-up"
+          signInFallbackRedirectUrl="/"
+          signUpFallbackRedirectUrl="/"
         >
-          {children}
-          <Toaster />
-        </ThemeProvider>
-        <Analytics />
+          <ConvexProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+            <Analytics />
+          </ConvexProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

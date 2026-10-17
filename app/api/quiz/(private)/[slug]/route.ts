@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { revalidateTag } from "next/cache";
-import { QuizService } from "@/lib/supabase/quiz-service";
-import {
-  QUIZ_FIELDS,
-  QUESTION_FIELDS,
-  requireAuth,
-  verifyQuizOwnership,
-} from "@/lib/api-utils";
+import { QuizService } from "@/lib/quiz-service";
+import { requireAuth } from "@/lib/api-utils";
 
 // GET /api/explore/[slug] - get quiz details with questions (public)
 // PUT /api/explore/[slug] - update quiz (authenticated, creator only)
@@ -16,29 +10,26 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const client = await createClient();
   try {
     const slug = (await params).slug;
 
-    const quiz = await QuizService.getQuiz(slug);
+    const ownerOnly = request.nextUrl.searchParams.get("scope") === "owner";
+    if (ownerOnly) {
+      const authResult = await requireAuth();
+      if (authResult.error) return authResult.error;
+    }
+    const quiz = ownerOnly ? await QuizService.getOwnedQuiz(slug) : await QuizService.getQuiz(slug);
 
     if (!quiz) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    // Fetch questions for this quiz (exclude answer key from response)
-    const { data: questions, error: questionsError } = await client
-      .from("questions")
-      .select(QUESTION_FIELDS.DISPLAY)
-      .eq("quiz_id", quiz.id)
-      .order("order", { ascending: true });
-
-    if (questionsError) throw questionsError;
+    const questions = await QuizService.getQuizQuestions(quiz.id);
 
     return NextResponse.json({
       ...quiz,
       questions: questions || [],
-    });
+    }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to fetch quiz";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -51,7 +42,6 @@ export async function PUT(
 ) {
   try {
     const { slug } = await params;
-    const client = await createClient();
 
     const quiz = await QuizService.getQuiz(slug);
 
@@ -59,15 +49,10 @@ export async function PUT(
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    const authResult = await requireAuth(client);
+    const authResult = await requireAuth();
     if (authResult.error) return authResult.error;
 
-    const ownershipResult = await verifyQuizOwnership(
-      client,
-      quiz.id,
-      authResult.user!.id,
-    );
-    if (ownershipResult.error) return ownershipResult.error;
+    if (quiz.creator_id !== authResult.user!.id) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     const body = await request.json();
     const updatedQuiz = await QuizService.updateQuiz(quiz.id, body);
@@ -90,7 +75,6 @@ export async function DELETE(
 ) {
   try {
     const slug = (await params).slug;
-    const client = await createClient();
 
     const quiz = await QuizService.getQuiz(slug);
 
@@ -98,15 +82,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    const authResult = await requireAuth(client);
+    const authResult = await requireAuth();
     if (authResult.error) return authResult.error;
 
-    const ownershipResult = await verifyQuizOwnership(
-      client,
-      quiz.id,
-      authResult.user!.id,
-    );
-    if (ownershipResult.error) return ownershipResult.error;
+    if (quiz.creator_id !== authResult.user!.id) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
     await QuizService.deleteQuiz(quiz.id);
 
